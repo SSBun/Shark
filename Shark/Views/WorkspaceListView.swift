@@ -231,6 +231,8 @@ struct WorkspaceRow: View {
     let onRename: () -> Void
     let onRemove: () -> Void
     
+    @State private var isHovered = false
+    
     var body: some View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 4) {
@@ -243,14 +245,24 @@ struct WorkspaceRow: View {
             }
             
             Spacer()
+            
+            // Open button on the right
+            Button(action: onOpen) {
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(.blue)
+            }
+            .buttonStyle(.plain)
+            .opacity(isHovered ? 1.0 : 0.6)
+            .help("Open workspace in Cursor")
         }
         .padding(.vertical, 4)
+        .padding(.horizontal, 4)
         .contentShape(Rectangle())
+        .onHover { hovering in
+            isHovered = hovering
+        }
         .contextMenu {
-            Button(action: onOpen) {
-                Label("Open", systemImage: "arrow.right.circle")
-            }
-            
             Button(action: onShowInFinder) {
                 Label("Show in Finder", systemImage: "folder")
             }
