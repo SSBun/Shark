@@ -83,14 +83,28 @@ struct FolderRow: View {
     let onShowInFinder: () -> Void
     let onDelete: () -> Void
     @State private var folderExists: Bool = true
+    @State private var isGitRepo: Bool = false
     
     var body: some View {
         HStack(spacing: 8) {
-            // Folder icon with status indicator
+            // Folder icon with status indicators
             ZStack(alignment: .bottomTrailing) {
                 Image(systemName: "folder.fill")
                     .foregroundColor(folderExists ? .blue : .gray)
                     .font(.system(size: 14))
+                
+                // Git badge indicator
+                if isGitRepo && folderExists {
+                    Image(systemName: "arrow.branch")
+                        .foregroundColor(.blue)
+                        .font(.system(size: 8))
+                        .offset(x: 2, y: 2)
+                        .background(
+                            Circle()
+                                .fill(Color(NSColor.windowBackgroundColor))
+                                .frame(width: 10, height: 10)
+                        )
+                }
                 
                 // Warning indicator for missing folders
                 if !folderExists {
@@ -135,20 +149,37 @@ struct FolderRow: View {
         .opacity(folderExists ? 1.0 : 0.7)
         .contextMenu {
             Button(action: onShowInFinder) {
-                Label("Show in Finder", systemImage: "folder")
+                HStack {
+                    Image(systemName: "folder")
+                    Text("Show in Finder")
+                }
+            }
+            
+            if isGitRepo && folderExists {
+                Divider()
+                
+                Button(action: {
+                    ForkOpener.openRepository(at: folder.path)
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.branch")
+                        Text("Open in Fork")
+                    }
+                }
             }
         }
         .onAppear {
-            checkFolderExistence()
+            checkFolderStatus()
         }
         .onChange(of: folder.path) { oldValue, newValue in
-            checkFolderExistence()
+            checkFolderStatus()
         }
         .help(folderExists ? folder.path : "Folder not found on disk: \(folder.path)")
     }
     
-    private func checkFolderExistence() {
+    private func checkFolderStatus() {
         folderExists = folder.existsOnDisk
+        isGitRepo = folder.isGitRepository
     }
 }
 

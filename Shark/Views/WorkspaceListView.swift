@@ -67,6 +67,9 @@ struct WorkspaceListView: View {
                         },
                         onRemove: {
                             removeWorkspace(workspace)
+                        },
+                        onOpenInFork: {
+                            openGitFoldersInFork(workspace)
                         }
                     )
                     .tag(workspace)
@@ -209,6 +212,30 @@ struct WorkspaceListView: View {
             }
         }
     }
+    
+    private func openGitFoldersInFork(_ workspace: Workspace) {
+        Task {
+            let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
+            guard authorized else {
+                return
+            }
+            
+            do {
+                let fileURL = URL(fileURLWithPath: workspace.filePath)
+                let workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
+                let folders = workspaceFile.toFolders()
+                
+                // Open all git repositories in Fork
+                for folder in folders {
+                    if folder.isGitRepository {
+                        ForkOpener.openRepository(at: folder.path)
+                    }
+                }
+            } catch {
+                print("Failed to load workspace file: \(error)")
+            }
+        }
+    }
 }
 
 struct WorkspaceRow: View {
@@ -217,6 +244,7 @@ struct WorkspaceRow: View {
     let onShowInFinder: () -> Void
     let onRename: (String) -> Void
     let onRemove: () -> Void
+    let onOpenInFork: () -> Void
     
     @State private var isHovered = false
     @State private var isEditing = false
@@ -276,21 +304,35 @@ struct WorkspaceRow: View {
         }
         .contextMenu {
             Button(action: onShowInFinder) {
-                Label("Show in Finder", systemImage: "folder")
+                HStack {
+                    Image(systemName: "folder")
+                    Text("Show in Finder")
+                }
             }
             
-            Divider()
+            Button(action: onOpenInFork) {
+                HStack {
+                    Image(systemName: "arrow.branch")
+                    Text("Open in Fork")
+                }
+            }
             
             Button(action: {
                 startEditing()
             }) {
-                Label("Rename", systemImage: "pencil")
+                HStack {
+                    Image(systemName: "pencil")
+                    Text("Rename")
+                }
             }
             
             Divider()
             
             Button(role: .destructive, action: onRemove) {
-                Label("Remove", systemImage: "trash")
+                HStack {
+                    Image(systemName: "trash")
+                    Text("Remove")
+                }
             }
         }
     }

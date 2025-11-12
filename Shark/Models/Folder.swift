@@ -26,5 +26,13 @@ struct Folder: Identifiable, Hashable {
         let exists = FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
         return exists && isDirectory.boolValue
     }
+    
+    /// Check if the folder is a git repository
+    var isGitRepository: Bool {
+        guard existsOnDisk else { return false }
+        let gitPath = (path as NSString).appendingPathComponent(".git")
+        var isDirectory: ObjCBool = false
+        return FileManager.default.fileExists(atPath: gitPath, isDirectory: &isDirectory) && isDirectory.boolValue
+    }
 }
 
