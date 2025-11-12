@@ -10,6 +10,9 @@ on:
         description: 'Version tag (e.g., 1.0.0)'
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-14
@@ -44,6 +47,9 @@ jobs:
             -configuration Release \
             -derivedDataPath build \
             -destination 'platform=macOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             clean build
       
       - name: Create DMG
