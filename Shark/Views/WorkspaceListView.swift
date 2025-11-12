@@ -248,9 +248,9 @@ struct WorkspaceRow: View {
             
             // Open button on the right
             Button(action: onOpen) {
-                Image(systemName: "arrow.right.circle.fill")
+                Image(systemName: "arrow.right.circle")
                     .font(.system(size: 14))
-                    .foregroundColor(.blue)
+                    .foregroundColor(.secondary)
             }
             .buttonStyle(.plain)
             .opacity(isHovered ? 1.0 : 0.6)
