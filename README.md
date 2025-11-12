@@ -2,6 +2,8 @@
 
 A beautiful macOS application for managing Cursor IDE workspace files. Streamline your development workflow by organizing and managing multiple Cursor workspaces with ease.
 
+![Shark Screenshot](resources/iShot_2025-11-12_14.22.43.png)
+
 ## ✨ Features
 
 ### Workspace Management
