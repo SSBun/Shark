@@ -12,8 +12,6 @@ struct WorkspaceListView: View {
     @Binding var workspaces: [Workspace]
     @Binding var selectedWorkspace: Workspace?
     @EnvironmentObject var authManager: AuthorizationManager
-    @State private var renameWorkspace: Workspace?
-    @State private var showRenameDialog = false
     @State private var lastSelectedWorkspace: Workspace?
     @State private var lastSelectionTime: Date?
     
@@ -64,9 +62,8 @@ struct WorkspaceListView: View {
                         onShowInFinder: {
                             showWorkspaceInFinder(workspace)
                         },
-                        onRename: {
-                            renameWorkspace = workspace
-                            showRenameDialog = true
+                        onRename: { newName in
+                            renameWorkspace(workspace, to: newName)
                         },
                         onRemove: {
                             removeWorkspace(workspace)
@@ -89,16 +86,6 @@ struct WorkspaceListView: View {
                     }
                     lastSelectedWorkspace = newValue
                     lastSelectionTime = now
-                }
-            }
-        }
-        .sheet(isPresented: $showRenameDialog) {
-            if let workspace = renameWorkspace {
-                RenameWorkspaceView(
-                    isPresented: $showRenameDialog,
-                    currentName: workspace.name
-                ) { newName in
-                    renameWorkspace(workspace, to: newName)
                 }
             }
         }
@@ -228,16 +215,36 @@ struct WorkspaceRow: View {
     let workspace: Workspace
     let onOpen: () -> Void
     let onShowInFinder: () -> Void
-    let onRename: () -> Void
+    let onRename: (String) -> Void
     let onRemove: () -> Void
     
     @State private var isHovered = false
+    @State private var isEditing = false
+    @State private var editedName: String = ""
+    @FocusState private var isTextFieldFocused: Bool
     
     var body: some View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(workspace.name)
-                    .font(.system(size: 14, weight: .medium))
+                if isEditing {
+                    TextField("Workspace name", text: $editedName)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 14, weight: .medium))
+                        .padding(.horizontal, 2)
+                        .padding(.vertical, 1)
+                        .background(Color(NSColor.textBackgroundColor))
+                        .cornerRadius(2)
+                        .focused($isTextFieldFocused)
+                        .onSubmit {
+                            commitRename()
+                        }
+                        .onExitCommand {
+                            cancelRename()
+                        }
+                } else {
+                    Text(workspace.name)
+                        .font(.system(size: 14, weight: .medium))
+                }
                 Text(workspace.filePath)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
@@ -262,6 +269,11 @@ struct WorkspaceRow: View {
         .onHover { hovering in
             isHovered = hovering
         }
+        .onChange(of: isTextFieldFocused) { oldValue, newValue in
+            if !newValue && isEditing {
+                commitRename()
+            }
+        }
         .contextMenu {
             Button(action: onShowInFinder) {
                 Label("Show in Finder", systemImage: "folder")
@@ -269,7 +281,9 @@ struct WorkspaceRow: View {
             
             Divider()
             
-            Button(action: onRename) {
+            Button(action: {
+                startEditing()
+            }) {
                 Label("Rename", systemImage: "pencil")
             }
             
@@ -279,6 +293,28 @@ struct WorkspaceRow: View {
                 Label("Remove", systemImage: "trash")
             }
         }
+    }
+    
+    private func startEditing() {
+        editedName = workspace.name
+        isEditing = true
+        isTextFieldFocused = true
+    }
+    
+    private func commitRename() {
+        guard isEditing else { return }
+        let trimmedName = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedName.isEmpty && trimmedName != workspace.name {
+            onRename(trimmedName)
+        }
+        isEditing = false
+        isTextFieldFocused = false
+    }
+    
+    private func cancelRename() {
+        isEditing = false
+        isTextFieldFocused = false
+        editedName = workspace.name
     }
 }
 

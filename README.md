@@ -56,7 +56,14 @@ Download the latest release from the [Releases](https://github.com/SSBun/Shark/r
 1. Download `Shark-1.0.0.dmg` (or latest version)
 2. Open the DMG file
 3. Drag Shark to your Applications folder
-4. Launch Shark from Applications
+4. **Important**: If macOS shows "Shark is damaged" error:
+   - **Right-click** on Shark.app in Applications folder
+   - Select **"Open"** from the context menu
+   - Click **"Open"** in the security dialog
+   - Alternatively, run this command in Terminal:
+     ```bash
+     xattr -d com.apple.quarantine /Applications/Shark.app
+     ```
 
 ### System Requirements
 - macOS 14.0 or later
