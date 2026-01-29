@@ -84,6 +84,12 @@ class WorkspaceManager: ObservableObject {
         }
     }
     
+    /// Clear all workspaces from the list
+    func clearWorkspaces() {
+        workspaces = []
+        saveWorkspaces()
+    }
+    
     /// Add a workspace
     func addWorkspace(_ workspace: Workspace) {
         if !workspaces.contains(where: { $0.filePath == workspace.filePath }) {
@@ -141,6 +147,9 @@ class WorkspaceManager: ObservableObject {
     
     /// Refresh workspaces from disk
     func refreshWorkspaces() {
+        // Clear existing workspaces before scanning the new folder
+        workspaces = []
+        
         // Merge scanned workspaces with existing ones
         var scannedWorkspaces: [Workspace] = []
         

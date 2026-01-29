@@ -45,6 +45,8 @@ struct SettingsView: View {
             if newValue == .default {
                 settingsFolderPath = settingsManager.defaultSettingsFolderPath
                 settingsManager.settingsFolderPath = settingsFolderPath
+                // Refresh workspaces when switching back to default
+                WorkspaceManager.shared.refreshWorkspaces()
             }
         }
         .onChange(of: settingsFolderPath) { oldValue, newValue in
@@ -135,6 +137,9 @@ struct SettingsView: View {
         
         settingsFolderPath = url.path
         selectedLocationType = .custom
+        
+        // Refresh workspaces after changing storage path
+        WorkspaceManager.shared.refreshWorkspaces()
     }
     
     private func openFolderInFinder() {
