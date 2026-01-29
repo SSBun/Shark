@@ -165,19 +165,22 @@ struct WorkspaceListView: View {
     }
     
     private func renameWorkspace(_ workspace: Workspace, to newName: String) {
-        guard let index = workspaces.firstIndex(where: { $0.id == workspace.id }) else {
-            return
-        }
-        
-        // Update workspace name
-        workspaces[index].name = newName
-        
-        // Update in WorkspaceManager
-        WorkspaceManager.shared.updateWorkspace(workspaces[index])
-        
-        // If this is the selected workspace, update the selection
-        if selectedWorkspace?.id == workspace.id {
-            selectedWorkspace = workspaces[index]
+        do {
+            // Rename the workspace and the file on disk
+            let updatedWorkspace = try WorkspaceManager.shared.renameWorkspace(workspace, to: newName)
+            
+            // Update local state
+            if let index = workspaces.firstIndex(where: { $0.id == workspace.id }) {
+                workspaces[index] = updatedWorkspace
+                
+                // If this is the selected workspace, update the selection
+                if selectedWorkspace?.id == workspace.id {
+                    selectedWorkspace = updatedWorkspace
+                }
+            }
+        } catch {
+            print("Failed to rename workspace: \(error)")
+            // TODO: Show error alert to user
         }
     }
     

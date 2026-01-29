@@ -106,6 +106,39 @@ class WorkspaceManager: ObservableObject {
         }
     }
     
+    /// Rename a workspace and its corresponding file on disk
+    func renameWorkspace(_ workspace: Workspace, to newName: String) throws -> Workspace {
+        let oldURL = URL(fileURLWithPath: workspace.filePath)
+        let folderURL = oldURL.deletingLastPathComponent()
+        let newURL = folderURL.appendingPathComponent("\(newName).code-workspace")
+        
+        // If the filename is already correct, just update the name in the model
+        if oldURL.path == newURL.path {
+            var updatedWorkspace = workspace
+            updatedWorkspace.name = newName
+            updateWorkspace(updatedWorkspace)
+            return updatedWorkspace
+        }
+        
+        // Check if destination already exists
+        if FileManager.default.fileExists(atPath: newURL.path) {
+            // If it exists, we might want to generate a unique name or throw error
+            // For now, let's throw an error to be safe
+            throw NSError(domain: "WorkspaceManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "A workspace file with this name already exists."])
+        }
+        
+        // Perform the file rename
+        try FileManager.default.moveItem(at: oldURL, to: newURL)
+        
+        // Update the workspace model with new name and path
+        var updatedWorkspace = workspace
+        updatedWorkspace.name = newName
+        updatedWorkspace.filePath = newURL.path
+        
+        updateWorkspace(updatedWorkspace)
+        return updatedWorkspace
+    }
+    
     /// Refresh workspaces from disk
     func refreshWorkspaces() {
         // Merge scanned workspaces with existing ones
