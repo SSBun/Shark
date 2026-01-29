@@ -48,13 +48,13 @@ struct FileDialogHelper {
     }
     
     /// Open a folder picker to select a folder
-    static func selectFolder() -> URL? {
+    static func selectFolder(title: String = "Select Folder", message: String = "Choose a folder") -> URL? {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
-        panel.title = "Select Folder"
-        panel.message = "Choose a folder to add to the workspace"
+        panel.title = title
+        panel.message = message
         
         if panel.runModal() == .OK {
             return panel.url

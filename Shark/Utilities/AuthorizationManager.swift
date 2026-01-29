@@ -51,12 +51,13 @@ class AuthorizationManager: ObservableObject {
         // Check if we can access user's Documents folder
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         if let documentsPath = documentsPath {
-            let testFile = documentsPath.appendingPathComponent(".shark_test")
-            do {
-                try "test".write(to: testFile, atomically: true, encoding: .utf8)
-                try? FileManager.default.removeItem(at: testFile)
+            // In a sandbox, writing to Documents might be restricted unless we have specific entitlements
+            // or the user has selected the folder.
+            // For the purpose of this status check, we'll try to check if we can read the directory.
+            let fileManager = FileManager.default
+            if fileManager.isReadableFile(atPath: documentsPath.path) {
                 return .authorized
-            } catch {
+            } else {
                 return .denied
             }
         }

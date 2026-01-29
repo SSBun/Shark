@@ -111,9 +111,28 @@ struct SettingsView: View {
     }
     
     private func selectSettingsFolder() {
-        guard let url = FileDialogHelper.selectFolder() else {
+        guard let url = FileDialogHelper.selectFolder(
+            title: "Select Settings Saving Folder",
+            message: "Choose a folder where Shark will save your workspace files"
+        ) else {
             return
         }
+        
+        // Persist access to this folder across app launches
+        do {
+            let bookmarkData = try url.bookmarkData(
+                options: .withSecurityScope,
+                includingResourceValuesForKeys: nil,
+                relativeTo: nil
+            )
+            UserDefaults.standard.set(bookmarkData, forKey: "settingsFolderBookmark")
+            
+            // Start accessing the security-scoped resource
+            _ = url.startAccessingSecurityScopedResource()
+        } catch {
+            print("Failed to create security-scoped bookmark: \(error)")
+        }
+        
         settingsFolderPath = url.path
         selectedLocationType = .custom
     }

@@ -11,8 +11,36 @@ class SettingsManager {
     static let shared = SettingsManager()
     
     private let settingsFolderPathKey = "settingsFolderPath"
+    private let settingsFolderBookmarkKey = "settingsFolderBookmark"
     
-    private init() {}
+    private init() {
+        restoreSecurityScopedAccess()
+    }
+    
+    private func restoreSecurityScopedAccess() {
+        guard let bookmarkData = UserDefaults.standard.data(forKey: settingsFolderBookmarkKey) else {
+            return
+        }
+        
+        do {
+            var isStale = false
+            let url = try URL(
+                resolvingBookmarkData: bookmarkData,
+                options: .withSecurityScope,
+                relativeTo: nil,
+                bookmarkDataIsStale: &isStale
+            )
+            
+            if isStale {
+                // Handle stale bookmark if necessary
+                print("Bookmark is stale")
+            }
+            
+            _ = url.startAccessingSecurityScopedResource()
+        } catch {
+            print("Failed to resolve security-scoped bookmark: \(error)")
+        }
+    }
     
     /// Get the default settings folder path (SharkSpace in Documents)
     var defaultSettingsFolderPath: String {
