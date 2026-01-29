@@ -10,6 +10,7 @@ import AppKit
 
 struct SettingsView: View {
     @State private var settingsFolderPath: String = ""
+    @State private var componentsSearchPath: String = ""
     @State private var selectedLocationType: LocationType = .default
     private let settingsManager = SettingsManager.shared
     
@@ -25,6 +26,11 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 32) {
                     // Settings Saving Folder section
                     settingsSavingFolderSection
+                    
+                    Divider()
+                    
+                    // Components Search Path section
+                    componentsSearchPathSection
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(24)
@@ -34,6 +40,7 @@ struct SettingsView: View {
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             settingsFolderPath = settingsManager.settingsFolderPath
+            componentsSearchPath = settingsManager.componentsSearchPath
             // Determine if current path is default or custom
             if settingsFolderPath == settingsManager.defaultSettingsFolderPath {
                 selectedLocationType = .default
@@ -53,6 +60,56 @@ struct SettingsView: View {
             // Auto-save when path changes
             settingsManager.settingsFolderPath = newValue
         }
+        .onChange(of: componentsSearchPath) { oldValue, newValue in
+            settingsManager.componentsSearchPath = newValue
+        }
+    }
+    
+    private var componentsSearchPathSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Components Search Path:")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.primary)
+            
+            HStack(spacing: 6) {
+                Text(componentsSearchPath.isEmpty ? "Not set" : componentsSearchPath)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(componentsSearchPath.isEmpty ? .secondary : .primary)
+                    .textSelection(.enabled)
+                    .lineLimit(1)
+                
+                if !componentsSearchPath.isEmpty {
+                    Button(action: {
+                        let url = URL(fileURLWithPath: componentsSearchPath)
+                        NSWorkspace.shared.open(url)
+                    }) {
+                        Image(systemName: "arrow.right.circle.fill")
+                            .foregroundColor(.blue)
+                            .font(.system(size: 13))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Reveal in Finder")
+                }
+            }
+            
+            Button("Set Path...") {
+                selectComponentsSearchPath()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
+    }
+    
+    private func selectComponentsSearchPath() {
+        guard let url = FileDialogHelper.selectFolder(
+            title: "Select Components Search Path",
+            message: "Choose a folder containing your components"
+        ) else {
+            return
+        }
+        
+        settingsManager.saveComponentsSearchPathBookmark(url)
+        componentsSearchPath = url.path
     }
     
     private var settingsSavingFolderSection: some View {

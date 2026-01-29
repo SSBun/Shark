@@ -12,6 +12,7 @@ struct MainWorkspaceView: View {
     @State private var selectedWorkspace: Workspace? = nil
     @State private var folders: [Folder] = []
     @State private var isLoadingFolders = false
+    @State private var showComponentSelector = false
     @EnvironmentObject var authManager: AuthorizationManager
     
     private var workspaces: Binding<[Workspace]> {
@@ -32,12 +33,26 @@ struct MainWorkspaceView: View {
             .frame(minWidth: 250, idealWidth: 300, maxWidth: 400)
             
             // Right area: Folder list
-            FolderListView(folders: $folders, onAddFolder: {
-                addFolder()
-            })
+            FolderListView(
+                folders: $folders,
+                onAddFolder: {
+                    addFolder()
+                },
+                onSelectComponents: {
+                    showComponentSelector = true
+                }
+            )
             .frame(minWidth: 250, idealWidth: 300)
         }
         .frame(minWidth: 500, minHeight: 400)
+        .sheet(isPresented: $showComponentSelector) {
+            ComponentSelectorView(
+                searchPath: SettingsManager.shared.componentsSearchPath,
+                onAdd: { selectedFolders in
+                    addSelectedFolders(selectedFolders)
+                }
+            )
+        }
         .onChange(of: selectedWorkspace) { oldValue, newValue in
             // Update folders when workspace selection changes
             loadFoldersForWorkspace(newValue)
@@ -139,6 +154,19 @@ struct MainWorkspaceView: View {
                 folders.append(contentsOf: newFolders)
             }
         }
+    }
+    
+    private func addSelectedFolders(_ selectedFolders: [Folder]) {
+        guard selectedWorkspace != nil else { return }
+        
+        var newFolders: [Folder] = []
+        for folder in selectedFolders {
+            if !folders.contains(where: { $0.path == folder.path }) {
+                newFolders.append(folder)
+            }
+        }
+        
+        folders.append(contentsOf: newFolders)
     }
     
     private func saveFoldersToWorkspace() {

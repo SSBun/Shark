@@ -11,20 +11,34 @@ import AppKit
 struct FolderListView: View {
     @Binding var folders: [Folder]
     let onAddFolder: (() -> Void)?
+    let onSelectComponents: (() -> Void)?
     
-    init(folders: Binding<[Folder]>, onAddFolder: (() -> Void)? = nil) {
+    init(folders: Binding<[Folder]>, onAddFolder: (() -> Void)? = nil, onSelectComponents: (() -> Void)? = nil) {
         self._folders = folders
         self.onAddFolder = onAddFolder
+        self.onSelectComponents = onSelectComponents
     }
     
     var body: some View {
         VStack(spacing: 0) {
             // Header with Add button
-            HStack {
+            HStack(spacing: 12) {
                 Text("Folders")
                     .font(.headline)
                     .foregroundColor(.secondary)
                 Spacer()
+                
+                // Select Components button
+                Button(action: {
+                    onSelectComponents?()
+                }) {
+                    Image(systemName: "square.grid.3x1.below.line.grid.1x2")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .help("Select components from search path")
+                .disabled(onSelectComponents == nil)
+                
                 Button(action: {
                     onAddFolder?()
                 }) {

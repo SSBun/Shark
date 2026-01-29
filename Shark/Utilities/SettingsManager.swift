@@ -12,13 +12,20 @@ class SettingsManager {
     
     private let settingsFolderPathKey = "settingsFolderPath"
     private let settingsFolderBookmarkKey = "settingsFolderBookmark"
+    private let componentsSearchPathKey = "componentsSearchPath"
+    private let componentsSearchPathBookmarkKey = "componentsSearchPathBookmark"
     
     private init() {
         restoreSecurityScopedAccess()
     }
     
     private func restoreSecurityScopedAccess() {
-        guard let bookmarkData = UserDefaults.standard.data(forKey: settingsFolderBookmarkKey) else {
+        restoreURL(for: settingsFolderBookmarkKey)
+        restoreURL(for: componentsSearchPathBookmarkKey)
+    }
+    
+    private func restoreURL(for key: String) {
+        guard let bookmarkData = UserDefaults.standard.data(forKey: key) else {
             return
         }
         
@@ -32,13 +39,36 @@ class SettingsManager {
             )
             
             if isStale {
-                // Handle stale bookmark if necessary
-                print("Bookmark is stale")
+                print("Bookmark for \(key) is stale")
             }
             
             _ = url.startAccessingSecurityScopedResource()
         } catch {
-            print("Failed to resolve security-scoped bookmark: \(error)")
+            print("Failed to resolve security-scoped bookmark for \(key): \(error)")
+        }
+    }
+    
+    /// Get the current components search path
+    var componentsSearchPath: String {
+        get {
+            UserDefaults.standard.string(forKey: componentsSearchPathKey) ?? ""
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: componentsSearchPathKey)
+        }
+    }
+    
+    func saveComponentsSearchPathBookmark(_ url: URL) {
+        do {
+            let bookmarkData = try url.bookmarkData(
+                options: .withSecurityScope,
+                includingResourceValuesForKeys: nil,
+                relativeTo: nil
+            )
+            UserDefaults.standard.set(bookmarkData, forKey: componentsSearchPathBookmarkKey)
+            _ = url.startAccessingSecurityScopedResource()
+        } catch {
+            print("Failed to create security-scoped bookmark for components path: \(error)")
         }
     }
     

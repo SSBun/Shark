@@ -1,0 +1,180 @@
+//
+//  ComponentSelectorView.swift
+//  Shark
+//
+//  Created by caishilin on 2026/01/29.
+//
+
+import SwiftUI
+
+struct ComponentSelectorView: View {
+    @Environment(\.dismiss) var dismiss
+    @State private var searchText = ""
+    @State private var allFolders: [Folder] = []
+    @State private var selectedFolderPaths: Set<String> = []
+    @State private var isLoading = false
+    
+    let searchPath: String
+    let onAdd: ([Folder]) -> Void
+    
+    var filteredFolders: [Folder] {
+        if searchText.isEmpty {
+            return allFolders
+        } else {
+            return allFolders.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Select Components")
+                    .font(.headline)
+                Spacer()
+                Button("Cancel") {
+                    dismiss()
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+            }
+            .padding()
+            
+            // Search Bar
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                TextField("Search folders...", text: $searchText)
+                    .textFieldStyle(.plain)
+            }
+            .padding(8)
+            .background(Color(NSColor.controlBackgroundColor))
+            .cornerRadius(8)
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+            
+            Divider()
+            
+            // List
+            if isLoading {
+                Spacer()
+                ProgressView("Scanning folders...")
+                Spacer()
+            } else if allFolders.isEmpty {
+                Spacer()
+                VStack(spacing: 12) {
+                    Image(systemName: "folder.badge.questionmark")
+                        .font(.system(size: 32))
+                        .foregroundColor(.secondary)
+                    Text("No folders found in search path")
+                        .foregroundColor(.secondary)
+                    Text(searchPath)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                Spacer()
+            } else {
+                List(filteredFolders, id: \.path) { folder in
+                    HStack {
+                        Toggle("", isOn: Binding(
+                            get: { selectedFolderPaths.contains(folder.path) },
+                            set: { isSelected in
+                                if isSelected {
+                                    selectedFolderPaths.insert(folder.path)
+                                } else {
+                                    selectedFolderPaths.remove(folder.path)
+                                }
+                            }
+                        ))
+                        .toggleStyle(.checkbox)
+                        
+                        Image(systemName: "folder")
+                            .foregroundColor(.blue)
+                        
+                        VStack(alignment: .leading) {
+                            Text(folder.name)
+                                .font(.system(size: 13, weight: .medium))
+                            Text(folder.path)
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+                .listStyle(.plain)
+            }
+            
+            Divider()
+            
+            // Footer
+            HStack {
+                Text("\(selectedFolderPaths.count) selected")
+                    .foregroundColor(.secondary)
+                Spacer()
+                Button("Add Selected") {
+                    let selected = allFolders.filter { selectedFolderPaths.contains($0.path) }
+                    onAdd(selected)
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(selectedFolderPaths.isEmpty)
+            }
+            .padding()
+        }
+        .frame(width: 500, height: 600)
+        .onAppear {
+            scanFolders()
+        }
+    }
+    
+    private func scanFolders() {
+        guard !searchPath.isEmpty else { return }
+        isLoading = true
+        
+        let url = URL(fileURLWithPath: searchPath)
+        
+        // Start accessing security-scoped resource if needed
+        let didStartAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            let fileManager = FileManager.default
+            do {
+                let contents = try fileManager.contentsOfDirectory(
+                    at: url,
+                    includingPropertiesForKeys: [.isDirectoryKey],
+                    options: [.skipsHiddenFiles]
+                )
+                
+                let folders = contents.compactMap { itemURL -> Folder? in
+                    var isDir: ObjCBool = false
+                    if fileManager.fileExists(atPath: itemURL.path, isDirectory: &isDir), isDir.boolValue {
+                        return Folder(
+                            name: itemURL.lastPathComponent,
+                            path: itemURL.path,
+                            displayName: nil
+                        )
+                    }
+                    return nil
+                }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+                
+                DispatchQueue.main.async {
+                    self.allFolders = folders
+                    self.isLoading = false
+                }
+            } catch {
+                print("Error scanning directory: \(error)")
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                }
+            }
+        }
+    }
+}
