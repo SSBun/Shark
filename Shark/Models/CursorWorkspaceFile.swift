@@ -110,10 +110,16 @@ extension CursorWorkspaceFile {
     func toFolders() -> [Folder] {
         folders.map { workspaceFolder in
             let folderName = URL(fileURLWithPath: workspaceFolder.path).lastPathComponent
+            
+            // Try to find a stored bookmark for this path in UserDefaults
+            let bookmarkKey = "folderBookmark_\(workspaceFolder.path)"
+            let bookmarkData = UserDefaults.standard.data(forKey: bookmarkKey)
+            
             return Folder(
                 name: folderName,
                 path: workspaceFolder.path,
-                displayName: workspaceFolder.name
+                displayName: workspaceFolder.name,
+                bookmarkData: bookmarkData
             )
         }
     }
@@ -137,7 +143,12 @@ extension CursorWorkspaceFile {
     /// Update folders from Folder array
     mutating func updateFolders(from folderArray: [Folder]) {
         folders = folderArray.map { folder in
-            WorkspaceFolder(path: folder.path, name: folder.displayName)
+            // Store bookmark data if available
+            if let bookmarkData = folder.bookmarkData {
+                let bookmarkKey = "folderBookmark_\(folder.path)"
+                UserDefaults.standard.set(bookmarkData, forKey: bookmarkKey)
+            }
+            return WorkspaceFolder(path: folder.path, name: folder.displayName)
         }
     }
 }

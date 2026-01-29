@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var settingsFolderPath: String = ""
     @State private var componentsSearchPath: String = ""
     @State private var selectedLocationType: LocationType = .default
+    @State private var authorizedFolders: [String] = []
     private let settingsManager = SettingsManager.shared
     
     enum LocationType: String, CaseIterable {
@@ -31,16 +32,22 @@ struct SettingsView: View {
                     
                     // Components Search Path section
                     componentsSearchPathSection
+                    
+                    Divider()
+                    
+                    // Folder Access section
+                    folderAccessSection
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(24)
             }
         }
-        .frame(width: 620, height: 420)
+        .frame(width: 620, height: 520)
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             settingsFolderPath = settingsManager.settingsFolderPath
             componentsSearchPath = settingsManager.componentsSearchPath
+            authorizedFolders = settingsManager.authorizedFolders
             // Determine if current path is default or custom
             if settingsFolderPath == settingsManager.defaultSettingsFolderPath {
                 selectedLocationType = .default
@@ -65,11 +72,79 @@ struct SettingsView: View {
         }
     }
     
+    private var folderAccessSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Folder Access Permissions:")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.primary)
+                
+                Text("Grant Shark permission to access specific directories on your disk. This is required for sandboxed apps to read project files.")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            
+            if !authorizedFolders.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(authorizedFolders, id: \.self) { path in
+                        HStack {
+                            Text(path)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                settingsManager.removeAuthorizedFolder(at: path)
+                                authorizedFolders = settingsManager.authorizedFolders
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.vertical, 2)
+                        .padding(.horizontal, 8)
+                        .background(Color.black.opacity(0.05))
+                        .cornerRadius(4)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            
+            Button("Grant Access to New Folder...") {
+                requestGlobalFolderAccess()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
+    }
+    
+    private func requestGlobalFolderAccess() {
+        guard let url = FileDialogHelper.selectFolder(
+            title: "Grant Folder Access",
+            message: "Select a folder that Shark should have permission to access."
+        ) else {
+            return
+        }
+        
+        settingsManager.addAuthorizedFolder(url)
+        authorizedFolders = settingsManager.authorizedFolders
+    }
+    
     private var componentsSearchPathSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Components Search Path:")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.primary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Components Search Path:")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.primary)
+                
+                Text("Specify the directory where Shark should look for your reusable components.")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
             
             HStack(spacing: 6) {
                 Text(componentsSearchPath.isEmpty ? "Not set" : componentsSearchPath)
@@ -115,9 +190,15 @@ struct SettingsView: View {
     private var settingsSavingFolderSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Label
-            Text("Settings Saving Folder:")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.primary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Settings Saving Folder:")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.primary)
+                
+                Text("Choose where your workspace configurations and app settings are stored.")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
             
             // Dropdown
             Picker("", selection: $selectedLocationType) {

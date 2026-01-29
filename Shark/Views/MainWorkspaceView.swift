@@ -38,6 +38,9 @@ struct MainWorkspaceView: View {
                 onAddFolder: {
                     addFolder()
                 },
+                onUpdateFolder: { _ in
+                    saveFoldersToWorkspace()
+                },
                 onSelectComponents: {
                     showComponentSelector = true
                 }
@@ -135,6 +138,18 @@ struct MainWorkspaceView: View {
                 let folderPath = folderURL.path
                 let folderName = folderURL.lastPathComponent
                 
+                // Create security-scoped bookmark
+                var bookmarkData: Data? = nil
+                do {
+                    bookmarkData = try folderURL.bookmarkData(
+                        options: .withSecurityScope,
+                        includingResourceValuesForKeys: nil,
+                        relativeTo: nil
+                    )
+                } catch {
+                    print("Failed to create bookmark for \(folderPath): \(error)")
+                }
+                
                 // Check if folder already exists
                 if folders.contains(where: { $0.path == folderPath }) {
                     // Skip duplicate folders
@@ -144,7 +159,8 @@ struct MainWorkspaceView: View {
                 let newFolder = Folder(
                     name: folderName,
                     path: folderPath,
-                    displayName: nil
+                    displayName: nil,
+                    bookmarkData: bookmarkData
                 )
                 
                 newFolders.append(newFolder)
