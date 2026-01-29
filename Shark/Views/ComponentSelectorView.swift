@@ -101,6 +101,16 @@ struct ComponentSelectorView: View {
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
                         }
+                        
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if selectedFolderPaths.contains(folder.path) {
+                            selectedFolderPaths.remove(folder.path)
+                        } else {
+                            selectedFolderPaths.insert(folder.path)
+                        }
                     }
                     .padding(.vertical, 2)
                 }
