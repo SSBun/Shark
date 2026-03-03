@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var componentsSearchPath: String = ""
     @State private var selectedLocationType: LocationType = .default
     @State private var authorizedFolders: [String] = []
+    @State private var selectedTerminalApp: TerminalApp = .systemDefault
     private let settingsManager = SettingsManager.shared
     
     enum LocationType: String, CaseIterable {
@@ -37,17 +38,23 @@ struct SettingsView: View {
                     
                     // Folder Access section
                     folderAccessSection
+                    
+                    Divider()
+                    
+                    // Terminal App section
+                    terminalAppSection
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(24)
             }
         }
-        .frame(width: 620, height: 520)
+        .frame(width: 620, height: 600)
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
             settingsFolderPath = settingsManager.settingsFolderPath
             componentsSearchPath = settingsManager.componentsSearchPath
             authorizedFolders = settingsManager.authorizedFolders
+            selectedTerminalApp = settingsManager.defaultTerminalApp
             // Determine if current path is default or custom
             if settingsFolderPath == settingsManager.defaultSettingsFolderPath {
                 selectedLocationType = .default
@@ -69,6 +76,9 @@ struct SettingsView: View {
         }
         .onChange(of: componentsSearchPath) { oldValue, newValue in
             settingsManager.componentsSearchPath = newValue
+        }
+        .onChange(of: selectedTerminalApp) { oldValue, newValue in
+            settingsManager.defaultTerminalApp = newValue
         }
     }
     
@@ -284,6 +294,89 @@ struct SettingsView: View {
         let path = displayPath
         let url = URL(fileURLWithPath: path)
         NSWorkspace.shared.open(url)
+    }
+    
+    private var terminalAppSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Default Terminal Application:")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.primary)
+                
+                Text("Choose the terminal application to use when opening folders in terminal.")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            
+            Picker("Terminal App", selection: $selectedTerminalApp) {
+                ForEach(TerminalApp.allCases) { app in
+                    let isInstalled = app.isInstalled
+                    Text(app.displayName + (isInstalled ? "" : " (Not Installed)"))
+                        .tag(app)
+                        .foregroundColor(isInstalled ? .primary : .secondary)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(maxWidth: 300, alignment: .leading)
+            
+            // Show installed apps info
+            let installedApps = TerminalApp.allCases.filter { $0 != .systemDefault && $0.isInstalled }
+            if !installedApps.isEmpty {
+                Text("Detected: \(installedApps.map { $0.displayName }.joined(separator: ", "))")
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+            
+            // Custom terminal app selection
+            Button("Select Custom Terminal App...") {
+                selectCustomTerminalApp()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .padding(.top, 4)
+        }
+    }
+    
+    private func selectCustomTerminalApp() {
+        guard let window = NSApp.mainWindow else { return }
+        
+        let dialog = NSOpenPanel()
+        dialog.title = "Select Terminal Application"
+        dialog.showsHiddenFiles = false
+        dialog.allowsMultipleSelection = false
+        dialog.canChooseDirectories = false
+        dialog.canChooseFiles = true
+        
+        // Set default directory to Applications
+        dialog.directoryURL = URL(fileURLWithPath: "/Applications")
+        
+        // Filter for app bundles using allowedFileTypes
+        dialog.allowedFileTypes = ["app"]
+        
+        dialog.beginSheetModal(for: window) { result in
+            guard result == .OK, let appURL = dialog.url else { return }
+            
+            // Get the bundle identifier
+            guard let bundle = Bundle(url: appURL),
+                  let bundleId = bundle.bundleIdentifier else {
+                print("Could not get bundle identifier for selected app")
+                return
+            }
+            
+            print("Selected terminal app: \(appURL.lastPathComponent) (bundle: \(bundleId))")
+            
+            // Save to UserDefaults for future use
+            UserDefaults.standard.set(appURL.path, forKey: "customTerminalAppPath")
+            UserDefaults.standard.set(bundleId, forKey: "customTerminalAppBundleId")
+            
+            // Show confirmation
+            let alert = NSAlert()
+            alert.messageText = "Terminal App Selected"
+            alert.informativeText = "\(appURL.lastPathComponent) has been selected as your custom terminal app.\n\nYou can now right-click on any folder and select 'Open in Terminal' to use this app."
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
     }
 }
 

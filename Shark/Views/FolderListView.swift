@@ -205,6 +205,17 @@ struct FolderRow: View {
                 }
             }
             
+            if folderExists {
+                Button(action: {
+                    TerminalOpener.openFolder(folder.path)
+                }) {
+                    HStack {
+                        Image(systemName: "terminal")
+                        Text("Open in Terminal")
+                    }
+                }
+            }
+            
             if let xcodePath = xcodeProjectPath, folderExists {
                 Button(action: {
                     XcodeOpener.openProject(at: xcodePath, bookmarkData: folder.bookmarkData)

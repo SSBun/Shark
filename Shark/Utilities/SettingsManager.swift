@@ -15,6 +15,7 @@ class SettingsManager {
     private let componentsSearchPathKey = "componentsSearchPath"
     private let componentsSearchPathBookmarkKey = "componentsSearchPathBookmark"
     private let authorizedFoldersKey = "authorizedFolders"
+    private let defaultTerminalAppKey = "defaultTerminalApp"
     
     private init() {
         restoreSecurityScopedAccess()
@@ -138,7 +139,10 @@ class SettingsManager {
     
     /// Get the default settings folder path (SharkSpace in Documents)
     var defaultSettingsFolderPath: String {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            // Fallback to home directory if documents directory is not available
+            return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("SharkSpace").path
+        }
         return documentsPath.appendingPathComponent("SharkSpace").path
     }
     
@@ -187,6 +191,22 @@ class SettingsManager {
         let folderURL = try getSettingsFolderURL()
         let filename = generateWorkspaceFilename(baseName: baseName)
         return folderURL.appendingPathComponent(filename)
+    }
+    
+    // MARK: - Terminal App Preference
+    
+    /// Get the default terminal app, defaults to system default
+    var defaultTerminalApp: TerminalApp {
+        get {
+            if let savedValue = UserDefaults.standard.string(forKey: defaultTerminalAppKey),
+               let terminalApp = TerminalApp(rawValue: savedValue) {
+                return terminalApp
+            }
+            return .systemDefault
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: defaultTerminalAppKey)
+        }
     }
 }
 
