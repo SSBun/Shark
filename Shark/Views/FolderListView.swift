@@ -107,6 +107,7 @@ struct FolderRow: View {
     let onUpdate: (Folder) -> Void
     @State private var folderExists: Bool = true
     @State private var isGitRepo: Bool = false
+    @State private var gitReference: GitReference? = nil
     @State private var xcodeProjectPath: String? = nil
     @State private var permissionDenied: Bool = false
     
@@ -155,6 +156,14 @@ struct FolderRow: View {
                     Text(folder.displayName ?? folder.name)
                         .font(.system(size: 13))
                         .foregroundColor(permissionDenied ? .orange : (folderExists ? .primary : .secondary))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    
+                    // Git branch/tag badge
+                    if let reference = gitReference, folderExists {
+                        GitReferenceBadge(reference: reference)
+                            .fixedSize()
+                    }
                     
                     if permissionDenied {
                         Image(systemName: "lock.fill")
@@ -254,6 +263,9 @@ struct FolderRow: View {
         isGitRepo = folder.isGitRepository
         xcodeProjectPath = folder.xcodeProjectPath
         
+        // Get git reference in security context
+        gitReference = getGitReferenceWithSecurityScope()
+        
         // Check if we can actually read the directory
         let url = URL(fileURLWithPath: folder.path)
         var isAccessed = false
@@ -294,6 +306,41 @@ struct FolderRow: View {
         }
     }
     
+    private func getGitReferenceWithSecurityScope() -> GitReference? {
+        guard isGitRepo else { return nil }
+        
+        // Try to use bookmark data if available
+        if let bookmarkData = folder.bookmarkData {
+            var isStale = false
+            if let url = try? URL(resolvingBookmarkData: bookmarkData, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale),
+               url.startAccessingSecurityScopedResource() {
+                defer { url.stopAccessingSecurityScopedResource() }
+                // The bookmark can be a parent folder; always query the real repo path.
+                return folder.getGitReference(at: folder.path)
+            }
+        }
+        
+        // Try global authorized folders from SettingsManager
+        if let globalBookmarkData = SettingsManager.shared.bookmarkData(for: folder.path) {
+            var isStale = false
+            if let bookmarkedURL = try? URL(resolvingBookmarkData: globalBookmarkData, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale),
+               bookmarkedURL.startAccessingSecurityScopedResource() {
+                defer { bookmarkedURL.stopAccessingSecurityScopedResource() }
+                return folder.getGitReference(at: folder.path)
+            }
+        }
+        
+        let url = URL(fileURLWithPath: folder.path)
+        let isAccessed = url.startAccessingSecurityScopedResource()
+        defer {
+            if isAccessed {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        
+        return folder.getGitReference(at: folder.path)
+    }
+    
     private func requestAccess() {
         guard let url = FileDialogHelper.selectFolder(
             title: "Grant Access to Folder",
@@ -325,6 +372,64 @@ struct FolderRow: View {
     }
 }
 
+struct GitReferenceBadge: View {
+    let reference: GitReference
+    
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: iconName)
+                .font(.system(size: 9))
+            Text(displayText)
+                .font(.system(size: 10, weight: .medium))
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(
+            RoundedRectangle(cornerRadius: 4)
+                .fill(badgeColor)
+        )
+    }
+    
+    private var displayText: String {
+        switch reference {
+        case .branch(let branch): return branch
+        case .tag(let tag): return tag
+        }
+    }
+    
+    private var iconName: String {
+        switch reference {
+        case .branch:
+            return "arrow.branch"
+        case .tag:
+            return "tag.fill"
+        }
+    }
+    
+    private var badgeColor: Color {
+        switch reference {
+        case .tag:
+            return Color(nsColor: .systemPink)
+        case .branch(let branch):
+            switch branch {
+        case "main", "master":
+            return Color(nsColor: .systemGreen)
+        case "develop", "dev":
+            return Color(nsColor: .systemBlue)
+        case let b where b.hasPrefix("feature/"):
+            return Color(nsColor: .systemPurple)
+        case let b where b.hasPrefix("bugfix/") || b.hasPrefix("fix/"):
+            return Color(nsColor: .systemOrange)
+        case let b where b.hasPrefix("release/"):
+            return Color(nsColor: .systemTeal)
+        default:
+            return Color(nsColor: .systemGray)
+        }
+        }
+    }
+}
+
 #Preview {
     @Previewable @State var folders: [Folder] = [
         Folder(name: "Example", path: "/Users/example/Projects/Example", displayName: "Example Folder")
@@ -333,4 +438,3 @@ struct FolderRow: View {
     FolderListView(folders: $folders)
         .frame(width: 300, height: 600)
 }
-
