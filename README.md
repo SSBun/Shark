@@ -53,7 +53,7 @@ Shark features a clean, modern interface that follows macOS design guidelines:
 Run this command in your terminal to download the latest version:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/SSBun/Shark/main/install_latest.sh | bash
+curl -sL https://github.com/SSBun/Shark/raw/main/install_latest.sh | bash
 ```
 
 The script will:
