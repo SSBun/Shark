@@ -10,6 +10,7 @@ import AppKit
 
 struct FolderListView: View {
     @Binding var folders: [Folder]
+    @State private var selectedFolderIDs: Set<Folder.ID> = []
     let onAddFolder: (() -> Void)?
     let onUpdateFolder: ((Folder) -> Void)?
     let onSelectComponents: (() -> Void)?
@@ -68,10 +69,13 @@ struct FolderListView: View {
                     Spacer()
                 }
             } else {
-                List {
+                List(selection: $selectedFolderIDs) {
                     ForEach(folders) { folder in
                         FolderRow(
                             folder: folder,
+                            selectedTargetsProvider: {
+                                selectedTargets(for: folder)
+                            },
                             onShowInFinder: {
                                 showFolderInFinder(folder)
                             },
@@ -87,9 +91,20 @@ struct FolderListView: View {
                                 }
                             }
                         )
+                        .simultaneousGesture(
+                            TapGesture().onEnded {
+                                print("[FolderListView] Row clicked: \(folder.displayName ?? folder.name) (\(folder.path))")
+                                Log.info("Folder row clicked: \(folder.displayName ?? folder.name)", category: .workspace)
+                            }
+                        )
+                        .tag(folder.id)
                     }
                 }
                 .listStyle(.sidebar)
+                .onChange(of: folders) { _, newFolders in
+                    let validIDs = Set(newFolders.map(\.id))
+                    selectedFolderIDs = selectedFolderIDs.intersection(validIDs)
+                }
             }
         }
     }
@@ -98,10 +113,18 @@ struct FolderListView: View {
         let folderURL = URL(fileURLWithPath: folder.path)
         NSWorkspace.shared.activateFileViewerSelecting([folderURL])
     }
+    
+    private func selectedTargets(for folder: Folder) -> [Folder] {
+        if selectedFolderIDs.contains(folder.id), !selectedFolderIDs.isEmpty {
+            return folders.filter { selectedFolderIDs.contains($0.id) }
+        }
+        return [folder]
+    }
 }
 
 struct FolderRow: View {
     let folder: Folder
+    let selectedTargetsProvider: (() -> [Folder])?
     let onShowInFinder: () -> Void
     let onDelete: () -> Void
     let onUpdate: (Folder) -> Void
@@ -150,6 +173,7 @@ struct FolderRow: View {
                         .offset(x: 2, y: 2)
                 }
             }
+            .allowsHitTesting(false)
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
@@ -183,6 +207,7 @@ struct FolderRow: View {
                     .lineLimit(1)
                     .strikethrough(!folderExists)
             }
+            .allowsHitTesting(false)
             
             Spacer()
             
@@ -215,12 +240,17 @@ struct FolderRow: View {
             }
             
             if folderExists {
+                let targets = selectedTargetsProvider?() ?? [folder]
+                let targetCount = targets.count
+                
                 Button(action: {
-                    TerminalOpener.openFolder(folder.path)
+                    for target in targets {
+                        TerminalOpener.openFolder(target.path)
+                    }
                 }) {
                     HStack {
                         Image(systemName: "terminal")
-                        Text("Open in Terminal")
+                        Text(targetCount > 1 ? "Open \(targetCount) in Terminal" : "Open in Terminal")
                     }
                 }
             }
@@ -238,13 +268,17 @@ struct FolderRow: View {
             
             if isGitRepo && folderExists {
                 Divider()
+                let targets = selectedTargetsProvider?() ?? [folder]
+                let targetCount = targets.count
                 
                 Button(action: {
-                    ForkOpener.openRepository(at: folder.path)
+                    for target in targets {
+                        ForkOpener.openRepository(at: target.path)
+                    }
                 }) {
                     HStack {
                         Image(systemName: "arrow.branch")
-                        Text("Open in Fork")
+                        Text(targetCount > 1 ? "Open \(targetCount) in Fork" : "Open in Fork")
                     }
                 }
             }

@@ -78,17 +78,13 @@ struct ComponentSelectorView: View {
             } else {
                 List(filteredFolders, id: \.path) { folder in
                     HStack {
-                        Toggle("", isOn: Binding(
-                            get: { selectedFolderPaths.contains(folder.path) },
-                            set: { isSelected in
-                                if isSelected {
-                                    selectedFolderPaths.insert(folder.path)
-                                } else {
-                                    selectedFolderPaths.remove(folder.path)
-                                }
-                            }
-                        ))
-                        .toggleStyle(.checkbox)
+                        Button(action: {
+                            toggleSelection(for: folder.path)
+                        }) {
+                            Image(systemName: selectedFolderPaths.contains(folder.path) ? "checkmark.square.fill" : "square")
+                                .foregroundColor(selectedFolderPaths.contains(folder.path) ? .accentColor : .secondary)
+                        }
+                        .buttonStyle(.plain)
                         
                         Image(systemName: "folder")
                             .foregroundColor(.blue)
@@ -106,10 +102,28 @@ struct ComponentSelectorView: View {
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        if selectedFolderPaths.contains(folder.path) {
-                            selectedFolderPaths.remove(folder.path)
-                        } else {
-                            selectedFolderPaths.insert(folder.path)
+                        toggleSelection(for: folder.path)
+                    }
+                    .contextMenu {
+                        let targetPaths = selectedTargetPaths(for: folder)
+                        let targetCount = targetPaths.count
+                        
+                        Button(action: {
+                            openInFork(paths: targetPaths)
+                        }) {
+                            Label(
+                                targetCount > 1 ? "Open \(targetCount) in Fork" : "Open in Fork",
+                                systemImage: "arrow.branch"
+                            )
+                        }
+                        
+                        Button(action: {
+                            openInTerminal(paths: targetPaths)
+                        }) {
+                            Label(
+                                targetCount > 1 ? "Open \(targetCount) in Terminal" : "Open in Terminal",
+                                systemImage: "terminal"
+                            )
                         }
                     }
                     .padding(.vertical, 2)
@@ -185,6 +199,33 @@ struct ComponentSelectorView: View {
                     self.isLoading = false
                 }
             }
+        }
+    }
+    
+    private func selectedTargetPaths(for folder: Folder) -> [String] {
+        if selectedFolderPaths.contains(folder.path), !selectedFolderPaths.isEmpty {
+            return selectedFolderPaths.sorted()
+        }
+        return [folder.path]
+    }
+    
+    private func toggleSelection(for path: String) {
+        if selectedFolderPaths.contains(path) {
+            selectedFolderPaths.remove(path)
+        } else {
+            selectedFolderPaths.insert(path)
+        }
+    }
+    
+    private func openInFork(paths: [String]) {
+        for path in paths {
+            ForkOpener.openRepository(at: path)
+        }
+    }
+    
+    private func openInTerminal(paths: [String]) {
+        for path in paths {
+            TerminalOpener.openFolder(path)
         }
     }
 }
