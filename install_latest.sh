@@ -12,30 +12,16 @@ echo "Fetching latest release from GitHub..."
 # Get latest release info
 RELEASE_JSON=$(curl -sL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest")
 
-# Use Python to parse JSON and extract DMG URL
-DMG_URL=$(python3 -c "
-import json
-import sys
-
-data = json.loads('$RELEASE_JSON')
-assets = data.get('assets', [])
-
-for asset in assets:
-    name = asset.get('name', '')
-    url = asset.get('browser_download_url', '')
-    if name.endswith('.dmg') and not name.endswith('.sha256'):
-        print(url)
-        break
-" 2>/dev/null)
+# Extract DMG URL - find browser_download_url ending with .dmg (not .sha256)
+DMG_URL=$(echo "$RELEASE_JSON" | grep -o 'browser_download_url.*\.dmg' | grep -v sha256 | head -1 | sed 's/.*"\(https.*\)".*/\1/')
 
 if [ -z "$DMG_URL" ]; then
     echo "Error: Could not find DMG file in latest release"
-    echo "Debug: $RELEASE_JSON"
     exit 1
 fi
 
 # Extract version from URL
-DMG_VERSION=$(echo "$DMG_URL" | grep -oE 'Shark-[0-9]+\.[0-9]+\.[0-9]+\.dmg')
+DMG_VERSION=$(echo "$DMG_URL" | sed 's/.*\(Shark-[0-9.]*\.dmg\).*/\1/')
 
 # Download to Downloads folder
 DOWNLOADS_DIR="$HOME/Downloads"
