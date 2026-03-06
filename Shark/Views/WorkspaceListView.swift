@@ -319,7 +319,16 @@ struct WorkspaceRow: View {
                     Text("Open in Fork")
                 }
             }
-            
+
+            Button(action: {
+                openGitFoldersInSourceTree()
+            }) {
+                HStack {
+                    Image(systemName: "tree.diagram")
+                    Text("Open in SourceTree")
+                }
+            }
+
             Button(action: {
                 startEditing()
             }) {
@@ -360,6 +369,25 @@ struct WorkspaceRow: View {
         isEditing = false
         isTextFieldFocused = false
         editedName = workspace.name
+    }
+
+    private func openGitFoldersInSourceTree() {
+        Task {
+            let fileURL = URL(fileURLWithPath: workspace.filePath)
+            do {
+                let workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
+                let folders = workspaceFile.toFolders()
+
+                // Open all git repositories in SourceTree
+                for folder in folders {
+                    if folder.isGitRepository {
+                        SourceTreeOpener.openRepository(at: folder.path)
+                    }
+                }
+            } catch {
+                print("Failed to load workspace file: \(error)")
+            }
+        }
     }
 }
 

@@ -107,7 +107,7 @@ struct ComponentSelectorView: View {
                     .contextMenu {
                         let targetPaths = selectedTargetPaths(for: folder)
                         let targetCount = targetPaths.count
-                        
+
                         Button(action: {
                             openInFork(paths: targetPaths)
                         }) {
@@ -116,7 +116,16 @@ struct ComponentSelectorView: View {
                                 systemImage: "arrow.branch"
                             )
                         }
-                        
+
+                        Button(action: {
+                            openInSourceTree(paths: targetPaths)
+                        }) {
+                            Label(
+                                targetCount > 1 ? "Open \(targetCount) in SourceTree" : "Open in SourceTree",
+                                systemImage: "tree.diagram"
+                            )
+                        }
+
                         Button(action: {
                             openInTerminal(paths: targetPaths)
                         }) {
@@ -222,7 +231,13 @@ struct ComponentSelectorView: View {
             ForkOpener.openRepository(at: path)
         }
     }
-    
+
+    private func openInSourceTree(paths: [String]) {
+        for path in paths {
+            SourceTreeOpener.openRepository(at: path)
+        }
+    }
+
     private func openInTerminal(paths: [String]) {
         for path in paths {
             TerminalOpener.openFolder(path)

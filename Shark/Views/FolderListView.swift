@@ -270,7 +270,7 @@ struct FolderRow: View {
                 Divider()
                 let targets = selectedTargetsProvider?() ?? [folder]
                 let targetCount = targets.count
-                
+
                 Button(action: {
                     for target in targets {
                         ForkOpener.openRepository(at: target.path)
@@ -279,6 +279,17 @@ struct FolderRow: View {
                     HStack {
                         Image(systemName: "arrow.branch")
                         Text(targetCount > 1 ? "Open \(targetCount) in Fork" : "Open in Fork")
+                    }
+                }
+
+                Button(action: {
+                    for target in targets {
+                        SourceTreeOpener.openRepository(at: target.path)
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "tree.diagram")
+                        Text(targetCount > 1 ? "Open \(targetCount) in SourceTree" : "Open in SourceTree")
                     }
                 }
             }
