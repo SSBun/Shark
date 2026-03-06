@@ -288,7 +288,13 @@ struct FolderRow: View {
                     }
                 }) {
                     HStack {
-                        Image(systemName: "tree.diagram")
+                        if let icon = SourceTreeOpener.appIcon {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .frame(width: 16, height: 16)
+                        } else {
+                            Image(systemName: "tree.diagram")
+                        }
                         Text(targetCount > 1 ? "Open \(targetCount) in SourceTree" : "Open in SourceTree")
                     }
                 }

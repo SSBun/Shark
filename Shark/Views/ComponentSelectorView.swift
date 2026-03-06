@@ -120,10 +120,16 @@ struct ComponentSelectorView: View {
                         Button(action: {
                             openInSourceTree(paths: targetPaths)
                         }) {
-                            Label(
-                                targetCount > 1 ? "Open \(targetCount) in SourceTree" : "Open in SourceTree",
-                                systemImage: "tree.diagram"
-                            )
+                            HStack {
+                                if let icon = SourceTreeOpener.appIcon {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .frame(width: 14, height: 14)
+                                } else {
+                                    Image(systemName: "tree.diagram")
+                                }
+                                Text(targetCount > 1 ? "Open \(targetCount) in SourceTree" : "Open in SourceTree")
+                            }
                         }
 
                         Button(action: {

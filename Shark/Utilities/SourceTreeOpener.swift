@@ -9,6 +9,27 @@ import AppKit
 import Foundation
 
 struct SourceTreeOpener {
+    /// Get the SourceTree app icon if available
+    static var appIcon: NSImage? {
+        let possiblePaths = [
+            "/Applications/SourceTree.app",
+            "/Applications/Sourcetree.app",
+            "/System/Applications/SourceTree.app",
+            "/System/Applications/Sourcetree.app"
+        ]
+
+        for path in possiblePaths {
+            if let appBundle = Bundle(path: path),
+               let iconName = appBundle.infoDictionary?["CFBundleIconFile"] as? String {
+                let iconPath = (path as NSString).appendingPathComponent("Contents/Resources/\(iconName).icns")
+                if let icon = NSImage(contentsOfFile: iconPath) {
+                    return icon
+                }
+            }
+        }
+        return nil
+    }
+
     /// Open a git repository in SourceTree
     static func openRepository(at path: String) {
         // Check if folder exists
