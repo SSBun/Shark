@@ -324,7 +324,7 @@ struct WorkspaceRow: View {
                 openGitFoldersInSourceTree()
             }) {
                 HStack {
-                    if let icon = SourceTreeOpener.appIcon { Image(nsImage: icon).resizable().frame(width: 14, height: 14) } else { Image(systemName: "tree.diagram") }
+                    if let icon = SourceTreeOpener.appIcon { Image(nsImage: icon).resizable().frame(width: 14, height: 14) } else { Image(systemName: "arrow.triangle.branch") }
                     Text("Open in SourceTree")
                 }
             }

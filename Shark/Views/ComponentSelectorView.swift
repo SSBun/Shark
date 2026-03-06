@@ -126,7 +126,7 @@ struct ComponentSelectorView: View {
                                         .resizable()
                                         .frame(width: 14, height: 14)
                                 } else {
-                                    Image(systemName: "tree.diagram")
+                                    Image(systemName: "arrow.triangle.branch")
                                 }
                                 Text(targetCount > 1 ? "Open \(targetCount) in SourceTree" : "Open in SourceTree")
                             }

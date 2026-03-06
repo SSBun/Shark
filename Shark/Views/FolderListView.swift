@@ -293,7 +293,7 @@ struct FolderRow: View {
                                 .resizable()
                                 .frame(width: 16, height: 16)
                         } else {
-                            Image(systemName: "tree.diagram")
+                            Image(systemName: "arrow.triangle.branch")
                         }
                         Text(targetCount > 1 ? "Open \(targetCount) in SourceTree" : "Open in SourceTree")
                     }
