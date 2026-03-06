@@ -9,21 +9,30 @@ APP_NAME="Shark"
 
 echo "Fetching latest release from GitHub..."
 
-# Get the latest release tag by following the redirect
-# This doesn't require API access - just github.com
-LATEST_URL=$(curl -sL "https://github.com/$REPO_OWNER/$REPO_NAME/releases/latest" -w "%{url_effective}" -o /dev/null)
+# Try GitHub API first
+RELEASE_JSON=$(curl -sL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest" 2>/dev/null)
 
-# Extract tag from URL (e.g., https://github.com/SSBun/Shark/releases/tag/v1.1.4 -> v1.1.4)
-TAG=$(echo "$LATEST_URL" | sed 's/.*\/tag\///')
+if echo "$RELEASE_JSON" | grep -q "browser_download_url"; then
+    # API worked - extract DMG URL
+    DMG_URL=$(echo "$RELEASE_JSON" | grep -o '"browser_download_url" *: *"[^"]*\.dmg"' | grep -v sha256 | head -1 | sed 's/.*"browser_download_url" *: *"\([^"]*\)".*/\1/')
+else
+    # Fallback: Use GitHub redirect to get latest tag
+    LATEST_URL=$(curl -sL "https://github.com/$REPO_OWNER/$REPO_NAME/releases/latest" -w "%{url_effective}" -o /dev/null)
+    TAG=$(echo "$LATEST_URL" | sed 's/.*\/tag\///')
+    VERSION=$(echo "$TAG" | sed 's/^v//')
+    DMG_URL="https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$TAG/$APP_NAME-$VERSION.dmg"
+fi
 
-# Remove 'v' prefix from tag for version number (v1.1.4 -> 1.1.4)
-VERSION=$(echo "$TAG" | sed 's/^v//')
+if [ -z "$DMG_URL" ]; then
+    echo "Error: Could not find DMG file"
+    echo "Please download manually from: https://github.com/$REPO_OWNER/$REPO_NAME/releases"
+    exit 1
+fi
 
-# Construct the download URL
-DMG_URL="https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$TAG/$APP_NAME-$VERSION.dmg"
+# Extract version from URL
+DMG_VERSION=$(echo "$DMG_URL" | sed 's/.*\(Shark-[0-9.]*\.dmg\).*/\1/')
 
 # Download to Downloads folder
-DMG_VERSION="$APP_NAME-$VERSION.dmg"
 DOWNLOADS_DIR="$HOME/Downloads"
 DMG_PATH="$DOWNLOADS_DIR/$DMG_VERSION"
 
