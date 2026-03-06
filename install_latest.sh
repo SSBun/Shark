@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+# Version update to force cache refreshset -e
 
 REPO_OWNER="SSBun"
 REPO_NAME="Shark"
