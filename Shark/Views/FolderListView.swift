@@ -222,6 +222,14 @@ struct FolderRow: View {
         .padding(.vertical, 4)
         .opacity(folderExists ? 1.0 : 0.7)
         .contextMenu {
+            // Top section - Actions
+            Button(role: .destructive, action: onDelete) {
+                HStack {
+                    Image(systemName: "trash")
+                    Text("Remove")
+                }
+            }
+
             if permissionDenied {
                 Button(action: requestAccess) {
                     HStack {
@@ -231,18 +239,18 @@ struct FolderRow: View {
                 }
                 Divider()
             }
-            
+
             Button(action: onShowInFinder) {
                 HStack {
                     Image(systemName: "folder")
                     Text("Show in Finder")
                 }
             }
-            
+
             if folderExists {
                 let targets = selectedTargetsProvider?() ?? [folder]
                 let targetCount = targets.count
-                
+
                 Button(action: {
                     for target in targets {
                         TerminalOpener.openFolder(target.path)
@@ -254,7 +262,7 @@ struct FolderRow: View {
                     }
                 }
             }
-            
+
             if let xcodePath = xcodeProjectPath, folderExists {
                 Button(action: {
                     XcodeOpener.openProject(at: xcodePath, bookmarkData: folder.bookmarkData)
@@ -265,7 +273,8 @@ struct FolderRow: View {
                     }
                 }
             }
-            
+
+            // Bottom section - Git tools
             if isGitRepo && folderExists {
                 Divider()
                 let targets = selectedTargetsProvider?() ?? [folder]
