@@ -49,11 +49,23 @@ Shark features a clean, modern interface that follows macOS design guidelines:
 
 ## 📦 Installation
 
-### Download
-Download the latest release from the [Releases](https://github.com/SSBun/Shark/releases) page.
+### Quick Install (One Command)
+Run this command in your terminal to download and install the latest version automatically:
 
-### Install
-1. Download `Shark-1.0.0.dmg` (or latest version)
+```bash
+curl -sL https://raw.githubusercontent.com/SSBun/Shark/main/install_latest.sh | bash
+```
+
+Or clone the repository and run the script locally:
+
+```bash
+git clone https://github.com/SSBun/Shark.git
+cd Shark
+./install_latest.sh
+```
+
+### Manual Install
+1. Download the latest `Shark-x.x.x.dmg` from the [Releases](https://github.com/SSBun/Shark/releases) page
 2. Open the DMG file
 3. Drag Shark to your Applications folder
 4. **Important**: If macOS shows "Shark is damaged" error:
