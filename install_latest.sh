@@ -9,14 +9,22 @@ APP_NAME="Shark"
 
 echo "Fetching latest release from GitHub..."
 
-# Get latest release info
-RELEASE_JSON=$(curl -sL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest")
+# Method 1: Try GitHub API (works if user can access api.github.com)
+RELEASE_JSON=$(curl -sL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest" 2>/dev/null)
 
-# Extract DMG URL - find browser_download_url ending with .dmg (not .sha256)
-DMG_URL=$(echo "$RELEASE_JSON" | grep -o 'browser_download_url.*\.dmg' | grep -v sha256 | head -1 | sed 's/.*"\(https.*\)".*/\1/')
+if [ -n "$RELEASE_JSON" ] && echo "$RELEASE_JSON" | grep -q "browser_download_url"; then
+    # API worked - extract DMG URL
+    DMG_URL=$(echo "$RELEASE_JSON" | grep -o '"browser_download_url" *: *"[^"]*\.dmg"' | grep -v sha256 | head -1 | sed 's/.*"browser_download_url" *: *"\([^"]*\)".*/\1/')
+else
+    # Method 2: API failed - scrape the releases page HTML
+    echo "API not accessible, trying alternative method..."
+    RELEASE_HTML=$(curl -sL "https://github.com/$REPO_OWNER/$REPO_NAME/releases/latest")
+    DMG_URL=$(echo "$RELEASE_HTML" | grep -o 'https://github.com/SSBun/Shark/releases/download/[^"]*\.dmg' | grep -v sha256 | head -1)
+fi
 
 if [ -z "$DMG_URL" ]; then
-    echo "Error: Could not find DMG file in latest release"
+    echo "Error: Could not find DMG file"
+    echo "Please download manually from: https://github.com/$REPO_OWNER/$REPO_NAME/releases"
     exit 1
 fi
 
