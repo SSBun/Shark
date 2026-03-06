@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct AuthorizationPanel: View {
-    @ObservedObject var authManager = AuthorizationManager.shared
+    @EnvironmentObject var authManager: AuthorizationManager
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         if let authType = authManager.pendingAuthorizationType {
             VStack(spacing: 20) {
@@ -19,26 +19,26 @@ struct AuthorizationPanel: View {
                     .font(.system(size: 48))
                     .foregroundColor(.blue)
                     .padding(.top, 20)
-                
+
                 // Title
                 Text(titleForType(authType))
                     .font(.title2)
                     .fontWeight(.semibold)
-                
+
                 // Description
                 Text(descriptionForType(authType))
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
-                
+
                 // Additional info for Full Disk Access
                 if authType == .fullDiskAccess {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("To grant Full Disk Access:")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                        
+
                         VStack(alignment: .leading, spacing: 4) {
                             Text("1. Click \"Open System Preferences\"")
                             Text("2. Select \"Full Disk Access\"")
@@ -53,9 +53,9 @@ struct AuthorizationPanel: View {
                     .cornerRadius(8)
                     .padding(.horizontal, 40)
                 }
-                
+
                 Spacer()
-                
+
                 // Buttons
                 HStack(spacing: 12) {
                     Button("Cancel") {
@@ -63,7 +63,7 @@ struct AuthorizationPanel: View {
                         dismiss()
                     }
                     .keyboardShortcut(.cancelAction)
-                    
+
                     if authType == .fullDiskAccess {
                         Button("Open System Preferences") {
                             authManager.handleAuthorizationResult(true, for: authType)
@@ -86,7 +86,7 @@ struct AuthorizationPanel: View {
             .padding()
         }
     }
-    
+
     private func iconForType(_ type: AuthorizationType) -> String {
         switch type {
         case .fileSystemAccess:
@@ -97,7 +97,7 @@ struct AuthorizationPanel: View {
             return "network"
         }
     }
-    
+
     private func titleForType(_ type: AuthorizationType) -> String {
         switch type {
         case .fileSystemAccess:
@@ -108,7 +108,7 @@ struct AuthorizationPanel: View {
             return "Network Access Required"
         }
     }
-    
+
     private func descriptionForType(_ type: AuthorizationType) -> String {
         switch type {
         case .fileSystemAccess:
@@ -122,11 +122,12 @@ struct AuthorizationPanel: View {
 }
 
 struct AuthorizationPanelModifier: ViewModifier {
-    @ObservedObject var authManager = AuthorizationManager.shared
-    
     func body(content: Content) -> some View {
         content
-            .sheet(isPresented: $authManager.showAuthorizationPanel) {
+            .sheet(isPresented: .init(
+                get: { AuthorizationManager.shared.showAuthorizationPanel },
+                set: { AuthorizationManager.shared.showAuthorizationPanel = $0 }
+            )) {
                 AuthorizationPanel()
             }
     }
@@ -140,5 +141,5 @@ extension View {
 
 #Preview {
     AuthorizationPanel()
+        .environmentObject(AuthorizationManager.shared)
 }
-

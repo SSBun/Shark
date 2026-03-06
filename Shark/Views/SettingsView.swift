@@ -260,9 +260,12 @@ struct SettingsView: View {
 
     // MARK: - Advanced Tab
 
+    @StateObject private var updateManager = UpdateManager.shared
+
     private var advancedTabContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                // About Section
                 VStack(alignment: .leading, spacing: 10) {
                     Text("About")
                         .font(.system(size: 13, weight: .semibold))
@@ -270,9 +273,80 @@ struct SettingsView: View {
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
+
+                Divider()
+
+                // Version Section
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Version")
+                        .font(.system(size: 13, weight: .semibold))
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Current Version: \(updateManager.currentVersion) (\(updateManager.buildNumber))")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                            updateStatusView
+                        }
+                        Spacer()
+                        Button("Check for Updates") {
+                            Task {
+                                await updateManager.checkForUpdates()
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(updateManager.updateStatus == .checking)
+                    }
+                }
+
                 Spacer(minLength: 0)
             }
             .padding(30)
+        }
+    }
+
+    @ViewBuilder
+    private var updateStatusView: some View {
+        switch updateManager.updateStatus {
+        case .idle:
+            EmptyView()
+        case .checking:
+            HStack(spacing: 6) {
+                ProgressView()
+                    .scaleEffect(0.6)
+                Text("Checking for updates...")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+        case .updateAvailable(let version):
+            HStack(spacing: 6) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .foregroundStyle(.green)
+                Text("Update available: v\(version)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.green)
+                Button("Download") {
+                    updateManager.openReleasePage()
+                }
+                .buttonStyle(.link)
+                .font(.system(size: 11))
+            }
+        case .upToDate:
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.blue)
+                Text("You're up to date!")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+        case .error(let message):
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                Text("Error: \(message)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.orange)
+            }
         }
     }
 
