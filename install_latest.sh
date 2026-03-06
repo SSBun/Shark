@@ -1,6 +1,7 @@
 #!/bin/bash
+# Shark Installer - Downloads and installs the latest Shark release from GitHub
 
-# Version update to force cache refreshset -e
+set -e
 
 REPO_OWNER="SSBun"
 REPO_NAME="Shark"
