@@ -8,48 +8,59 @@
 import SwiftUI
 import AppKit
 
+// MARK: - Settings Tab (Seahorse-style: TabView with tabItem)
+
+private enum SettingsTab: String, CaseIterable, Identifiable {
+    case general = "General"
+    case folders = "Folders"
+    case terminal = "Terminal"
+    case advanced = "Advanced"
+
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .general: return "gearshape"
+        case .folders: return "folder.badge.plus"
+        case .terminal: return "terminal"
+        case .advanced: return "slider.horizontal.3"
+        }
+    }
+}
+
 struct SettingsView: View {
+    @State private var selectedTab: SettingsTab = .general
     @State private var settingsFolderPath: String = ""
     @State private var componentsSearchPath: String = ""
     @State private var selectedLocationType: LocationType = .default
     @State private var authorizedFolders: [String] = []
     @State private var selectedTerminalApp: TerminalApp = .systemDefault
     private let settingsManager = SettingsManager.shared
-    
+
     enum LocationType: String, CaseIterable {
         case `default` = "Default"
         case custom = "Custom"
     }
-    
+
     var body: some View {
-        VStack(spacing: 0) {
-            // Content area
-            ScrollView {
-                VStack(alignment: .leading, spacing: 32) {
-                    // Settings Saving Folder section
-                    settingsSavingFolderSection
-                    
-                    Divider()
-                    
-                    // Components Search Path section
-                    componentsSearchPathSection
-                    
-                    Divider()
-                    
-                    // Folder Access section
-                    folderAccessSection
-                    
-                    Divider()
-                    
-                    // Terminal App section
-                    terminalAppSection
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(24)
-            }
+        TabView(selection: $selectedTab) {
+            generalTabContent
+                .tabItem { Label("General", systemImage: SettingsTab.general.icon) }
+                .tag(SettingsTab.general)
+
+            foldersTabContent
+                .tabItem { Label("Folders", systemImage: SettingsTab.folders.icon) }
+                .tag(SettingsTab.folders)
+
+            terminalTabContent
+                .tabItem { Label("Terminal", systemImage: SettingsTab.terminal.icon) }
+                .tag(SettingsTab.terminal)
+
+            advancedTabContent
+                .tabItem { Label("Advanced", systemImage: SettingsTab.advanced.icon) }
+                .tag(SettingsTab.advanced)
         }
-        .frame(width: 620, height: 600)
-        .background(Color(NSColor.windowBackgroundColor))
+        .frame(width: 600, height: 500)
         .onAppear {
             settingsFolderPath = settingsManager.settingsFolderPath
             componentsSearchPath = settingsManager.componentsSearchPath
@@ -81,57 +92,190 @@ struct SettingsView: View {
             settingsManager.defaultTerminalApp = newValue
         }
     }
-    
-    private var folderAccessSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Folder Access Permissions:")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                Text("Grant Shark permission to access specific directories on your disk. This is required for sandboxed apps to read project files.")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-            }
-            
-            if !authorizedFolders.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(authorizedFolders, id: \.self) { path in
-                        HStack {
-                            Text(path)
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                            
-                            Spacer()
-                            
+
+    // MARK: - General Tab (Seahorse-style: ScrollView + sections with Dividers)
+
+    private var generalTabContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Settings saving folder
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Settings saving folder")
+                        .font(.system(size: 13, weight: .semibold))
+                    Picker("", selection: $selectedLocationType) {
+                        ForEach(LocationType.allCases, id: \.self) { type in
+                            Text(type.rawValue).tag(type)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                    .frame(maxWidth: 300)
+                    HStack(spacing: 8) {
+                        Text(displayPath)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                            .lineLimit(1)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(NSColor.controlBackgroundColor))
+                            .cornerRadius(6)
+                        if selectedLocationType == .custom {
+                            Button("Change...") { selectSettingsFolder() }
+                        }
+                        Button(action: openFolderInFinder) {
+                            Image(systemName: "arrow.right.circle.fill")
+                                .foregroundStyle(Color.accentColor)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Reveal in Finder")
+                    }
+                    Text("Choose where your workspace configurations and app settings are stored.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                Divider()
+                // Components search path
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Components search path")
+                        .font(.system(size: 13, weight: .semibold))
+                    HStack(spacing: 8) {
+                        Text(componentsSearchPath.isEmpty ? "Not set" : componentsSearchPath)
+                            .font(.system(size: 12))
+                            .foregroundStyle(componentsSearchPath.isEmpty ? .secondary : .primary)
+                            .textSelection(.enabled)
+                            .lineLimit(1)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(NSColor.controlBackgroundColor))
+                            .cornerRadius(6)
+                        Button("Set Path...") { selectComponentsSearchPath() }
+                        if !componentsSearchPath.isEmpty {
                             Button(action: {
-                                settingsManager.removeAuthorizedFolder(at: path)
-                                authorizedFolders = settingsManager.authorizedFolders
+                                NSWorkspace.shared.open(URL(fileURLWithPath: componentsSearchPath))
                             }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.secondary)
+                                Image(systemName: "arrow.right.circle.fill")
+                                    .foregroundStyle(Color.accentColor)
                             }
                             .buttonStyle(.plain)
+                            .help("Reveal in Finder")
                         }
-                        .padding(.vertical, 2)
-                        .padding(.horizontal, 8)
-                        .background(Color.black.opacity(0.05))
-                        .cornerRadius(4)
                     }
+                    Text("Specify the directory where Shark should look for your reusable components.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
                 }
-                .padding(.vertical, 4)
+                Spacer(minLength: 0)
             }
-            
-            Button("Grant Access to New Folder...") {
-                requestGlobalFolderAccess()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
+            .padding(30)
         }
     }
-    
+
+    // MARK: - Folders Tab
+
+    private var foldersTabContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Folder access permissions")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("Grant Shark permission to access specific directories on your disk. This is required for sandboxed apps to read project files.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                    if !authorizedFolders.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(authorizedFolders, id: \.self) { path in
+                                HStack {
+                                    Text(path)
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    Spacer()
+                                    Button(action: {
+                                        settingsManager.removeAuthorizedFolder(at: path)
+                                        authorizedFolders = settingsManager.authorizedFolders
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.secondary)
+                                            .font(.system(size: 14))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .background(Color(NSColor.controlBackgroundColor))
+                                .cornerRadius(6)
+                            }
+                        }
+                    }
+                    Button("Grant Access to New Folder...") { requestGlobalFolderAccess() }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(30)
+        }
+    }
+
+    // MARK: - Terminal Tab
+
+    private var terminalTabContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Default terminal application")
+                        .font(.system(size: 13, weight: .semibold))
+                    Picker("Terminal App", selection: $selectedTerminalApp) {
+                        ForEach(TerminalApp.allCases) { app in
+                            let isInstalled = app.isInstalled
+                            Text(app.displayName + (isInstalled ? "" : " (Not Installed)"))
+                                .tag(app)
+                                .foregroundColor(isInstalled ? .primary : .secondary)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: 300)
+                    if !TerminalApp.allCases.filter({ $0 != .systemDefault && $0.isInstalled }).isEmpty {
+                        let installed = TerminalApp.allCases.filter { $0 != .systemDefault && $0.isInstalled }
+                        Text("Detected: \(installed.map { $0.displayName }.joined(separator: ", "))")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                    Button("Select Custom Terminal App...") { selectCustomTerminalApp() }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    Text("Choose the terminal application to use when opening folders in terminal.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(30)
+        }
+    }
+
+    // MARK: - Advanced Tab
+
+    private var advancedTabContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("About")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("Shark helps you manage Cursor IDE workspace files and organize your projects.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(30)
+        }
+    }
+
     private func requestGlobalFolderAccess() {
         guard let url = FileDialogHelper.selectFolder(
             title: "Grant Folder Access",
@@ -144,47 +288,6 @@ struct SettingsView: View {
         authorizedFolders = settingsManager.authorizedFolders
     }
     
-    private var componentsSearchPathSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Components Search Path:")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                Text("Specify the directory where Shark should look for your reusable components.")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-            }
-            
-            HStack(spacing: 6) {
-                Text(componentsSearchPath.isEmpty ? "Not set" : componentsSearchPath)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(componentsSearchPath.isEmpty ? .secondary : .primary)
-                    .textSelection(.enabled)
-                    .lineLimit(1)
-                
-                if !componentsSearchPath.isEmpty {
-                    Button(action: {
-                        let url = URL(fileURLWithPath: componentsSearchPath)
-                        NSWorkspace.shared.open(url)
-                    }) {
-                        Image(systemName: "arrow.right.circle.fill")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 13))
-                    }
-                    .buttonStyle(.plain)
-                    .help("Reveal in Finder")
-                }
-            }
-            
-            Button("Set Path...") {
-                selectComponentsSearchPath()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-        }
-    }
-    
     private func selectComponentsSearchPath() {
         guard let url = FileDialogHelper.selectFolder(
             title: "Select Components Search Path",
@@ -195,61 +298,6 @@ struct SettingsView: View {
         
         settingsManager.saveComponentsSearchPathBookmark(url)
         componentsSearchPath = url.path
-    }
-    
-    private var settingsSavingFolderSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Label
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Settings Saving Folder:")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                Text("Choose where your workspace configurations and app settings are stored.")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-            }
-            
-            // Dropdown
-            Picker("", selection: $selectedLocationType) {
-                ForEach(LocationType.allCases, id: \.self) { type in
-                    Text(type.rawValue).tag(type)
-                }
-            }
-            .pickerStyle(.menu)
-            .frame(width: 180, alignment: .leading)
-            
-            // Path display with arrow icon
-            HStack(spacing: 6) {
-                Text(displayPath)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(.secondary)
-                    .textSelection(.enabled)
-                    .lineLimit(1)
-                
-                Button(action: {
-                    openFolderInFinder()
-                }) {
-                    Image(systemName: "arrow.right.circle.fill")
-                        .foregroundColor(.blue)
-                        .font(.system(size: 13))
-                }
-                .buttonStyle(.plain)
-                .help("Reveal in Finder")
-            }
-            .padding(.leading, 0)
-            
-            // Change button (only show for custom)
-            if selectedLocationType == .custom {
-                Button("Change...") {
-                    selectSettingsFolder()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .padding(.top, 2)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var displayPath: String {
@@ -294,47 +342,6 @@ struct SettingsView: View {
         let path = displayPath
         let url = URL(fileURLWithPath: path)
         NSWorkspace.shared.open(url)
-    }
-    
-    private var terminalAppSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Default Terminal Application:")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                Text("Choose the terminal application to use when opening folders in terminal.")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-            }
-            
-            Picker("Terminal App", selection: $selectedTerminalApp) {
-                ForEach(TerminalApp.allCases) { app in
-                    let isInstalled = app.isInstalled
-                    Text(app.displayName + (isInstalled ? "" : " (Not Installed)"))
-                        .tag(app)
-                        .foregroundColor(isInstalled ? .primary : .secondary)
-                }
-            }
-            .pickerStyle(.menu)
-            .frame(maxWidth: 300, alignment: .leading)
-            
-            // Show installed apps info
-            let installedApps = TerminalApp.allCases.filter { $0 != .systemDefault && $0.isInstalled }
-            if !installedApps.isEmpty {
-                Text("Detected: \(installedApps.map { $0.displayName }.joined(separator: ", "))")
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-            }
-            
-            // Custom terminal app selection
-            Button("Select Custom Terminal App...") {
-                selectCustomTerminalApp()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .padding(.top, 4)
-        }
     }
     
     private func selectCustomTerminalApp() {

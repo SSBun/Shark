@@ -40,6 +40,25 @@ cp -R "$APP_PATH" "$TMP_DIR/"
 # Create Applications symlink for easy installation
 ln -s /Applications "$TMP_DIR/Applications"
 
+# Create INSTALL.md with instructions
+cat > "$TMP_DIR/INSTALL.md" << 'EOF'
+# Shark Installation Guide
+
+## Quick Install
+1. Drag Shark.app to the Applications folder
+2. Run the following command in Terminal to fix the app:
+   ```
+   xattr -cr /Applications/Shark.app
+   ```
+3. Launch Shark from Applications
+
+## Why do I need to run xattr?
+This command removes extended attributes that macOS adds when downloading DMG files. These attributes can prevent the app from launching properly.
+
+EOF
+
+echo -e "${GREEN}Created INSTALL.md${NC}"
+
 # Check if create-dmg is installed
 if command -v create-dmg &> /dev/null; then
   echo -e "${GREEN}Using create-dmg...${NC}"
