@@ -12,11 +12,25 @@ echo "Fetching latest release from GitHub..."
 # Get latest release info
 RELEASE_JSON=$(curl -sL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest")
 
-# Find the DMG file URL - look for browser_download_url containing .dmg but NOT .sha256
-DMG_URL=$(echo "$RELEASE_JSON" | grep -oE '"browser_download_url"[[:space:]]*:[[:space:]]*"[^"]*\.dmg"' | grep -v '\.sha256"' | sed 's/.*"browser_download_url"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+# Use Python to parse JSON and extract DMG URL
+DMG_URL=$(python3 -c "
+import json
+import sys
+
+data = json.loads('$RELEASE_JSON')
+assets = data.get('assets', [])
+
+for asset in assets:
+    name = asset.get('name', '')
+    url = asset.get('browser_download_url', '')
+    if name.endswith('.dmg') and not name.endswith('.sha256'):
+        print(url)
+        break
+" 2>/dev/null)
 
 if [ -z "$DMG_URL" ]; then
     echo "Error: Could not find DMG file in latest release"
+    echo "Debug: $RELEASE_JSON"
     exit 1
 fi
 
