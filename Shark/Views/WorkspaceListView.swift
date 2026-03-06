@@ -306,13 +306,33 @@ struct WorkspaceRow: View {
             }
         }
         .contextMenu {
+            // Top section - Actions
+            Button(role: .destructive, action: onRemove) {
+                HStack {
+                    Image(systemName: "trash")
+                    Text("Remove")
+                }
+            }
+
             Button(action: onShowInFinder) {
                 HStack {
                     Image(systemName: "folder")
                     Text("Show in Finder")
                 }
             }
-            
+
+            Button(action: {
+                startEditing()
+            }) {
+                HStack {
+                    Image(systemName: "pencil")
+                    Text("Rename")
+                }
+            }
+
+            Divider()
+
+            // Bottom section - Git tools
             Button(action: onOpenInFork) {
                 HStack {
                     Image(systemName: "arrow.branch")
@@ -326,24 +346,6 @@ struct WorkspaceRow: View {
                 HStack {
                     if let icon = SourceTreeOpener.appIcon { Image(nsImage: icon).resizable().frame(width: 14, height: 14) } else { Image(systemName: "arrow.triangle.branch") }
                     Text("Open in SourceTree")
-                }
-            }
-
-            Button(action: {
-                startEditing()
-            }) {
-                HStack {
-                    Image(systemName: "pencil")
-                    Text("Rename")
-                }
-            }
-            
-            Divider()
-            
-            Button(role: .destructive, action: onRemove) {
-                HStack {
-                    Image(systemName: "trash")
-                    Text("Remove")
                 }
             }
         }
