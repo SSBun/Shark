@@ -14,7 +14,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
     case general = "General"
     case folders = "Folders"
     case terminal = "Terminal"
-    case advanced = "Advanced"
+    case about = "About"
 
     var id: String { rawValue }
 
@@ -23,7 +23,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
         case .general: return "gearshape"
         case .folders: return "folder.badge.plus"
         case .terminal: return "terminal"
-        case .advanced: return "slider.horizontal.3"
+        case .about: return "info.circle"
         }
     }
 }
@@ -56,9 +56,9 @@ struct SettingsView: View {
                 .tabItem { Label("Terminal", systemImage: SettingsTab.terminal.icon) }
                 .tag(SettingsTab.terminal)
 
-            advancedTabContent
-                .tabItem { Label("Advanced", systemImage: SettingsTab.advanced.icon) }
-                .tag(SettingsTab.advanced)
+            aboutTabContent
+                .tabItem { Label("About", systemImage: SettingsTab.about.icon) }
+                .tag(SettingsTab.about)
         }
         .frame(width: 600, height: 500)
         .onAppear {
@@ -262,7 +262,7 @@ struct SettingsView: View {
 
     @StateObject private var updateManager = UpdateManager.shared
 
-    private var advancedTabContent: some View {
+    private var aboutTabContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 // About Section
