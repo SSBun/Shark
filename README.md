@@ -4,6 +4,8 @@ A beautiful macOS application for managing Cursor IDE workspace files. Streamlin
 
 ![Shark Screenshot](resources/screen.png)
 
+**Official Website**: https://ssbun.github.io/Shark
+
 ## ✨ Features
 
 ### Workspace Management
