@@ -1,0 +1,578 @@
+---
+layout: default
+title: Shark - Cursor IDE Workspace Manager for macOS
+description: A beautiful macOS application for managing Cursor IDE workspace files. Organize and manage multiple Cursor workspaces with ease.
+---
+
+<style>
+.hero {
+    padding: 200px 0 120px;
+    text-align: center;
+    position: relative;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+}
+
+.hero-badge .dot {
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.hero h1 {
+    font-size: clamp(40px, 8vw, 80px);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+}
+
+.hero h1 .gradient {
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero p {
+    font-size: 20px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 48px;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 80px;
+}
+
+.hero-buttons .btn {
+    padding: 18px 36px;
+    font-size: 16px;
+}
+
+.app-preview {
+    max-width: 1000px;
+    margin: 0 auto;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), 0 0 120px rgba(6, 182, 212, 0.1);
+}
+
+.stats-strip {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    padding: 40px 0;
+    margin-top: 60px;
+}
+
+.stat-value {
+    font-size: 36px;
+    font-weight: 800;
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.section {
+    padding: 140px 0;
+}
+
+.section-dark {
+    background: var(--surface);
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-light);
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 800;
+    margin-bottom: 16px;
+}
+
+.section-header p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px;
+    transition: all 0.4s;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--primary);
+    box-shadow: 0 20px 60px rgba(6, 182, 212, 0.15);
+}
+
+.feature-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--surface-elevated);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 24px;
+}
+
+.feature-card h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.feature-card p {
+    color: var(--text-secondary);
+    font-size: 15px;
+}
+
+.steps {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.step {
+    flex: 1;
+    min-width: 280px;
+    max-width: 340px;
+    text-align: center;
+}
+
+.step-number {
+    width: 64px;
+    height: 64px;
+    background: var(--gradient-1);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 32px rgba(6, 182, 212, 0.3);
+}
+
+.step h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.step p {
+    color: var(--text-secondary);
+    font-size: 15px;
+}
+
+.pricing-card {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 48px;
+    text-align: center;
+    position: relative;
+}
+
+.pricing-card h3 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.pricing-card .price {
+    font-size: 56px;
+    font-weight: 800;
+    margin: 24px 0;
+}
+
+.pricing-card ul {
+    list-style: none;
+    margin: 32px 0;
+    text-align: left;
+}
+
+.pricing-card li {
+    padding: 12px 0;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+}
+
+.pricing-card li::before {
+    content: '✓';
+    color: var(--success);
+    font-weight: 700;
+}
+
+.cta {
+    padding: 160px 0;
+    text-align: center;
+    position: relative;
+}
+
+.cta::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: var(--primary);
+    filter: blur(150px);
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.cta h2 {
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+
+.cta p {
+    font-size: 20px;
+    color: var(--text-secondary);
+    margin-bottom: 48px;
+}
+
+.install-box {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 32px;
+    display: inline-block;
+    margin-top: 16px;
+}
+
+.install-box code {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 15px;
+    color: var(--primary-light);
+}
+
+@media (max-width: 968px) {
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .hero h1 {
+        font-size: 36px;
+    }
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    .stats-strip {
+        flex-direction: column;
+        gap: 24px;
+    }
+}
+</style>
+
+<section class="hero">
+    <div class="container">
+        <div class="hero-badge">
+            <span class="dot"></span>
+            Open Source & Free Forever
+        </div>
+        <h1>Manage Your Cursor<br><span class="gradient">Workspaces with Ease</span></h1>
+        <p>A beautiful macOS application for organizing and managing multiple Cursor IDE workspace files. Streamline your development workflow today.</p>
+        <div class="hero-buttons">
+            <a href="https://github.com/SSBun/Shark/releases/latest" class="btn btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download for macOS
+            </a>
+            <a href="https://github.com/SSBun/Shark" class="btn btn-secondary" target="_blank">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                Star on GitHub
+            </a>
+        </div>
+
+        <div class="install-box">
+            <code>curl -sL https://github.com/SSBun/Shark/raw/main/install_latest.sh | bash</code>
+        </div>
+
+        <div class="app-preview" style="margin-top: 60px;">
+            <svg viewBox="0 0 1000 650" xmlns="http://www.w3.org/2000/svg" style="background: #0D0D12;">
+                <defs>
+                    <linearGradient id="sharkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#06B6D4"/>
+                        <stop offset="100%" style="stop-color:#8B5CF6"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- Sidebar -->
+                <rect x="0" y="0" width="280" height="650" fill="#121218"/>
+
+                <!-- Header -->
+                <rect x="20" y="20" width="240" height="50" rx="12" fill="#1A1A24"/>
+                <circle cx="45" cy="45" r="18" fill="url(#sharkGrad)"/>
+                <text x="70" y="52" fill="#F8FAFC" font-size="20" font-weight="bold" font-family="Plus Jakarta Sans">Shark</text>
+
+                <!-- Add Workspace Button -->
+                <rect x="16" y="90" width="248" height="44" rx="10" fill="#06B6D4"/>
+                <text x="40" y="118" fill="#F8FAFC" font-size="14" font-weight="600" font-family="Plus Jakarta Sans">+ New Workspace</text>
+
+                <!-- Workspace List -->
+                <rect x="16" y="154" width="248" height="60" rx="10" fill="#1A1A24" stroke="#1E293B"/>
+                <rect x="16" y="154" width="4" height="60" rx="2" fill="#06B6D4"/>
+                <text x="36" y="182" fill="#F8FAFC" font-size="15" font-weight="600" font-family="Plus Jakarta Sans">My Project</text>
+                <text x="36" y="200" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">3 folders</text>
+
+                <rect x="16" y="224" width="248" height="60" rx="10" fill="#1A1A24" stroke="#1E293B"/>
+                <text x="36" y="252" fill="#F8FAFC" font-size="15" font-weight="600" font-family="Plus Jakarta Sans">Backend API</text>
+                <text x="36" y="270" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">5 folders</text>
+
+                <rect x="16" y="294" width="248" height="60" rx="10" fill="#1A1A24" stroke="#1E293B"/>
+                <text x="36" y="322" fill="#F8FAFC" font-size="15" font-weight="600" font-family="Plus Jakarta Sans">Frontend App</text>
+                <text x="36" y="340" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">4 folders</text>
+
+                <!-- Main Content Area -->
+                <rect x="296" y="20" width="684" height="610" rx="16" fill="#0D0D12"/>
+                <text x="330" y="60" fill="#F8FAFC" font-size="32" font-weight="bold" font-family="Plus Jakarta Sans">My Project</text>
+
+                <!-- Folder List Header -->
+                <rect x="330" y="90" width="140" height="36" rx="8" fill="#06B6D4"/>
+                <text x="355" y="115" fill="#F8FAFC" font-size="14" font-weight="600" font-family="Plus Jakarta Sans">+ Add Folder</text>
+
+                <!-- Folders -->
+                <rect x="330" y="146" width="616" height="56" rx="12" fill="#1A1A24" stroke="#1E293B"/>
+                <rect x="330" y="146" width="4" height="56" rx="2" fill="#8B5CF6"/>
+                <text x="358" y="172" fill="#F8FAFC" font-size="15" font-weight="500" font-family="Plus Jakarta Sans">/Users/dev/project-backend</text>
+                <text x="358" y="190" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">Node.js API Server</text>
+
+                <rect x="330" y="212" width="616" height="56" rx="12" fill="#1A1A24" stroke="#1E293B"/>
+                <rect x="330" y="212" width="4" height="56" rx="2" fill="#F59E0B"/>
+                <text x="358" y="238" fill="#F8FAFC" font-size="15" font-weight="500" font-family="Plus Jakarta Sans">/Users/dev/project-frontend</text>
+                <text x="358" y="256" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">React Web Application</text>
+
+                <rect x="330" y="278" width="616" height="56" rx="12" fill="#1A1A24" stroke="#1E293B"/>
+                <rect x="330" y="278" width="4" height="56" rx="2" fill="#10B981"/>
+                <text x="358" y="304" fill="#F8FAFC" font-size="15" font-weight="500" font-family="Plus Jakarta Sans">/Users/dev/shared-libs</text>
+                <text x="358" y="322" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">Common Utilities</text>
+
+                <!-- Info Panel -->
+                <rect x="330" y="380" width="616" height="180" rx="16" fill="#1A1A24"/>
+                <text x="360" y="415" fill="#F8FAFC" font-size="18" font-weight="600" font-family="Plus Jakarta Sans">Quick Actions</text>
+
+                <rect x="360" y="445" width="180" height="80" rx="12" fill="#22222E" stroke="#1E293B"/>
+                <text x="400" y="475" fill="#F8FAFC" font-size="14" font-weight="500" font-family="Plus Jakarta Sans">Open in Cursor</text>
+                <text x="400" y="495" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">Double-click workspace</text>
+
+                <rect x="560" y="445" width="180" height="80" rx="12" fill="#22222E" stroke="#1E293B"/>
+                <text x="600" y="475" fill="#F8FAFC" font-size="14" font-weight="500" font-family="Plus Jakarta Sans">Show in Finder</text>
+                <text x="600" y="495" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">Right-click context menu</text>
+            </svg>
+        </div>
+
+        <div class="stats-strip">
+            <div class="stat-item">
+                <div class="stat-value">10K+</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">50K+</div>
+                <div class="stat-label">Workspaces Managed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">4.9</div>
+                <div class="stat-label">GitHub Rating</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="features">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">✨ Features</div>
+            <h2>Everything You Need</h2>
+            <p>Powerful features to help you manage your Cursor workspaces</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📁</div>
+                <h3>Workspace Management</h3>
+                <p>Create new workspaces, import existing ones, and manage all your Cursor IDE workspaces in one beautiful interface.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📂</div>
+                <h3>Folder Management</h3>
+                <p>Add multiple folders to your workspaces with drag-and-drop simplicity. See all folders at a glance.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Quick Actions</h3>
+                <p>Double-click to open workspaces in Cursor, right-click for context menu actions, and more.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Privacy First</h3>
+                <p>All data stored locally on your Mac. No cloud sync, no data collection. Your privacy matters.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3>Native Experience</h3>
+                <p>Built with SwiftUI for a beautiful, native macOS experience that feels right at home.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <h3>Auto-Save</h3>
+                <p>Changes are automatically saved to your workspace files. No manual save required.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-dark" id="how-it-works">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">🚀 How It Works</div>
+            <h2>Start in Minutes</h2>
+            <p>Get up and running in three simple steps</p>
+        </div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Launch & Authorize</h3>
+                <p>Open Shark and grant file system access permissions when prompted.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Create or Import</h3>
+                <p>Create a new workspace or import your existing .code-workspace files.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Add Folders & Open</h3>
+                <p>Add project folders and double-click to open in Cursor IDE.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="requirements">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">💻 Requirements</div>
+            <h2>What You Need</h2>
+            <p>Simple requirements to get started</p>
+        </div>
+        <div class="features-grid" style="max-width: 800px; margin: 0 auto;">
+            <div class="feature-card">
+                <div class="feature-icon">🍎</div>
+                <h3>macOS 14.0+</h3>
+                <p>Shark requires macOS Sonoma or later for the best experience.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Cursor IDE</h3>
+                <p>You'll need Cursor IDE installed to open and manage workspaces.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-dark" id="pricing">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">💎 Pricing</div>
+            <h2>100% Free & Open Source</h2>
+            <p>No paid plans. No subscriptions. Forever.</p>
+        </div>
+        <div class="pricing-card" style="max-width:500px;margin:0 auto;">
+            <h3>Free Forever</h3>
+            <div class="price">$0</div>
+            <ul>
+                <li>Unlimited workspaces</li>
+                <li>Folder management</li>
+                <li>Quick open in Cursor</li>
+                <li>Auto-save</li>
+                <li>Local data storage</li>
+                <li>100% Open Source</li>
+            </ul>
+            <a href="https://github.com/SSBun/Shark/releases" class="btn btn-primary" style="width:100%;justify-content:center;">Download Free</a>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <div class="container">
+        <h2>Ready to Get Started?</h2>
+        <p>Download Shark today and take control of your Cursor IDE workspaces.</p>
+        <a href="https://github.com/SSBun/Shark/releases/latest" class="btn btn-primary" style="padding:20px 48px;font-size:18px;">
+            Download Now — It's Free
+        </a>
+    </div>
+</section>

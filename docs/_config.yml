@@ -1,0 +1,15 @@
+title: Shark
+description: A beautiful macOS application for managing Cursor IDE workspace files
+baseurl: "/Shark"
+url: "https://ssbun.github.io"
+
+# Build settings
+markdown: kramdown
+
+# Exclude unnecessary files
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/
+  - .git/
