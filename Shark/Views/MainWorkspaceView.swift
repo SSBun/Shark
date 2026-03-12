@@ -43,6 +43,9 @@ struct MainWorkspaceView: View {
                 },
                 onSelectComponents: {
                     showComponentSelector = true
+                },
+                onDropFolders: { droppedFolders in
+                    handleDroppedFolders(droppedFolders)
                 }
             )
             .frame(minWidth: 250, idealWidth: 300)
@@ -174,15 +177,30 @@ struct MainWorkspaceView: View {
     
     private func addSelectedFolders(_ selectedFolders: [Folder]) {
         guard selectedWorkspace != nil else { return }
-        
+
         var newFolders: [Folder] = []
         for folder in selectedFolders {
             if !folders.contains(where: { $0.path == folder.path }) {
                 newFolders.append(folder)
             }
         }
-        
+
         folders.append(contentsOf: newFolders)
+    }
+
+    private func handleDroppedFolders(_ droppedFolders: [Folder]) {
+        guard selectedWorkspace != nil else { return }
+
+        var newFolders: [Folder] = []
+        for folder in droppedFolders {
+            if !folders.contains(where: { $0.path == folder.path }) {
+                newFolders.append(folder)
+            }
+        }
+
+        if !newFolders.isEmpty {
+            folders.append(contentsOf: newFolders)
+        }
     }
     
     private func saveFoldersToWorkspace() {

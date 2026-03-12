@@ -11,15 +11,18 @@ import AppKit
 struct FolderListView: View {
     @Binding var folders: [Folder]
     @State private var selectedFolderIDs: Set<Folder.ID> = []
+    @State private var isTargeted = false
     let onAddFolder: (() -> Void)?
     let onUpdateFolder: ((Folder) -> Void)?
     let onSelectComponents: (() -> Void)?
-    
-    init(folders: Binding<[Folder]>, onAddFolder: (() -> Void)? = nil, onUpdateFolder: ((Folder) -> Void)? = nil, onSelectComponents: (() -> Void)? = nil) {
+    let onDropFolders: (([Folder]) -> Void)?
+
+    init(folders: Binding<[Folder]>, onAddFolder: (() -> Void)? = nil, onUpdateFolder: ((Folder) -> Void)? = nil, onSelectComponents: (() -> Void)? = nil, onDropFolders: (([Folder]) -> Void)? = nil) {
         self._folders = folders
         self.onAddFolder = onAddFolder
         self.onUpdateFolder = onUpdateFolder
         self.onSelectComponents = onSelectComponents
+        self.onDropFolders = onDropFolders
     }
     
     var body: some View {
@@ -30,7 +33,7 @@ struct FolderListView: View {
                     .font(.headline)
                     .foregroundColor(.secondary)
                 Spacer()
-                
+
                 // Select Components button
                 Button(action: {
                     onSelectComponents?()
@@ -41,7 +44,7 @@ struct FolderListView: View {
                 .buttonStyle(.plain)
                 .help("Select components from search path")
                 .disabled(onSelectComponents == nil)
-                
+
                 Button(action: {
                     onAddFolder?()
                 }) {
@@ -56,9 +59,9 @@ struct FolderListView: View {
             .padding(.vertical, 8)
             .frame(height: 36)
             .background(Color(NSColor.controlBackgroundColor))
-            
+
             Divider()
-            
+
             // Folder list
             if folders.isEmpty {
                 VStack {
@@ -107,18 +110,93 @@ struct FolderListView: View {
                 }
             }
         }
+        .overlay(
+            Group {
+                if isTargeted, onDropFolders != nil {
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.accentColor, lineWidth: 2)
+                        .background(Color.accentColor.opacity(0.1))
+                        .overlay(
+                            VStack(spacing: 8) {
+                                Image(systemName: "folder.badge.plus")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.accentColor)
+                                Text("Drop folders here")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.accentColor)
+                            }
+                        )
+                }
+            }
+        )
+        .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
+            handleDrop(providers: providers)
+            return true
+        }
     }
     
     private func showFolderInFinder(_ folder: Folder) {
         let folderURL = URL(fileURLWithPath: folder.path)
         NSWorkspace.shared.activateFileViewerSelecting([folderURL])
     }
-    
+
     private func selectedTargets(for folder: Folder) -> [Folder] {
         if selectedFolderIDs.contains(folder.id), !selectedFolderIDs.isEmpty {
             return folders.filter { selectedFolderIDs.contains($0.id) }
         }
         return [folder]
+    }
+
+    private func handleDrop(providers: [NSItemProvider]) {
+        guard let onDropFolders = onDropFolders else { return }
+
+        for provider in providers {
+            provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { item, error in
+                guard error == nil,
+                      let data = item as? Data,
+                      let urlString = String(data: data, encoding: .utf8),
+                      let url = URL(string: urlString) else {
+                    return
+                }
+
+                var isDirectory: ObjCBool = false
+                guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
+                      isDirectory.boolValue else {
+                    return
+                }
+
+                let folderPath = url.path
+                let folderName = url.lastPathComponent
+
+                // Check if folder already exists
+                if folders.contains(where: { $0.path == folderPath }) {
+                    return
+                }
+
+                // Create security-scoped bookmark
+                var bookmarkData: Data? = nil
+                do {
+                    bookmarkData = try url.bookmarkData(
+                        options: .withSecurityScope,
+                        includingResourceValuesForKeys: nil,
+                        relativeTo: nil
+                    )
+                } catch {
+                    print("Failed to create bookmark for \(folderPath): \(error)")
+                }
+
+                let newFolder = Folder(
+                    name: folderName,
+                    path: folderPath,
+                    displayName: nil,
+                    bookmarkData: bookmarkData
+                )
+
+                DispatchQueue.main.async {
+                    onDropFolders([newFolder])
+                }
+            }
+        }
     }
 }
 
