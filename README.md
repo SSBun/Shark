@@ -97,12 +97,13 @@ cd Shark
 3. **Create or Import a Workspace**:
    - Click the **+** button to create a new workspace
    - Click the **↓** button to import an existing workspace file
-4. **Add Folders** - Select a workspace and click "Add Folder" to add project folders
+4. **Add Folders** - Select a workspace and click "Add Folder" or drag folders directly into the folder area
 5. **Open in Cursor** - Double-click a workspace or use the context menu to open it in Cursor
 
 ## 💡 Tips
 
 - **Double-click** any workspace to quickly open it in Cursor
+- **Drag & Drop** folders directly into the folder list to add them to your workspace
 - **Right-click** workspaces for additional options
 - Workspaces are automatically saved when you make changes
 - Imported workspaces remain at their original location
