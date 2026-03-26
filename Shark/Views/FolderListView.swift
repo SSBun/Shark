@@ -211,6 +211,7 @@ struct FolderRow: View {
     @State private var gitReference: GitReference? = nil
     @State private var xcodeProjectPath: String? = nil
     @State private var permissionDenied: Bool = false
+    @State private var showGitPanel: Bool = false
     
     var body: some View {
         HStack(spacing: 8) {
@@ -385,7 +386,19 @@ struct FolderRow: View {
                         Text(targetCount > 1 ? "Open \(targetCount) in SourceTree" : "Open in SourceTree")
                     }
                 }
+                
+                Button(action: {
+                    showGitPanel = true
+                }) {
+                    HStack {
+                        Image(systemName: "bolt.fill")
+                        Text("Git Operations...")
+                    }
+                }
             }
+        }
+        .sheet(isPresented: $showGitPanel) {
+            GitPanelView(folder: folder)
         }
         .onAppear {
             checkFolderStatus()

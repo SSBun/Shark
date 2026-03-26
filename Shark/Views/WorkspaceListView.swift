@@ -14,6 +14,20 @@ struct WorkspaceListView: View {
     @EnvironmentObject var authManager: AuthorizationManager
     @State private var lastSelectedWorkspace: Workspace?
     @State private var lastSelectionTime: Date?
+    @State private var searchText: String = ""
+    @State private var isSearchFocused: Bool = false
+    @FocusState private var isTextFieldFocused: Bool
+    
+    private var filteredWorkspaces: [Workspace] {
+        if searchText.isEmpty {
+            return workspaces
+        }
+        let lowercased = searchText.lowercased()
+        return workspaces.filter {
+            $0.name.lowercased().contains(lowercased) ||
+            $0.filePath.lowercased().contains(lowercased)
+        }
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -23,6 +37,16 @@ struct WorkspaceListView: View {
                     .font(.headline)
                     .foregroundColor(.secondary)
                 Spacer()
+                
+                // Search button (⌘F)
+                Button(action: {
+                    isSearchFocused = true
+                }) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .help("Search workspaces (⌘F)")
                 
                 // Import button
                 Button(action: {
@@ -42,55 +66,122 @@ struct WorkspaceListView: View {
                         .font(.system(size: 14, weight: .medium))
                 }
                 .buttonStyle(.plain)
-                .help("Create new workspace file")
+                .help("Create new workspace file (⌘N)")
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .frame(height: 36)
             .background(Color(NSColor.controlBackgroundColor))
             
+            // Search bar (shown when ⌘F pressed)
+            if isSearchFocused {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    
+                    TextField("Search workspaces...", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 13))
+                        .focused($isTextFieldFocused)
+                        .onSubmit {
+                            isSearchFocused = false
+                        }
+                    
+                    if !searchText.isEmpty {
+                        Button(action: {
+                            searchText = ""
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
+                    Button("Cancel") {
+                        searchText = ""
+                        isSearchFocused = false
+                    }
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color(NSColor.controlBackgroundColor))
+                .onAppear {
+                    isTextFieldFocused = true
+                }
+            }
+            
             Divider()
             
             // Workspace list
-            List(selection: $selectedWorkspace) {
-                ForEach(workspaces) { workspace in
-                    WorkspaceRow(
-                        workspace: workspace,
-                        onOpen: {
-                            WorkspaceOpener.openWorkspace(workspace)
-                        },
-                        onShowInFinder: {
-                            showWorkspaceInFinder(workspace)
-                        },
-                        onRename: { newName in
-                            renameWorkspace(workspace, to: newName)
-                        },
-                        onRemove: {
-                            removeWorkspace(workspace)
-                        },
-                        onOpenInFork: {
-                            openGitFoldersInFork(workspace)
-                        }
-                    )
-                    .tag(workspace)
+            if filteredWorkspaces.isEmpty && !searchText.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 32))
+                        .foregroundColor(.secondary)
+                    Text("No results for \"\(searchText)\"")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
                 }
-            }
-            .listStyle(.sidebar)
-            .onChange(of: selectedWorkspace) { oldValue, newValue in
-                // Handle double-click detection
-                if let newValue = newValue {
-                    let now = Date()
-                    if let lastTime = lastSelectionTime,
-                       let lastSelected = lastSelectedWorkspace,
-                       lastSelected.id == newValue.id,
-                       now.timeIntervalSince(lastTime) < 0.5 { // Double-click threshold (500ms)
-                        // Double-click detected - open workspace
-                        WorkspaceOpener.openWorkspace(newValue)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List(selection: $selectedWorkspace) {
+                    ForEach(filteredWorkspaces) { workspace in
+                        WorkspaceRow(
+                            workspace: workspace,
+                            onOpen: {
+                                WorkspaceOpener.openWorkspace(workspace)
+                            },
+                            onShowInFinder: {
+                                showWorkspaceInFinder(workspace)
+                            },
+                            onRename: { newName in
+                                renameWorkspace(workspace, to: newName)
+                            },
+                            onRemove: {
+                                removeWorkspace(workspace)
+                            },
+                            onOpenInFork: {
+                                openGitFoldersInFork(workspace)
+                            }
+                        )
+                        .tag(workspace)
                     }
-                    lastSelectedWorkspace = newValue
-                    lastSelectionTime = now
+                }
+                .listStyle(.sidebar)
+                .onChange(of: selectedWorkspace) { oldValue, newValue in
+                    // Handle double-click detection
+                    if let newValue = newValue {
+                        let now = Date()
+                        if let lastTime = lastSelectionTime,
+                           let lastSelected = lastSelectedWorkspace,
+                           lastSelected.id == newValue.id,
+                           now.timeIntervalSince(lastTime) < 0.5 {
+                            WorkspaceOpener.openWorkspace(newValue)
+                        }
+                        lastSelectedWorkspace = newValue
+                        lastSelectionTime = now
+                    }
                 }
             }
+        }
+        .onAppear {
+            setupKeyboardShortcuts()
+        }
+    }
+    
+    private func setupKeyboardShortcuts() {
+        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if event.modifierFlags.contains(.command) && event.keyCode == 3 {
+                DispatchQueue.main.async {
+                    isSearchFocused = true
+                }
+                return nil
+            }
+            return event
         }
     }
     
@@ -391,14 +482,5 @@ struct WorkspaceRow: View {
             }
         }
     }
-}
-
-#Preview {
-    @Previewable @State var workspaces: [Workspace] = []
-    @Previewable @State var selectedWorkspace: Workspace? = nil
-    
-    WorkspaceListView(workspaces: $workspaces, selectedWorkspace: $selectedWorkspace)
-        .environmentObject(AuthorizationManager.shared)
-        .frame(width: 300, height: 600)
 }
 
