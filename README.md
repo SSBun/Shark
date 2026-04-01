@@ -1,6 +1,6 @@
 # Shark 🦈
 
-A beautiful macOS application for managing Cursor IDE workspace files. Streamline your development workflow by organizing and managing multiple Cursor workspaces with ease.
+A beautiful macOS application for managing Cursor and Trae IDE workspace files. Streamline your development workflow by organizing and managing multiple workspaces with ease, and easily manage your Venomfiles dependencies.
 
 ![Shark Screenshot](resources/screen.png)
 
@@ -20,22 +20,34 @@ A beautiful macOS application for managing Cursor IDE workspace files. Streamlin
 - **Automatic Saving** - Changes are automatically saved to your workspace files
 
 ### Quick Actions
-- **Double-Click to Open** - Open workspaces in Cursor with a simple double-click
+- **Double-Click to Open** - Open workspaces in Cursor or Trae with a simple double-click
 - **Context Menu** - Right-click for quick actions:
-  - Open workspace in Cursor
+  - Open workspace in Cursor or Trae
   - Show workspace file in Finder
   - Rename workspace
   - Remove workspace
 - **Native macOS Integration** - Built with SwiftUI for a native macOS experience
 
+### Settings
+- **IDE Selector** - Switch between Cursor and Trae IDE for opening workspaces
+- **Venomfiles Support** - Check dependencies for components with Venomfiles folders
+- **Refresh Dependencies** - Refresh Venomfiles status for all components
+
+### Venomfiles Management
+- **Check Dependencies** - Scan and verify dependencies for Venomfiles projects
+- **Jump to Repository** - Open dependency repositories directly in your browser
+- **Edit Source** - Open `.rb` source files in your system default editor
+- **Visual Status** - See dependency status at a glance with refresh capability
+
 ## 🚀 Why Use Shark?
 
-### For Developers Who Use Cursor IDE
+### For Developers Who Use Cursor or Trae IDE
 If you work with multiple projects or need to organize your development environment, Shark makes it effortless to:
 - Switch between different project workspaces
 - Organize related folders into workspaces
 - Quickly access your most-used workspaces
 - Keep your workspace files organized and up-to-date
+- Manage Venomfiles dependencies across your components
 
 ### Clean & Intuitive Interface
 Shark features a clean, modern interface that follows macOS design guidelines:
@@ -88,7 +100,7 @@ cd Shark
 
 ### System Requirements
 - macOS 14.0 or later
-- Cursor IDE (for opening workspaces)
+- Cursor IDE or Trae IDE (for opening workspaces)
 
 ## 🎯 Getting Started
 
@@ -98,11 +110,11 @@ cd Shark
    - Click the **+** button to create a new workspace
    - Click the **↓** button to import an existing workspace file
 4. **Add Folders** - Select a workspace and click "Add Folder" or drag folders directly into the folder area
-5. **Open in Cursor** - Double-click a workspace or use the context menu to open it in Cursor
+5. **Open in IDE** - Double-click a workspace or use the context menu to open it in Cursor or Trae
 
 ## 💡 Tips
 
-- **Double-click** any workspace to quickly open it in Cursor
+- **Double-click** any workspace to quickly open it in Cursor or Trae
 - **Drag & Drop** folders directly into the folder list to add them to your workspace
 - **Right-click** workspaces for additional options
 - Workspaces are automatically saved when you make changes
@@ -113,7 +125,7 @@ cd Shark
 
 - Built with **SwiftUI** and **Swift 6**
 - Native macOS application
-- Supports Cursor IDE `.code-workspace` file format
+- Supports Cursor and Trae IDE `.code-workspace` file format
 - Stores workspace metadata in UserDefaults
 - Requires file system access for reading/writing workspace files
 
@@ -131,5 +143,5 @@ For issues, feature requests, or questions, please open an issue on GitHub.
 
 ---
 
-**Made with ❤️ for the Cursor IDE community**
+**Made with ❤️ for the Cursor and Trae IDE community**
 
