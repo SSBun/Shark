@@ -403,7 +403,7 @@ struct WorkspaceRow: View {
             }
             .buttonStyle(.plain)
             .opacity(isHovered ? 1.0 : 0.6)
-            .help("Open workspace in Cursor")
+            .help("Open workspace in \(SettingsManager.shared.defaultIDEApp.displayName)")
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 4)

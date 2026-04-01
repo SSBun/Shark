@@ -9,33 +9,90 @@ import AppKit
 import Foundation
 
 struct WorkspaceOpener {
-    /// Open a workspace file with Cursor
-    static func openWorkspace(_ workspace: Workspace) {
+    /// Open a workspace file with the configured IDE
+    static func openWorkspace(_ workspace: Workspace, ide: IDEApp? = nil) {
         let fileURL = URL(fileURLWithPath: workspace.filePath)
-        
+
         // Check if file exists
         guard FileManager.default.fileExists(atPath: workspace.filePath) else {
             print("Workspace file does not exist: \(workspace.filePath)")
-            // TODO: Show error alert
             return
         }
-        
-        // Try to open with Cursor
-        // Cursor's bundle identifier is typically "com.todesktop.230313mzl4w4u92"
-        // But we can also try opening with the default app for .code-workspace files
-        let cursorBundleID = "com.todesktop.230313mzl4w4u92"
-        
-        // First, try to open with Cursor specifically
-        if let cursorApp = NSWorkspace.shared.urlForApplication(withBundleIdentifier: cursorBundleID) {
-            do {
-                try NSWorkspace.shared.open([fileURL], withApplicationAt: cursorApp, configuration: NSWorkspace.OpenConfiguration())
-            } catch {
-                print("Failed to open workspace with Cursor: \(error)")
+
+        let selectedIDE = ide ?? SettingsManager.shared.defaultIDEApp
+        Log.debug("Opening workspace with IDE: \(selectedIDE.displayName)", category: .workspace)
+
+        switch selectedIDE {
+        case .cursor:
+            openWithCursor(fileURL: fileURL)
+        case .zed:
+            openWithZed(fileURL: fileURL)
+        case .trae:
+            openWithTrae(fileURL: fileURL)
+        }
+    }
+
+    // MARK: - Private Methods
+
+    private static func openWithCursor(fileURL: URL) {
+        // Use command line to open with Cursor so it properly loads the workspace
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-a", "Cursor", fileURL.path]
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+            if task.terminationStatus != 0 {
+                Log.error("Failed to open workspace with Cursor (exit code: \(task.terminationStatus))", category: .workspace)
                 // Fallback to opening with default app
                 NSWorkspace.shared.open(fileURL)
             }
-        } else {
-            // Cursor not found, try opening with default app for .code-workspace files
+        } catch {
+            Log.error("Failed to open workspace with Cursor: \(error)", category: .workspace)
+            // Fallback to opening with default app
+            NSWorkspace.shared.open(fileURL)
+        }
+    }
+
+    private static func openWithZed(fileURL: URL) {
+        // Use command line to open with Zed so it properly loads the workspace
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-a", "Zed", fileURL.path]
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+            if task.terminationStatus != 0 {
+                Log.error("Failed to open workspace with Zed (exit code: \(task.terminationStatus))", category: .workspace)
+                // Fallback to opening with default app
+                NSWorkspace.shared.open(fileURL)
+            }
+        } catch {
+            Log.error("Failed to open workspace with Zed: \(error)", category: .workspace)
+            // Fallback to opening with default app
+            NSWorkspace.shared.open(fileURL)
+        }
+    }
+
+    private static func openWithTrae(fileURL: URL) {
+        // Try using command line first for Trae
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-a", "Trae", fileURL.path]
+
+        do {
+            try task.run()
+            task.waitUntilExit()
+            if task.terminationStatus != 0 {
+                Log.error("Failed to open workspace with Trae (exit code: \(task.terminationStatus))", category: .workspace)
+                // Fallback to opening with default app
+                NSWorkspace.shared.open(fileURL)
+            }
+        } catch {
+            Log.error("Failed to open workspace with Trae: \(error)", category: .workspace)
+            // Fallback to opening with default app
             NSWorkspace.shared.open(fileURL)
         }
     }

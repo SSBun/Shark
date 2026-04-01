@@ -16,6 +16,7 @@ class SettingsManager {
     private let componentsSearchPathBookmarkKey = "componentsSearchPathBookmark"
     private let authorizedFoldersKey = "authorizedFolders"
     private let defaultTerminalAppKey = "defaultTerminalApp"
+    private let defaultIDEAppKey = "defaultIDEApp"
     
     private init() {
         restoreSecurityScopedAccess()
@@ -206,6 +207,20 @@ class SettingsManager {
         }
         set {
             UserDefaults.standard.set(newValue.rawValue, forKey: defaultTerminalAppKey)
+        }
+    }
+
+    /// Get the default IDE app, defaults to Cursor
+    var defaultIDEApp: IDEApp {
+        get {
+            if let savedValue = UserDefaults.standard.string(forKey: defaultIDEAppKey),
+               let ideApp = IDEApp(rawValue: savedValue) {
+                return ideApp
+            }
+            return .cursor
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: defaultIDEAppKey)
         }
     }
 }

@@ -35,6 +35,7 @@ struct SettingsView: View {
     @State private var selectedLocationType: LocationType = .default
     @State private var authorizedFolders: [String] = []
     @State private var selectedTerminalApp: TerminalApp = .systemDefault
+    @State private var selectedIDEApp: IDEApp = .cursor
     private let settingsManager = SettingsManager.shared
 
     enum LocationType: String, CaseIterable {
@@ -66,6 +67,7 @@ struct SettingsView: View {
             componentsSearchPath = settingsManager.componentsSearchPath
             authorizedFolders = settingsManager.authorizedFolders
             selectedTerminalApp = settingsManager.defaultTerminalApp
+            selectedIDEApp = settingsManager.defaultIDEApp
             // Determine if current path is default or custom
             if settingsFolderPath == settingsManager.defaultSettingsFolderPath {
                 selectedLocationType = .default
@@ -90,6 +92,9 @@ struct SettingsView: View {
         }
         .onChange(of: selectedTerminalApp) { oldValue, newValue in
             settingsManager.defaultTerminalApp = newValue
+        }
+        .onChange(of: selectedIDEApp) { oldValue, newValue in
+            settingsManager.defaultIDEApp = newValue
         }
     }
 
@@ -164,6 +169,31 @@ struct SettingsView: View {
                         }
                     }
                     Text("Specify the directory where Shark should look for your reusable components.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                Divider()
+                // Default IDE
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Default IDE for opening workspaces")
+                        .font(.system(size: 13, weight: .semibold))
+                    Picker("IDE", selection: $selectedIDEApp) {
+                        ForEach(IDEApp.allCases) { ide in
+                            let isInstalled = ide.isInstalled
+                            Text(ide.displayName + (isInstalled ? "" : " (Not Installed)"))
+                                .tag(ide)
+                                .foregroundColor(isInstalled ? .primary : .secondary)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: 300)
+                    if !IDEApp.allCases.filter({ $0.isInstalled }).isEmpty {
+                        let installed = IDEApp.allCases.filter { $0.isInstalled }
+                        Text("Detected: \(installed.map { $0.displayName }.joined(separator: ", "))")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+                    Text("Choose the IDE to use when opening workspace files.")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
