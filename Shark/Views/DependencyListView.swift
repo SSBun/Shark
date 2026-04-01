@@ -174,6 +174,19 @@ struct DependencyRow: View {
                     .buttonStyle(.plain)
                     .help("Open repository in browser")
                 }
+
+                if !dependency.sourceFilePath.isEmpty {
+                    Button(action: {
+                        let fileURL = URL(fileURLWithPath: dependency.sourceFilePath)
+                        NSWorkspace.shared.open(fileURL)
+                    }) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Edit \(URL(fileURLWithPath: dependency.sourceFilePath).lastPathComponent) in default editor")
+                }
             }
 
             if !dependency.git.isEmpty {

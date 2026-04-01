@@ -12,4 +12,12 @@ struct VenomDependency: Identifiable, Hashable {
     let name: String
     let git: String
     let tag: String
+    let sourceFilePath: String
+
+    init(name: String, git: String, tag: String, sourceFilePath: String = "") {
+        self.name = name
+        self.git = git
+        self.tag = tag
+        self.sourceFilePath = sourceFilePath
+    }
 }

@@ -149,7 +149,8 @@ struct VenomfileParser {
         return VenomDependency(
             name: name,
             git: git ?? "",
-            tag: tag ?? ""
+            tag: tag ?? "",
+            sourceFilePath: url.path
         )
     }
 }
