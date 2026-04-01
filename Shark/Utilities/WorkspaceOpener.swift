@@ -25,8 +25,6 @@ struct WorkspaceOpener {
         switch selectedIDE {
         case .cursor:
             openWithCursor(fileURL: fileURL)
-        case .zed:
-            openWithZed(fileURL: fileURL)
         case .trae:
             openWithTrae(fileURL: fileURL)
         }
@@ -50,27 +48,6 @@ struct WorkspaceOpener {
             }
         } catch {
             Log.error("Failed to open workspace with Cursor: \(error)", category: .workspace)
-            // Fallback to opening with default app
-            NSWorkspace.shared.open(fileURL)
-        }
-    }
-
-    private static func openWithZed(fileURL: URL) {
-        // Use command line to open with Zed so it properly loads the workspace
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = ["-a", "Zed", fileURL.path]
-
-        do {
-            try task.run()
-            task.waitUntilExit()
-            if task.terminationStatus != 0 {
-                Log.error("Failed to open workspace with Zed (exit code: \(task.terminationStatus))", category: .workspace)
-                // Fallback to opening with default app
-                NSWorkspace.shared.open(fileURL)
-            }
-        } catch {
-            Log.error("Failed to open workspace with Zed: \(error)", category: .workspace)
             // Fallback to opening with default app
             NSWorkspace.shared.open(fileURL)
         }

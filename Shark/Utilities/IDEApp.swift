@@ -10,7 +10,6 @@ import Foundation
 
 enum IDEApp: String, CaseIterable, Identifiable {
     case cursor = "Cursor"
-    case zed = "Zed"
     case trae = "Trae"
 
     var id: String { rawValue }
@@ -19,8 +18,6 @@ enum IDEApp: String, CaseIterable, Identifiable {
         switch self {
         case .cursor:
             return "Cursor"
-        case .zed:
-            return "Zed"
         case .trae:
             return "Trae"
         }
@@ -30,8 +27,6 @@ enum IDEApp: String, CaseIterable, Identifiable {
         switch self {
         case .cursor:
             return "com.todesktop.230313mzl4w4u92"
-        case .zed:
-            return "dev.zed.Zed"
         case .trae:
             return "com.traede.IDE"
         }
