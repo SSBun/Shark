@@ -17,6 +17,9 @@ struct WorkspaceListView: View {
     @State private var searchText: String = ""
     @State private var isSearchFocused: Bool = false
     @FocusState private var isTextFieldFocused: Bool
+    @Binding var isRefreshingVenomfiles: Bool
+
+    let onRefreshAllVenomfiles: (() -> Void)?
     
     private var filteredWorkspaces: [Workspace] {
         if searchText.isEmpty {
@@ -37,7 +40,24 @@ struct WorkspaceListView: View {
                     .font(.headline)
                     .foregroundColor(.secondary)
                 Spacer()
-                
+
+                // Refresh button
+                Button(action: {
+                    onRefreshAllVenomfiles?()
+                }) {
+                    if isRefreshingVenomfiles {
+                        ProgressView()
+                            .scaleEffect(0.6)
+                            .frame(width: 14, height: 14)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                }
+                .buttonStyle(.plain)
+                .help("Refresh Venomfiles status for all components")
+                .disabled(isRefreshingVenomfiles)
+
                 // Search button (⌘F)
                 Button(action: {
                     isSearchFocused = true
@@ -47,7 +67,7 @@ struct WorkspaceListView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Search workspaces (⌘F)")
-                
+
                 // Import button
                 Button(action: {
                     importWorkspace()
@@ -57,7 +77,7 @@ struct WorkspaceListView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Import existing Cursor workspace file")
-                
+
                 // Add button
                 Button(action: {
                     createNewWorkspace()

@@ -13,6 +13,7 @@ struct MainWorkspaceView: View {
     @State private var folders: [Folder] = []
     @State private var isLoadingFolders = false
     @State private var showComponentSelector = false
+    @State private var isRefreshingVenomfiles = false
     @EnvironmentObject var authManager: AuthorizationManager
     
     private var workspaces: Binding<[Workspace]> {
@@ -27,7 +28,9 @@ struct MainWorkspaceView: View {
             // Left area: Workspace list
             WorkspaceListView(
                 workspaces: workspaces,
-                selectedWorkspace: $selectedWorkspace
+                selectedWorkspace: $selectedWorkspace,
+                isRefreshingVenomfiles: $isRefreshingVenomfiles,
+                onRefreshAllVenomfiles: { refreshAllVenomfilesStatus() }
             )
             .environmentObject(authManager)
             .frame(minWidth: 250, idealWidth: 300, maxWidth: 400)
@@ -123,24 +126,24 @@ struct MainWorkspaceView: View {
         guard selectedWorkspace != nil else {
             return
         }
-        
+
         Task {
             let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
             guard authorized else {
                 return
             }
-            
+
             let selectedURLs = FileDialogHelper.selectFolders()
             guard !selectedURLs.isEmpty else {
                 return
             }
-            
+
             var newFolders: [Folder] = []
-            
+
             for folderURL in selectedURLs {
                 let folderPath = folderURL.path
                 let folderName = folderURL.lastPathComponent
-                
+
                 // Create security-scoped bookmark
                 var bookmarkData: Data? = nil
                 do {
@@ -152,23 +155,29 @@ struct MainWorkspaceView: View {
                 } catch {
                     print("Failed to create bookmark for \(folderPath): \(error)")
                 }
-                
+
                 // Check if folder already exists
                 if folders.contains(where: { $0.path == folderPath }) {
                     // Skip duplicate folders
                     continue
                 }
-                
+
+                // Check Venomfiles status asynchronously
+                let hasVenomfiles = await Task.detached(priority: .userInitiated) {
+                    Folder.checkHasVenomfiles(path: folderPath, bookmarkData: bookmarkData)
+                }.value
+
                 let newFolder = Folder(
                     name: folderName,
                     path: folderPath,
                     displayName: nil,
-                    bookmarkData: bookmarkData
+                    bookmarkData: bookmarkData,
+                    hasVenomfiles: hasVenomfiles
                 )
-                
+
                 newFolders.append(newFolder)
             }
-            
+
             await MainActor.run {
                 folders.append(contentsOf: newFolders)
             }
@@ -178,28 +187,48 @@ struct MainWorkspaceView: View {
     private func addSelectedFolders(_ selectedFolders: [Folder]) {
         guard selectedWorkspace != nil else { return }
 
-        var newFolders: [Folder] = []
-        for folder in selectedFolders {
-            if !folders.contains(where: { $0.path == folder.path }) {
-                newFolders.append(folder)
+        Task {
+            var newFolders: [Folder] = []
+            for folder in selectedFolders {
+                if !folders.contains(where: { $0.path == folder.path }) {
+                    // Check Venomfiles status when adding (async)
+                    let hasVenomfiles = await Task.detached(priority: .userInitiated) {
+                        Folder.checkHasVenomfiles(path: folder.path, bookmarkData: folder.bookmarkData)
+                    }.value
+                    var newFolder = folder
+                    newFolder.hasVenomfiles = hasVenomfiles
+                    newFolders.append(newFolder)
+                }
+            }
+
+            await MainActor.run {
+                folders.append(contentsOf: newFolders)
             }
         }
-
-        folders.append(contentsOf: newFolders)
     }
 
     private func handleDroppedFolders(_ droppedFolders: [Folder]) {
         guard selectedWorkspace != nil else { return }
 
-        var newFolders: [Folder] = []
-        for folder in droppedFolders {
-            if !folders.contains(where: { $0.path == folder.path }) {
-                newFolders.append(folder)
+        Task {
+            var newFolders: [Folder] = []
+            for folder in droppedFolders {
+                if !folders.contains(where: { $0.path == folder.path }) {
+                    // Check Venomfiles status when adding (async)
+                    let hasVenomfiles = await Task.detached(priority: .userInitiated) {
+                        Folder.checkHasVenomfiles(path: folder.path, bookmarkData: folder.bookmarkData)
+                    }.value
+                    var newFolder = folder
+                    newFolder.hasVenomfiles = hasVenomfiles
+                    newFolders.append(newFolder)
+                }
             }
-        }
 
-        if !newFolders.isEmpty {
-            folders.append(contentsOf: newFolders)
+            if !newFolders.isEmpty {
+                await MainActor.run {
+                    folders.append(contentsOf: newFolders)
+                }
+            }
         }
     }
     
@@ -233,6 +262,65 @@ struct MainWorkspaceView: View {
             } catch {
                 // TODO: Show error alert
                 print("Failed to save workspace file: \(error)")
+            }
+        }
+    }
+
+    private func refreshAllVenomfilesStatus() {
+        isRefreshingVenomfiles = true
+
+        Task {
+            let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
+            guard authorized else {
+                await MainActor.run {
+                    isRefreshingVenomfiles = false
+                }
+                return
+            }
+
+            // Helper to check and cache Venomfiles status
+            func checkAndCacheVenomfiles(path: String, bookmarkData: Data?) -> Bool {
+                let result = Folder.checkHasVenomfiles(path: path, bookmarkData: bookmarkData)
+                let venomfilesKey = "hasVenomfiles_\(path)"
+                UserDefaults.standard.set(result, forKey: venomfilesKey)
+                return result
+            }
+
+            // Refresh for current workspace's folders
+            await MainActor.run {
+                for i in 0..<folders.count {
+                    folders[i].hasVenomfiles = checkAndCacheVenomfiles(
+                        path: folders[i].path,
+                        bookmarkData: folders[i].bookmarkData
+                    )
+                }
+                isRefreshingVenomfiles = false
+            }
+
+            // Also refresh for all other workspaces
+            for workspace in workspaceManager.workspaces {
+                if workspace.id == selectedWorkspace?.id {
+                    continue // Already done above
+                }
+
+                do {
+                    let fileURL = URL(fileURLWithPath: workspace.filePath)
+                    var workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
+                    let otherFolders = workspaceFile.toFolders()
+
+                    // Update each folder's Venomfiles status and save
+                    var updatedFolders = otherFolders
+                    for i in 0..<updatedFolders.count {
+                        updatedFolders[i].hasVenomfiles = checkAndCacheVenomfiles(
+                            path: updatedFolders[i].path,
+                            bookmarkData: updatedFolders[i].bookmarkData
+                        )
+                    }
+                    workspaceFile.updateFolders(from: updatedFolders)
+                    try workspaceFile.save(to: fileURL)
+                } catch {
+                    print("Failed to refresh Venomfiles for workspace \(workspace.name): \(error)")
+                }
             }
         }
     }

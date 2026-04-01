@@ -18,13 +18,15 @@ struct Folder: Identifiable, Hashable, Codable {
     var path: String
     var displayName: String? // Optional display name from workspace file
     var bookmarkData: Data? // Security-scoped bookmark data for sandboxed access
-    
-    init(id: UUID = UUID(), name: String, path: String, displayName: String? = nil, bookmarkData: Data? = nil) {
+    var hasVenomfiles: Bool = false // Whether this folder contains Venomfiles (checked lazily on first add)
+
+    init(id: UUID = UUID(), name: String, path: String, displayName: String? = nil, bookmarkData: Data? = nil, hasVenomfiles: Bool = false) {
         self.id = id
         self.name = name
         self.path = path
         self.displayName = displayName
         self.bookmarkData = bookmarkData
+        self.hasVenomfiles = hasVenomfiles
     }
     
     /// Check if the folder exists on disk
@@ -306,5 +308,70 @@ struct Folder: Identifiable, Hashable, Codable {
         }
         
         return scanDirectory(at: url)
+    }
+
+    /// Check if a folder path contains a Venomfiles directory within 3 levels
+    static func checkHasVenomfiles(path: String, bookmarkData: Data?, depth: Int = 0) -> Bool {
+        guard depth < 3 else { return false }
+
+        // Try to use bookmark data if available - use the resolved URL
+        if let bookmarkData = bookmarkData {
+            var isStale = false
+            if let url = try? URL(resolvingBookmarkData: bookmarkData, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale),
+               url.startAccessingSecurityScopedResource() {
+                defer { url.stopAccessingSecurityScopedResource() }
+                if checkVenomfilesAt(url: url, depth: depth, bookmarkData: bookmarkData) {
+                    return true
+                }
+            }
+        }
+
+        // Try global authorized folders from SettingsManager
+        if let globalBookmarkData = SettingsManager.shared.bookmarkData(for: path) {
+            var isStale = false
+            if let bookmarkedURL = try? URL(resolvingBookmarkData: globalBookmarkData, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale),
+               bookmarkedURL.startAccessingSecurityScopedResource() {
+                defer { bookmarkedURL.stopAccessingSecurityScopedResource() }
+                if checkVenomfilesAt(url: bookmarkedURL, depth: depth, bookmarkData: globalBookmarkData) {
+                    return true
+                }
+            }
+        }
+
+        // Direct access
+        let url = URL(fileURLWithPath: path)
+        if checkVenomfilesAt(url: url, depth: depth, bookmarkData: bookmarkData) {
+            return true
+        }
+
+        return false
+    }
+
+    private static func checkVenomfilesAt(url: URL, depth: Int, bookmarkData: Data?) -> Bool {
+        var isDirectory: ObjCBool = false
+
+        // Check current directory for Venomfiles
+        let venomfilesURL = url.appendingPathComponent("Venomfiles")
+        if FileManager.default.fileExists(atPath: venomfilesURL.path, isDirectory: &isDirectory) && isDirectory.boolValue {
+            return true
+        }
+
+        // Check subdirectories recursively (up to 3 levels total)
+        if depth < 3 {
+            do {
+                let contents = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+                for itemURL in contents {
+                    if FileManager.default.fileExists(atPath: itemURL.path, isDirectory: &isDirectory), isDirectory.boolValue {
+                        if checkVenomfilesAt(url: itemURL, depth: depth + 1, bookmarkData: bookmarkData) {
+                            return true
+                        }
+                    }
+                }
+            } catch {
+                // Ignore errors when scanning subdirectories
+            }
+        }
+
+        return false
     }
 }

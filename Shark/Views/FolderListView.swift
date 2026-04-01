@@ -212,6 +212,7 @@ struct FolderRow: View {
     @State private var xcodeProjectPath: String? = nil
     @State private var permissionDenied: Bool = false
     @State private var showGitPanel: Bool = false
+    @State private var showDependencySheet: Bool = false
     
     var body: some View {
         HStack(spacing: 8) {
@@ -302,6 +303,16 @@ struct FolderRow: View {
         .opacity(folderExists ? 1.0 : 0.7)
         .contextMenu {
             // Top section - Actions
+            if folder.hasVenomfiles && folderExists {
+                Button(action: { showDependencySheet = true }) {
+                    HStack {
+                        Image(systemName: "list.bullet.rectangle")
+                        Text("Check Dependencies")
+                    }
+                }
+                Divider()
+            }
+
             Button(role: .destructive, action: onDelete) {
                 HStack {
                     Image(systemName: "trash")
@@ -399,6 +410,9 @@ struct FolderRow: View {
         }
         .sheet(isPresented: $showGitPanel) {
             GitPanelView(folder: folder)
+        }
+        .sheet(isPresented: $showDependencySheet) {
+            DependencyListView(folder: folder)
         }
         .onAppear {
             checkFolderStatus()

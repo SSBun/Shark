@@ -110,16 +110,21 @@ extension CursorWorkspaceFile {
     func toFolders() -> [Folder] {
         folders.map { workspaceFolder in
             let folderName = URL(fileURLWithPath: workspaceFolder.path).lastPathComponent
-            
+
             // Try to find a stored bookmark for this path in UserDefaults
             let bookmarkKey = "folderBookmark_\(workspaceFolder.path)"
             let bookmarkData = UserDefaults.standard.data(forKey: bookmarkKey)
-            
+
+            // Check if hasVenomfiles is cached in UserDefaults
+            let venomfilesKey = "hasVenomfiles_\(workspaceFolder.path)"
+            let cachedHasVenomfiles = UserDefaults.standard.bool(forKey: venomfilesKey)
+
             return Folder(
                 name: folderName,
                 path: workspaceFolder.path,
                 displayName: workspaceFolder.name,
-                bookmarkData: bookmarkData
+                bookmarkData: bookmarkData,
+                hasVenomfiles: cachedHasVenomfiles
             )
         }
     }
