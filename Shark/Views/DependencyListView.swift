@@ -11,6 +11,7 @@ struct DependencyListView: View {
     @Environment(\.dismiss) var dismiss
     let folder: Folder
     @State private var dependencies: [VenomDependency] = []
+    @State private var localDependencies: [VenomDependency] = []
     @State private var searchText = ""
     @State private var isLoading = false
 
@@ -22,6 +23,17 @@ struct DependencyListView: View {
                 $0.name.localizedCaseInsensitiveContains(searchText) ||
                 $0.git.localizedCaseInsensitiveContains(searchText) ||
                 $0.tag.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+
+    var filteredLocalDependencies: [VenomDependency] {
+        if searchText.isEmpty {
+            return localDependencies
+        } else {
+            return localDependencies.filter {
+                $0.name.localizedCaseInsensitiveContains(searchText) ||
+                ($0.localPath?.localizedCaseInsensitiveContains(searchText) ?? false)
             }
         }
     }
@@ -66,7 +78,7 @@ struct DependencyListView: View {
                 Spacer()
                 ProgressView("Loading dependencies...")
                 Spacer()
-            } else if dependencies.isEmpty {
+            } else if dependencies.isEmpty && localDependencies.isEmpty {
                 Spacer()
                 VStack(spacing: 12) {
                     Image(systemName: "tray")
@@ -76,7 +88,7 @@ struct DependencyListView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-            } else if filteredDependencies.isEmpty {
+            } else if filteredDependencies.isEmpty && filteredLocalDependencies.isEmpty {
                 Spacer()
                 VStack(spacing: 12) {
                     Image(systemName: "magnifyingglass")
@@ -87,9 +99,87 @@ struct DependencyListView: View {
                 }
                 Spacer()
             } else {
-                List(filteredDependencies) { dependency in
-                    DependencyRow(dependency: dependency)
-                        .padding(.vertical, 4)
+                List {
+                    // Developing Dependencies Section
+                    if !localDependencies.isEmpty {
+                        Section {
+                            ForEach(filteredLocalDependencies) { dependency in
+                                LocalDependencyRow(dependency: dependency)
+                                    .padding(.vertical, 4)
+                            }
+                        } header: {
+                            HStack {
+                                Image(systemName: "hammer.fill")
+                                    .foregroundColor(.orange)
+                                    .font(.system(size: 12))
+                                Text("Developing Dependencies")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.orange)
+                                Spacer()
+                                Text("\(filteredLocalDependencies.count)")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(.orange.opacity(0.9))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(.orange.opacity(0.15))
+                                    )
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(.orange.opacity(0.08))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(.orange.opacity(0.2), lineWidth: 0.5)
+                                    )
+                            )
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                        }
+                    }
+
+                    // Regular Dependencies Section
+                    if !dependencies.isEmpty {
+                        Section {
+                            ForEach(filteredDependencies) { dependency in
+                                DependencyRow(dependency: dependency)
+                                    .padding(.vertical, 4)
+                            }
+                        } header: {
+                            HStack {
+                                Image(systemName: "shippingbox")
+                                    .foregroundColor(.blue)
+                                    .font(.system(size: 12))
+                                Text("Dependencies")
+                                    .font(.system(size: 12, weight: .semibold))
+                                Spacer()
+                                Text("\(filteredDependencies.count)")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(.blue.opacity(0.9))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(.blue.opacity(0.15))
+                                    )
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(.blue.opacity(0.08))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(.blue.opacity(0.2), lineWidth: 0.5)
+                                    )
+                            )
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                        }
+                    }
                 }
                 .listStyle(.plain)
             }
@@ -98,7 +188,9 @@ struct DependencyListView: View {
 
             // Footer
             HStack {
-                Text("\(filteredDependencies.count) of \(dependencies.count) dependencies")
+                let totalFiltered = filteredDependencies.count + filteredLocalDependencies.count
+                let total = dependencies.count + localDependencies.count
+                Text("\(totalFiltered) of \(total) dependencies")
                     .foregroundColor(.secondary)
                 Spacer()
             }
@@ -116,11 +208,13 @@ struct DependencyListView: View {
 
         DispatchQueue.global(qos: .userInitiated).async {
             let deps = VenomfileParser.parseDependencies(from: folder)
+            let localDeps = VenomfileParser.parseLocalDependencies(from: folder)
             DispatchQueue.main.async {
                 self.dependencies = deps
+                self.localDependencies = localDeps
                 self.isLoading = false
 
-                if deps.isEmpty {
+                if deps.isEmpty && localDeps.isEmpty {
                     Log.info("No dependencies found for: \(folder.name). Venomfiles check: \(folder.hasVenomfiles)", category: .workspace)
 
                     // Try to diagnose why empty
@@ -129,10 +223,74 @@ struct DependencyListView: View {
                     let exists = FileManager.default.fileExists(atPath: venomfilesPath, isDirectory: &isDir)
                     Log.debug("Venomfiles path: \(venomfilesPath), exists: \(exists), isDirectory: \(isDir.boolValue)", category: .workspace)
                 } else {
-                    Log.info("Loaded \(deps.count) dependencies for: \(folder.name)", category: .workspace)
+                    Log.info("Loaded \(deps.count) dependencies and \(localDeps.count) local dependencies for: \(folder.name)", category: .workspace)
                 }
             }
         }
+    }
+}
+
+struct LocalDependencyRow: View {
+    let dependency: VenomDependency
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: "hammer")
+                    .foregroundColor(.orange)
+                    .font(.system(size: 14))
+
+                Text(dependency.name)
+                    .font(.system(size: 13, weight: .medium))
+
+                Spacer()
+
+                Text("local")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.orange)
+                    )
+
+                if !dependency.sourceFilePath.isEmpty {
+                    Button(action: {
+                        let fileURL = URL(fileURLWithPath: dependency.sourceFilePath)
+                        NSWorkspace.shared.open(fileURL)
+                    }) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Edit \(URL(fileURLWithPath: dependency.sourceFilePath).lastPathComponent) in default editor")
+                }
+            }
+
+            if let localPath = dependency.localPath, !localPath.isEmpty {
+                HStack(spacing: 4) {
+                    Text(localPath)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+
+                    Button(action: {
+                        let folderURL = URL(fileURLWithPath: localPath)
+                        NSWorkspace.shared.activateFileViewerSelecting([folderURL])
+                    }) {
+                        Image(systemName: "folder")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Show in Finder")
+                }
+            }
+        }
+        .padding(.vertical, 2)
     }
 }
 
