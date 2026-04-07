@@ -232,6 +232,7 @@ struct DependencyListView: View {
 
 struct LocalDependencyRow: View {
     let dependency: VenomDependency
+    @State private var gitBranch: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -245,15 +246,20 @@ struct LocalDependencyRow: View {
 
                 Spacer()
 
-                Text("local")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.orange)
-                    )
+                // Show git branch if available, otherwise show "local" badge
+                if let branch = gitBranch, !branch.isEmpty {
+                    GitReferenceBadge(reference: .branch(branch))
+                } else {
+                    Text("local")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.orange)
+                        )
+                }
 
                 if !dependency.sourceFilePath.isEmpty {
                     Button(action: {
@@ -291,6 +297,40 @@ struct LocalDependencyRow: View {
             }
         }
         .padding(.vertical, 2)
+        .onAppear {
+            loadGitBranch()
+        }
+    }
+
+    private func loadGitBranch() {
+        guard let localPath = dependency.localPath else {
+            Log.debug("[LocalDependencyRow] No localPath for dependency: \(dependency.name)", category: .workspace)
+            return
+        }
+
+        Log.debug("[LocalDependencyRow] Loading git branch for: \(dependency.name) at path: \(localPath)", category: .workspace)
+
+        // Check if path exists and is a git repository
+        let fileManager = FileManager.default
+        let gitPath = (localPath as NSString).appendingPathComponent(".git")
+        var isDirectory: ObjCBool = false
+        let exists = fileManager.fileExists(atPath: gitPath, isDirectory: &isDirectory)
+
+        Log.debug("[LocalDependencyRow] Git path: \(gitPath), exists: \(exists), isDirectory: \(isDirectory.boolValue)", category: .workspace)
+
+        guard exists && isDirectory.boolValue else {
+            Log.debug("[LocalDependencyRow] Not a git repository: \(localPath)", category: .workspace)
+            return
+        }
+
+        // Run git command on background thread
+        DispatchQueue.global(qos: .userInitiated).async {
+            let branch = getGitBranch(at: localPath)
+            Log.debug("[LocalDependencyRow] Git branch result for \(self.dependency.name): \(branch ?? "nil")", category: .workspace)
+            DispatchQueue.main.async {
+                self.gitBranch = branch
+            }
+        }
     }
 }
 
@@ -403,6 +443,83 @@ struct DependencyRow: View {
 
         return URL(string: "https://\(host)/\(path)")
     }
+}
+
+// MARK: - Git Branch Helper
+
+/// Read git branch directly from git files (sandbox-safe)
+private func getGitBranch(at path: String) -> String? {
+    Log.debug("[getGitBranch] Checking path: \(path)", category: .workspace)
+
+    // Try to read from .git/HEAD file directly
+    let gitDir = (path as NSString).appendingPathComponent(".git")
+    let headPath = (gitDir as NSString).appendingPathComponent("HEAD")
+
+    guard FileManager.default.fileExists(atPath: headPath),
+          let headContent = try? String(contentsOfFile: headPath, encoding: .utf8) else {
+        Log.debug("[getGitBranch] Cannot read HEAD file at: \(headPath)", category: .workspace)
+        return nil
+    }
+
+    let ref = headContent.trimmingCharacters(in: .whitespacesAndNewlines)
+    Log.debug("[getGitBranch] HEAD content: \(ref)", category: .workspace)
+
+    // HEAD contains: "ref: refs/heads/main" or just a commit hash
+    if ref.hasPrefix("ref: ") {
+        // Extract branch name from ref
+        let branch = String(ref.dropFirst("ref: refs/heads/".count))
+        Log.debug("[getGitBranch] Found branch: \(branch)", category: .workspace)
+        return branch
+    } else {
+        // Detached HEAD - try to find tag or just return short commit
+        if let tag = findTagForCommit(ref, in: gitDir) {
+            Log.debug("[getGitBranch] Found tag: \(tag)", category: .workspace)
+            return tag
+        }
+        // Return short commit hash
+        let shortCommit = String(ref.prefix(7))
+        Log.debug("[getGitBranch] Detached HEAD, commit: \(shortCommit)", category: .workspace)
+        return shortCommit
+    }
+}
+
+/// Find tag for a commit by scanning refs/tags directory
+private func findTagForCommit(_ commit: String, in gitDir: String) -> String? {
+    let tagsDir = (gitDir as NSString).appendingPathComponent("refs/tags")
+
+    guard FileManager.default.fileExists(atPath: tagsDir) else {
+        return nil
+    }
+
+    do {
+        let tagFiles = try FileManager.default.contentsOfDirectory(atPath: tagsDir)
+        for tagFile in tagFiles {
+            let tagPath = (tagsDir as NSString).appendingPathComponent(tagFile)
+            if let tagContent = try? String(contentsOfFile: tagPath, encoding: .utf8) {
+                let tagCommit = tagContent.trimmingCharacters(in: .whitespacesAndNewlines)
+                if tagCommit == commit {
+                    return tagFile
+                }
+            }
+        }
+    } catch {
+        // Ignore errors
+    }
+
+    // Try packed-refs
+    let packedRefsPath = (gitDir as NSString).appendingPathComponent("packed-refs")
+    if let packedRefs = try? String(contentsOfFile: packedRefsPath, encoding: .utf8) {
+        for line in packedRefs.split(separator: "\n") {
+            let lineStr = String(line)
+            if lineStr.hasPrefix("#") || lineStr.hasPrefix("^") { continue }
+            let parts = lineStr.split(separator: " ", maxSplits: 1).map(String.init)
+            if parts.count == 2, parts[0] == commit, parts[1].hasPrefix("refs/tags/") {
+                return String(parts[1].dropFirst("refs/tags/".count))
+            }
+        }
+    }
+
+    return nil
 }
 
 #Preview {

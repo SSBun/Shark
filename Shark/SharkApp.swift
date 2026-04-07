@@ -50,7 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return true
+        return false
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -105,7 +105,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // Clean up tracked windows
             if window == self.mainWindow {
                 self.mainWindow = nil
-                NSApplication.shared.terminate(nil)
             } else if window == self.settingsWindow {
                 self.settingsWindow = nil
             }
