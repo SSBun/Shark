@@ -14,7 +14,7 @@ struct ComponentSelectorView: View {
     @State private var selectedFolderPaths: Set<String> = []
     @State private var isLoading = false
     
-    let searchPath: String
+    let searchPaths: [String]
     let onAdd: ([Folder]) -> Void
     
     var filteredFolders: [Folder] {
@@ -66,13 +66,15 @@ struct ComponentSelectorView: View {
                     Image(systemName: "folder.badge.questionmark")
                         .font(.system(size: 32))
                         .foregroundColor(.secondary)
-                    Text("No folders found in search path")
+                    Text(searchPaths.isEmpty ? "No search paths configured" : "No folders found in search paths")
                         .foregroundColor(.secondary)
-                    Text(searchPath)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+                    if !searchPaths.isEmpty {
+                        Text(searchPaths.joined(separator: "\n"))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
                 }
                 Spacer()
             } else {
@@ -181,49 +183,54 @@ struct ComponentSelectorView: View {
     }
     
     private func scanFolders() {
-        guard !searchPath.isEmpty else { return }
-        isLoading = true
-        
-        let url = URL(fileURLWithPath: searchPath)
-        
-        // Start accessing security-scoped resource if needed
-        let didStartAccessing = url.startAccessingSecurityScopedResource()
-        defer {
-            if didStartAccessing {
-                url.stopAccessingSecurityScopedResource()
-            }
+        guard !searchPaths.isEmpty else {
+            allFolders = []
+            return
         }
-        
+        isLoading = true
+
         DispatchQueue.global(qos: .userInitiated).async {
             let fileManager = FileManager.default
-            do {
-                let contents = try fileManager.contentsOfDirectory(
-                    at: url,
-                    includingPropertiesForKeys: [.isDirectoryKey],
-                    options: [.skipsHiddenFiles]
-                )
-                
-                let folders = contents.compactMap { itemURL -> Folder? in
-                    var isDir: ObjCBool = false
-                    if fileManager.fileExists(atPath: itemURL.path, isDirectory: &isDir), isDir.boolValue {
-                        return Folder(
+            var allFound: [Folder] = []
+            var seenPaths = Set<String>()
+
+            for path in searchPaths {
+                let url = URL(fileURLWithPath: path)
+                let didStartAccessing = url.startAccessingSecurityScopedResource()
+                defer {
+                    if didStartAccessing {
+                        url.stopAccessingSecurityScopedResource()
+                    }
+                }
+
+                do {
+                    let contents = try fileManager.contentsOfDirectory(
+                        at: url,
+                        includingPropertiesForKeys: [.isDirectoryKey],
+                        options: [.skipsHiddenFiles]
+                    )
+
+                    for itemURL in contents {
+                        var isDir: ObjCBool = false
+                        guard fileManager.fileExists(atPath: itemURL.path, isDirectory: &isDir), isDir.boolValue else { continue }
+                        guard !seenPaths.contains(itemURL.path) else { continue }
+                        seenPaths.insert(itemURL.path)
+                        allFound.append(Folder(
                             name: itemURL.lastPathComponent,
                             path: itemURL.path,
                             displayName: nil
-                        )
+                        ))
                     }
-                    return nil
-                }.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-                
-                DispatchQueue.main.async {
-                    self.allFolders = folders
-                    self.isLoading = false
+                } catch {
+                    print("Error scanning directory \(path): \(error)")
                 }
-            } catch {
-                print("Error scanning directory: \(error)")
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                }
+            }
+
+            allFound.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
+            DispatchQueue.main.async {
+                self.allFolders = allFound
+                self.isLoading = false
             }
         }
     }

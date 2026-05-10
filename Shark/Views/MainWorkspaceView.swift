@@ -56,7 +56,7 @@ struct MainWorkspaceView: View {
         .frame(minWidth: 500, minHeight: 400)
         .sheet(isPresented: $showComponentSelector) {
             ComponentSelectorView(
-                searchPath: SettingsManager.shared.componentsSearchPath,
+                searchPaths: SettingsManager.shared.componentsSearchPaths,
                 onAdd: { selectedFolders in
                     addSelectedFolders(selectedFolders)
                 }

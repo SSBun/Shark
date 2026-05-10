@@ -37,9 +37,6 @@ echo -e "${GREEN}Creating DMG: $DMG_NAME${NC}"
 TMP_DIR=$(mktemp -d)
 cp -R "$APP_PATH" "$TMP_DIR/"
 
-# Create Applications symlink for easy installation
-ln -s /Applications "$TMP_DIR/Applications"
-
 # Create INSTALL.md with instructions
 cat > "$TMP_DIR/INSTALL.md" << 'EOF'
 # Shark Installation Guide
@@ -72,15 +69,17 @@ if command -v create-dmg &> /dev/null; then
     --app-drop-link 425 190 \
     --no-internet-enable \
     "$DMG_NAME" \
-    "$TMP_DIR/" 2>/dev/null || true
+    "$TMP_DIR/"
 else
   echo -e "${YELLOW}create-dmg not found, using hdiutil...${NC}"
   echo -e "${YELLOW}Install create-dmg with: brew install create-dmg${NC}"
+  ln -s /Applications "$TMP_DIR/Applications"
   hdiutil create -volname "Shark" -srcfolder "$TMP_DIR" -ov -format UDZO "$DMG_NAME"
 fi
 
 # Clean up
 rm -rf "$TMP_DIR"
+rm -f rw.*."$DMG_NAME"
 
 # Calculate checksum
 shasum -a 256 "$DMG_NAME" > "${DMG_NAME}.sha256"

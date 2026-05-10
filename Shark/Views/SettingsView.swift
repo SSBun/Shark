@@ -31,7 +31,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
 struct SettingsView: View {
     @State private var selectedTab: SettingsTab = .general
     @State private var settingsFolderPath: String = ""
-    @State private var componentsSearchPath: String = ""
+    @State private var componentsSearchPaths: [String] = []
     @State private var selectedLocationType: LocationType = .default
     @State private var authorizedFolders: [String] = []
     @State private var selectedTerminalApp: TerminalApp = .systemDefault
@@ -64,7 +64,7 @@ struct SettingsView: View {
         .frame(width: 600, height: 500)
         .onAppear {
             settingsFolderPath = settingsManager.settingsFolderPath
-            componentsSearchPath = settingsManager.componentsSearchPath
+            componentsSearchPaths = settingsManager.componentsSearchPaths
             authorizedFolders = settingsManager.authorizedFolders
             selectedTerminalApp = settingsManager.defaultTerminalApp
             selectedIDEApp = settingsManager.defaultIDEApp
@@ -87,9 +87,6 @@ struct SettingsView: View {
             // Auto-save when path changes
             settingsManager.settingsFolderPath = newValue
         }
-        .onChange(of: componentsSearchPath) { oldValue, newValue in
-            settingsManager.componentsSearchPath = newValue
-        }
         .onChange(of: selectedTerminalApp) { oldValue, newValue in
             settingsManager.defaultTerminalApp = newValue
         }
@@ -98,7 +95,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - General Tab (Seahorse-style: ScrollView + sections with Dividers)
+    // MARK: - General Tab
 
     private var generalTabContent: some View {
         ScrollView {
@@ -141,36 +138,54 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 Divider()
-                // Components search path
+                // Components search paths
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Components search path")
+                    Text("Components search paths")
                         .font(.system(size: 13, weight: .semibold))
-                    HStack(spacing: 8) {
-                        Text(componentsSearchPath.isEmpty ? "Not set" : componentsSearchPath)
-                            .font(.system(size: 12))
-                            .foregroundStyle(componentsSearchPath.isEmpty ? .secondary : .primary)
-                            .textSelection(.enabled)
-                            .lineLimit(1)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color(NSColor.controlBackgroundColor))
-                            .cornerRadius(6)
-                        Button("Set Path...") { selectComponentsSearchPath() }
-                        if !componentsSearchPath.isEmpty {
-                            Button(action: {
-                                NSWorkspace.shared.open(URL(fileURLWithPath: componentsSearchPath))
-                            }) {
-                                Image(systemName: "arrow.right.circle.fill")
-                                    .foregroundStyle(Color.accentColor)
-                            }
-                            .buttonStyle(.plain)
-                            .help("Reveal in Finder")
-                        }
-                    }
-                    Text("Specify the directory where Shark should look for your reusable components.")
+                    Text("Specify directories where Shark should look for your reusable components.")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
+
+                    if !componentsSearchPaths.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(componentsSearchPaths, id: \.self) { path in
+                                HStack(spacing: 6) {
+                                    Text(path)
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .foregroundColor(.primary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                    Spacer()
+                                    Button(action: {
+                                        NSWorkspace.shared.open(URL(fileURLWithPath: path))
+                                    }) {
+                                        Image(systemName: "arrow.right.circle.fill")
+                                            .foregroundStyle(Color.accentColor)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Reveal in Finder")
+                                    Button(action: {
+                                        settingsManager.removeComponentsSearchPath(at: path)
+                                        componentsSearchPaths = settingsManager.componentsSearchPaths
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.secondary)
+                                            .font(.system(size: 14))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Remove")
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .background(Color(NSColor.controlBackgroundColor))
+                                .cornerRadius(6)
+                            }
+                        }
+                    }
+
+                    Button("Add Path...") { addComponentsSearchPath() }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
                 }
                 Divider()
                 // Default IDE
@@ -288,7 +303,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Advanced Tab
+    // MARK: - About Tab
 
     @StateObject private var updateManager = UpdateManager.shared
 
@@ -387,23 +402,23 @@ struct SettingsView: View {
         ) else {
             return
         }
-        
+
         settingsManager.addAuthorizedFolder(url)
         authorizedFolders = settingsManager.authorizedFolders
     }
-    
-    private func selectComponentsSearchPath() {
+
+    private func addComponentsSearchPath() {
         guard let url = FileDialogHelper.selectFolder(
             title: "Select Components Search Path",
             message: "Choose a folder containing your components"
         ) else {
             return
         }
-        
-        settingsManager.saveComponentsSearchPathBookmark(url)
-        componentsSearchPath = url.path
+
+        settingsManager.addComponentsSearchPath(url)
+        componentsSearchPaths = settingsManager.componentsSearchPaths
     }
-    
+
     private var displayPath: String {
         if selectedLocationType == .default {
             return settingsManager.defaultSettingsFolderPath
@@ -411,7 +426,7 @@ struct SettingsView: View {
             return settingsFolderPath.isEmpty ? settingsManager.defaultSettingsFolderPath : settingsFolderPath
         }
     }
-    
+
     private func selectSettingsFolder() {
         guard let url = FileDialogHelper.selectFolder(
             title: "Select Settings Saving Folder",
@@ -419,7 +434,7 @@ struct SettingsView: View {
         ) else {
             return
         }
-        
+
         // Persist access to this folder across app launches
         do {
             let bookmarkData = try url.bookmarkData(
@@ -428,58 +443,58 @@ struct SettingsView: View {
                 relativeTo: nil
             )
             UserDefaults.standard.set(bookmarkData, forKey: "settingsFolderBookmark")
-            
+
             // Start accessing the security-scoped resource
             _ = url.startAccessingSecurityScopedResource()
         } catch {
             print("Failed to create security-scoped bookmark: \(error)")
         }
-        
+
         settingsFolderPath = url.path
         selectedLocationType = .custom
-        
+
         // Refresh workspaces after changing storage path
         WorkspaceManager.shared.refreshWorkspaces()
     }
-    
+
     private func openFolderInFinder() {
         let path = displayPath
         let url = URL(fileURLWithPath: path)
         NSWorkspace.shared.open(url)
     }
-    
+
     private func selectCustomTerminalApp() {
         guard let window = NSApp.mainWindow else { return }
-        
+
         let dialog = NSOpenPanel()
         dialog.title = "Select Terminal Application"
         dialog.showsHiddenFiles = false
         dialog.allowsMultipleSelection = false
         dialog.canChooseDirectories = false
         dialog.canChooseFiles = true
-        
+
         // Set default directory to Applications
         dialog.directoryURL = URL(fileURLWithPath: "/Applications")
-        
+
         // Filter for app bundles using allowedFileTypes
         dialog.allowedFileTypes = ["app"]
-        
+
         dialog.beginSheetModal(for: window) { result in
             guard result == .OK, let appURL = dialog.url else { return }
-            
+
             // Get the bundle identifier
             guard let bundle = Bundle(url: appURL),
                   let bundleId = bundle.bundleIdentifier else {
                 print("Could not get bundle identifier for selected app")
                 return
             }
-            
+
             print("Selected terminal app: \(appURL.lastPathComponent) (bundle: \(bundleId))")
-            
+
             // Save to UserDefaults for future use
             UserDefaults.standard.set(appURL.path, forKey: "customTerminalAppPath")
             UserDefaults.standard.set(bundleId, forKey: "customTerminalAppBundleId")
-            
+
             // Show confirmation
             let alert = NSAlert()
             alert.messageText = "Terminal App Selected"
@@ -494,4 +509,3 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
 }
-
