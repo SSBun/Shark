@@ -193,6 +193,22 @@ class SettingsManager {
         let filename = generateWorkspaceFilename(baseName: baseName)
         return folderURL.appendingPathComponent(filename)
     }
+
+    /// Get the full URL for a new Claude workspace directory
+    func getNewClaudeWorkspaceURL(baseName: String = "claude-workspace") throws -> URL {
+        let folderURL = try getSettingsFolderURL()
+        var dirName = baseName
+        var counter = 1
+
+        while FileManager.default.fileExists(atPath: folderURL.appendingPathComponent(dirName).path) {
+            dirName = "\(baseName)-\(counter)"
+            counter += 1
+        }
+
+        let url = folderURL.appendingPathComponent(dirName)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
     
     // MARK: - Terminal App Preference
     

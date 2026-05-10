@@ -109,6 +109,17 @@ struct ComponentSelectorView: View {
                         let targetCount = targetPaths.count
 
                         Button(action: {
+                            copyPaths(targetPaths)
+                        }) {
+                            Label(
+                                targetCount > 1 ? "Copy \(targetCount) Paths" : "Copy Path",
+                                systemImage: "doc.on.doc"
+                            )
+                        }
+
+                        Divider()
+
+                        Button(action: {
                             openInFork(paths: targetPaths)
                         }) {
                             Label(
@@ -232,6 +243,12 @@ struct ComponentSelectorView: View {
         }
     }
     
+    private func copyPaths(_ paths: [String]) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(paths.joined(separator: "\n"), forType: .string)
+    }
+
     private func openInFork(paths: [String]) {
         for path in paths {
             ForkOpener.openRepository(at: path)

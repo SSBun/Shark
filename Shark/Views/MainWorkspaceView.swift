@@ -15,14 +15,14 @@ struct MainWorkspaceView: View {
     @State private var showComponentSelector = false
     @State private var isRefreshingVenomfiles = false
     @EnvironmentObject var authManager: AuthorizationManager
-    
+
     private var workspaces: Binding<[Workspace]> {
         Binding(
             get: { workspaceManager.workspaces },
             set: { workspaceManager.workspaces = $0; workspaceManager.saveWorkspaces() }
         )
     }
-    
+
     var body: some View {
         HSplitView {
             // Left area: Workspace list
@@ -34,7 +34,7 @@ struct MainWorkspaceView: View {
             )
             .environmentObject(authManager)
             .frame(minWidth: 250, idealWidth: 300, maxWidth: 400)
-            
+
             // Right area: Folder list
             FolderListView(
                 folders: $folders,
@@ -63,38 +63,33 @@ struct MainWorkspaceView: View {
             )
         }
         .onChange(of: selectedWorkspace) { oldValue, newValue in
-            // Update folders when workspace selection changes
             loadFoldersForWorkspace(newValue)
         }
         .onChange(of: folders) { oldValue, newValue in
-            // Save workspace file when folders change (but not during initial load)
             if !isLoadingFolders {
                 saveFoldersToWorkspace()
             }
         }
         .onAppear {
-            // Refresh workspaces from disk on appear
             workspaceManager.refreshWorkspaces()
-            // Initialize folders if a workspace is already selected
             loadFoldersForWorkspace(selectedWorkspace)
         }
         .onChange(of: workspaceManager.workspaces) { oldValue, newValue in
-            // If selected workspace was removed, clear selection
             if let selected = selectedWorkspace,
                !newValue.contains(where: { $0.id == selected.id }) {
                 selectedWorkspace = nil
             }
         }
     }
-    
+
     private func loadFoldersForWorkspace(_ workspace: Workspace?) {
         guard let workspace = workspace else {
             folders = []
             return
         }
-        
+
         isLoadingFolders = true
-        
+
         Task {
             let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
             guard authorized else {
@@ -104,16 +99,24 @@ struct MainWorkspaceView: View {
                 }
                 return
             }
-            
+
             do {
-                let fileURL = URL(fileURLWithPath: workspace.filePath)
-                let workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
-                await MainActor.run {
-                    folders = workspaceFile.toFolders()
-                    isLoadingFolders = false
+                if workspace.type == .claude {
+                    let dirURL = URL(fileURLWithPath: workspace.filePath)
+                    let claudeFile = try ClaudeWorkspaceFile.parse(fromDirectory: dirURL)
+                    await MainActor.run {
+                        folders = claudeFile.toFolders()
+                        isLoadingFolders = false
+                    }
+                } else {
+                    let fileURL = URL(fileURLWithPath: workspace.filePath)
+                    let workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
+                    await MainActor.run {
+                        folders = workspaceFile.toFolders()
+                        isLoadingFolders = false
+                    }
                 }
             } catch {
-                // If file doesn't exist or can't be parsed, show empty folders
                 await MainActor.run {
                     folders = []
                     isLoadingFolders = false
@@ -121,7 +124,7 @@ struct MainWorkspaceView: View {
             }
         }
     }
-    
+
     private func addFolder() {
         guard selectedWorkspace != nil else {
             return
@@ -144,7 +147,6 @@ struct MainWorkspaceView: View {
                 let folderPath = folderURL.path
                 let folderName = folderURL.lastPathComponent
 
-                // Create security-scoped bookmark
                 var bookmarkData: Data? = nil
                 do {
                     bookmarkData = try folderURL.bookmarkData(
@@ -156,13 +158,10 @@ struct MainWorkspaceView: View {
                     print("Failed to create bookmark for \(folderPath): \(error)")
                 }
 
-                // Check if folder already exists
                 if folders.contains(where: { $0.path == folderPath }) {
-                    // Skip duplicate folders
                     continue
                 }
 
-                // Check Venomfiles status asynchronously
                 let hasVenomfiles = await Task.detached(priority: .userInitiated) {
                     Folder.checkHasVenomfiles(path: folderPath, bookmarkData: bookmarkData)
                 }.value
@@ -183,7 +182,7 @@ struct MainWorkspaceView: View {
             }
         }
     }
-    
+
     private func addSelectedFolders(_ selectedFolders: [Folder]) {
         guard selectedWorkspace != nil else { return }
 
@@ -191,7 +190,6 @@ struct MainWorkspaceView: View {
             var newFolders: [Folder] = []
             for folder in selectedFolders {
                 if !folders.contains(where: { $0.path == folder.path }) {
-                    // Check Venomfiles status when adding (async)
                     let hasVenomfiles = await Task.detached(priority: .userInitiated) {
                         Folder.checkHasVenomfiles(path: folder.path, bookmarkData: folder.bookmarkData)
                     }.value
@@ -214,7 +212,6 @@ struct MainWorkspaceView: View {
             var newFolders: [Folder] = []
             for folder in droppedFolders {
                 if !folders.contains(where: { $0.path == folder.path }) {
-                    // Check Venomfiles status when adding (async)
                     let hasVenomfiles = await Task.detached(priority: .userInitiated) {
                         Folder.checkHasVenomfiles(path: folder.path, bookmarkData: folder.bookmarkData)
                     }.value
@@ -231,39 +228,88 @@ struct MainWorkspaceView: View {
             }
         }
     }
-    
+
     private func saveFoldersToWorkspace() {
         guard let workspace = selectedWorkspace else {
             return
         }
-        
+
         Task {
             let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
             guard authorized else {
                 return
             }
-            
+
             do {
-                let fileURL = URL(fileURLWithPath: workspace.filePath)
-                
-                // Load existing workspace file or create new one
-                var workspaceFile: CursorWorkspaceFile
-                if FileManager.default.fileExists(atPath: workspace.filePath) {
-                    workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
+                if workspace.type == .claude {
+                    try saveClaudeWorkspace(workspace)
                 } else {
-                    workspaceFile = CursorWorkspaceFile.createEmpty()
+                    try saveCursorWorkspace(workspace)
                 }
-                
-                // Update folders
-                workspaceFile.updateFolders(from: folders)
-                
-                // Save workspace file
-                try workspaceFile.save(to: fileURL)
             } catch {
-                // TODO: Show error alert
-                print("Failed to save workspace file: \(error)")
+                print("Failed to save workspace: \(error)")
             }
         }
+    }
+
+    private func saveCursorWorkspace(_ workspace: Workspace) throws {
+        let fileURL = URL(fileURLWithPath: workspace.filePath)
+
+        var workspaceFile: CursorWorkspaceFile
+        if FileManager.default.fileExists(atPath: workspace.filePath) {
+            workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
+        } else {
+            workspaceFile = CursorWorkspaceFile.createEmpty()
+        }
+
+        workspaceFile.updateFolders(from: folders)
+        try workspaceFile.save(to: fileURL)
+    }
+
+    private func saveClaudeWorkspace(_ workspace: Workspace) throws {
+        let dirURL = URL(fileURLWithPath: workspace.filePath)
+
+        // Build links from current folders
+        var links: [ClaudeWorkspaceFile.LinkedFolder] = []
+        var existingNames = Set<String>()
+
+        for folder in folders {
+            let preferredName = folder.name
+            let parentFolder = URL(fileURLWithPath: folder.path).deletingLastPathComponent().lastPathComponent
+
+            let symlinkName = SymlinkManager.resolveSymlinkName(
+                preferredName: preferredName,
+                parentFolder: parentFolder,
+                existingNames: existingNames
+            )
+            existingNames.insert(symlinkName)
+
+            // Store bookmark data
+            if let bookmarkData = folder.bookmarkData {
+                let bookmarkKey = "folderBookmark_\(folder.path)"
+                UserDefaults.standard.set(bookmarkData, forKey: bookmarkKey)
+            }
+
+            links.append(ClaudeWorkspaceFile.LinkedFolder(
+                originalPath: folder.path,
+                symlinkName: symlinkName,
+                parentFolder: parentFolder
+            ))
+        }
+
+        // Recreate symlinks on disk
+        let updatedLinks = try SymlinkManager.recreateAllSymlinks(links: links, in: workspace.filePath)
+
+        // Save metadata
+        let metadataURL = dirURL.appendingPathComponent(ClaudeWorkspaceFile.metadataFileName)
+        var claudeFile: ClaudeWorkspaceFile
+        if FileManager.default.fileExists(atPath: metadataURL.path) {
+            claudeFile = try ClaudeWorkspaceFile.parse(from: metadataURL)
+            claudeFile.links = updatedLinks
+        } else {
+            claudeFile = ClaudeWorkspaceFile(name: workspace.name, links: updatedLinks, createdAt: Date())
+        }
+        try claudeFile.save(to: metadataURL)
     }
 
     private func refreshAllVenomfilesStatus() {
@@ -278,7 +324,6 @@ struct MainWorkspaceView: View {
                 return
             }
 
-            // Helper to check and cache Venomfiles status
             func checkAndCacheVenomfiles(path: String, bookmarkData: Data?) -> Bool {
                 let result = Folder.checkHasVenomfiles(path: path, bookmarkData: bookmarkData)
                 let venomfilesKey = "hasVenomfiles_\(path)"
@@ -300,15 +345,21 @@ struct MainWorkspaceView: View {
             // Also refresh for all other workspaces
             for workspace in workspaceManager.workspaces {
                 if workspace.id == selectedWorkspace?.id {
-                    continue // Already done above
+                    continue
                 }
 
                 do {
-                    let fileURL = URL(fileURLWithPath: workspace.filePath)
-                    var workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
-                    let otherFolders = workspaceFile.toFolders()
+                    let otherFolders: [Folder]
+                    if workspace.type == .claude {
+                        let dirURL = URL(fileURLWithPath: workspace.filePath)
+                        let claudeFile = try ClaudeWorkspaceFile.parse(fromDirectory: dirURL)
+                        otherFolders = claudeFile.toFolders()
+                    } else {
+                        let fileURL = URL(fileURLWithPath: workspace.filePath)
+                        var workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
+                        otherFolders = workspaceFile.toFolders()
+                    }
 
-                    // Update each folder's Venomfiles status and save
                     var updatedFolders = otherFolders
                     for i in 0..<updatedFolders.count {
                         updatedFolders[i].hasVenomfiles = checkAndCacheVenomfiles(
@@ -316,8 +367,15 @@ struct MainWorkspaceView: View {
                             bookmarkData: updatedFolders[i].bookmarkData
                         )
                     }
-                    workspaceFile.updateFolders(from: updatedFolders)
-                    try workspaceFile.save(to: fileURL)
+
+                    // Save updated status back to workspace file
+                    if workspace.type == .cursor {
+                        let fileURL = URL(fileURLWithPath: workspace.filePath)
+                        var workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
+                        workspaceFile.updateFolders(from: updatedFolders)
+                        try workspaceFile.save(to: fileURL)
+                    }
+                    // Claude workspaces: bookmarks are already cached in UserDefaults
                 } catch {
                     print("Failed to refresh Venomfiles for workspace \(workspace.name): \(error)")
                 }
@@ -331,4 +389,3 @@ struct MainWorkspaceView: View {
         .environmentObject(AuthorizationManager.shared)
         .frame(width: 800, height: 600)
 }
-
