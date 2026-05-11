@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
+import os
 
 struct MainWorkspaceView: View {
+    private static let logger = Logger(subsystem: "com.shark.app", category: "MainWorkspaceView")
     @StateObject private var workspaceManager = WorkspaceManager.shared
     @State private var selectedWorkspace: Workspace? = nil
     @State private var folders: [Folder] = []
@@ -267,6 +269,7 @@ struct MainWorkspaceView: View {
     }
 
     private func saveClaudeWorkspace(_ workspace: Workspace) throws {
+        Self.logger.debug("saveClaudeWorkspace: workspace.filePath=\(workspace.filePath), folders.count=\(folders.count)")
         let dirURL = URL(fileURLWithPath: workspace.filePath)
 
         // Build links from current folders
@@ -276,6 +279,7 @@ struct MainWorkspaceView: View {
         for folder in folders {
             let preferredName = folder.name
             let parentFolder = URL(fileURLWithPath: folder.path).deletingLastPathComponent().lastPathComponent
+            Self.logger.debug("saveClaudeWorkspace: folder name=\(folder.name), path=\(folder.path), preferredName=\(preferredName), parentFolder=\(parentFolder)")
 
             let symlinkName = SymlinkManager.resolveSymlinkName(
                 preferredName: preferredName,
@@ -295,10 +299,13 @@ struct MainWorkspaceView: View {
                 symlinkName: symlinkName,
                 parentFolder: parentFolder
             ))
+            Self.logger.debug("saveClaudeWorkspace: resolved symlinkName=\(symlinkName)")
         }
 
         // Recreate symlinks on disk
+        Self.logger.debug("saveClaudeWorkspace: recreating \(links.count) symlinks in \(workspace.filePath)")
         let updatedLinks = try SymlinkManager.recreateAllSymlinks(links: links, in: workspace.filePath)
+        Self.logger.info("saveClaudeWorkspace: created \(updatedLinks.count) symlinks")
 
         // Save metadata
         let metadataURL = dirURL.appendingPathComponent(ClaudeWorkspaceFile.metadataFileName)

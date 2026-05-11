@@ -4,8 +4,10 @@
 //
 
 import Foundation
+import os
 
 struct SymlinkManager {
+    private static let logger = Logger(subsystem: "com.shark.app", category: "SymlinkManager")
     /// Resolve symlink name collision by prefixing with parent folder name.
     /// "src" → "src" if available, → "ProjectA-src" if taken, → "ProjectA-src-2" if also taken.
     static func resolveSymlinkName(
@@ -13,7 +15,9 @@ struct SymlinkManager {
         parentFolder: String?,
         existingNames: Set<String>
     ) -> String {
+        logger.debug("resolveSymlinkName: preferredName=\(preferredName), parentFolder=\(parentFolder ?? "nil"), existingNames=\(existingNames)")
         if !existingNames.contains(preferredName) {
+            logger.debug("resolveSymlinkName: using preferred name \(preferredName)")
             return preferredName
         }
 
@@ -51,10 +55,12 @@ struct SymlinkManager {
             existingNames: existingNames
         )
         let symlinkPath = (workspaceDirectory as NSString).appendingPathComponent(resolvedName)
+        logger.debug("createSymlink: symlinkPath=\(symlinkPath) → originalPath=\(originalPath)")
         try FileManager.default.createSymbolicLink(
             atPath: symlinkPath,
             withDestinationPath: originalPath
         )
+        logger.info("createSymlink: created \(resolvedName) in \(workspaceDirectory)")
         existingNames.insert(resolvedName)
         return resolvedName
     }
@@ -69,20 +75,17 @@ struct SymlinkManager {
 
     /// Remove all symlinks in workspace directory (excluding .claude-workspace.json and other dotfiles).
     static func removeAllSymlinks(in workspaceDirectory: String) throws {
+        logger.debug("removeAllSymlinks: workspaceDirectory=\(workspaceDirectory)")
         let fileManager = FileManager.default
         let contents = try fileManager.contentsOfDirectory(atPath: workspaceDirectory)
+        logger.debug("removeAllSymlinks: found \(contents.count) items in directory")
         for item in contents {
+            guard !item.hasPrefix(".") else { continue }
             let itemPath = (workspaceDirectory as NSString).appendingPathComponent(item)
-            var isDir: ObjCBool = false
-            if fileManager.fileExists(atPath: itemPath, isDirectory: &isDir) {
-                // Skip directories and hidden files
-                if isDir.boolValue || item.hasPrefix(".") { continue }
-                // Only remove symbolic links
-                let attrs = try fileManager.attributesOfItem(atPath: itemPath)
-                if attrs[.systemFileNumber] as? mode_t != nil,
-                   (try? fileManager.destinationOfSymbolicLink(atPath: itemPath)) != nil {
-                    try fileManager.removeItem(atPath: itemPath)
-                }
+            // destinationOfSymbolicLink only succeeds for symlinks (doesn't follow them)
+            if (try? fileManager.destinationOfSymbolicLink(atPath: itemPath)) != nil {
+                logger.debug("removeAllSymlinks: removing symlink \(item)")
+                try fileManager.removeItem(atPath: itemPath)
             }
         }
     }
@@ -94,6 +97,7 @@ struct SymlinkManager {
         links: [ClaudeWorkspaceFile.LinkedFolder],
         in workspaceDirectory: String
     ) throws -> [ClaudeWorkspaceFile.LinkedFolder] {
+        logger.debug("recreateAllSymlinks: workspaceDirectory=\(workspaceDirectory), links.count=\(links.count)")
         // Remove existing symlinks
         try removeAllSymlinks(in: workspaceDirectory)
 
@@ -101,6 +105,7 @@ struct SymlinkManager {
         var updatedLinks: [ClaudeWorkspaceFile.LinkedFolder] = []
 
         for link in links {
+            logger.debug("recreateAllSymlinks: processing link originalPath=\(link.originalPath), folderName=\(link.folderName), parentFolder=\(link.parentFolder ?? "nil")")
             let symlinkName = resolveSymlinkName(
                 preferredName: link.folderName,
                 parentFolder: link.parentFolder,
@@ -114,12 +119,15 @@ struct SymlinkManager {
                     atPath: symlinkPath,
                     withDestinationPath: link.originalPath
                 )
+                logger.info("recreateAllSymlinks: created \(symlinkName) → \(link.originalPath)")
                 existingNames.insert(symlinkName)
                 updatedLinks.append(ClaudeWorkspaceFile.LinkedFolder(
                     originalPath: link.originalPath,
                     symlinkName: symlinkName,
                     parentFolder: link.parentFolder
                 ))
+            } else {
+                logger.warning("recreateAllSymlinks: skipping \(link.folderName), originalPath does not exist: \(link.originalPath)")
             }
         }
 
