@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1] - 2026-05-11
+
+### Fixed
+- Symlink removal failure when symlink points to a directory (caused "file already exists" error when saving Claude Code workspaces)
+- Added debug logging to SymlinkManager and workspace save flow
+
 ## [1.5.0] - 2026-05-11
 
 ### Added

@@ -1,6 +1,6 @@
 # Shark 🦈
 
-A beautiful macOS application for managing Cursor and Trae IDE workspace files. Streamline your development workflow by organizing and managing multiple workspaces with ease, and easily manage your Venomfiles dependencies.
+A macOS workspace manager for Cursor, Trae, and Claude Code. Organize projects into workspaces, manage Venomfiles dependencies, and quickly open everything in your preferred IDE.
 
 ![Shark Screenshot](resources/screen.png)
 
@@ -9,27 +9,29 @@ A beautiful macOS application for managing Cursor and Trae IDE workspace files. 
 ## ✨ Features
 
 ### Workspace Management
-- **Create New Workspaces** - Quickly create new `.code-workspace` files with a single click
-- **Import Existing Workspaces** - Import and manage your existing Cursor workspace files
+- **Cursor / Trae Workspaces** - Create, import, and manage `.code-workspace` files
+- **Claude Code Workspaces** - Create workspace directories with symlinked component folders, ready for Claude Code CLI
 - **Multiple Workspace Support** - Manage all your workspaces in one place
 - **Rename Workspaces** - Easily rename your workspaces to keep them organized
 
 ### Folder Management
-- **Add Folders** - Add multiple folders to your workspace files with drag-and-drop simplicity
-- **Visual Folder List** - See all folders in your workspace at a glance
+- **Add Folders** - Add multiple folders via drag-and-drop, file dialog, or component selector
+- **Component Selector** - Browse and pick components from configurable search paths
+- **Copy Path** - Right-click to copy folder path(s) to clipboard
+- **Visual Folder List** - See all folders in your workspace at a glance with git branch badges
 - **Automatic Saving** - Changes are automatically saved to your workspace files
 
 ### Quick Actions
-- **Double-Click to Open** - Open workspaces in Cursor or Trae with a simple double-click
+- **Double-Click to Open** - Open workspaces in Cursor, Trae, or terminal (for Claude Code) with a double-click
 - **Context Menu** - Right-click for quick actions:
-  - Open workspace in Cursor or Trae
+  - Open workspace in Cursor, Trae, or terminal
   - Show workspace file in Finder
   - Rename workspace
   - Remove workspace
-- **Native macOS Integration** - Built with SwiftUI for a native macOS experience
 
 ### Settings
-- **IDE Selector** - Switch between Cursor and Trae IDE for opening workspaces
+- **IDE Selector** - Switch between Cursor, Trae, or terminal for opening workspaces
+- **Components Search Paths** - Configure multiple directories to search for components
 - **Venomfiles Support** - Check dependencies for components with Venomfiles folders
 - **Refresh Dependencies** - Refresh Venomfiles status for all components
 
@@ -41,7 +43,7 @@ A beautiful macOS application for managing Cursor and Trae IDE workspace files. 
 
 ## 🚀 Why Use Shark?
 
-### For Developers Who Use Cursor or Trae IDE
+### For Developers Who Use Cursor, Trae, or Claude Code
 If you work with multiple projects or need to organize your development environment, Shark makes it effortless to:
 - Switch between different project workspaces
 - Organize related folders into workspaces
@@ -100,7 +102,7 @@ cd Shark
 
 ### System Requirements
 - macOS 14.0 or later
-- Cursor IDE or Trae IDE (for opening workspaces)
+- Cursor IDE, Trae IDE, or Claude Code CLI (for opening workspaces)
 
 ## 🎯 Getting Started
 
@@ -109,12 +111,12 @@ cd Shark
 3. **Create or Import a Workspace**:
    - Click the **+** button to create a new workspace
    - Click the **↓** button to import an existing workspace file
-4. **Add Folders** - Select a workspace and click "Add Folder" or drag folders directly into the folder area
-5. **Open in IDE** - Double-click a workspace or use the context menu to open it in Cursor or Trae
+4. **Add Folders** - Select a workspace and click "Add Folder", "Select Components", or drag folders directly into the folder area
+5. **Open in IDE** - Double-click a workspace or use the context menu to open it in your configured IDE
 
 ## 💡 Tips
 
-- **Double-click** any workspace to quickly open it in Cursor or Trae
+- **Double-click** any workspace to quickly open it in your IDE
 - **Drag & Drop** folders directly into the folder list to add them to your workspace
 - **Right-click** workspaces for additional options
 - Workspaces are automatically saved when you make changes
@@ -125,7 +127,8 @@ cd Shark
 
 - Built with **SwiftUI** and **Swift 6**
 - Native macOS application
-- Supports Cursor and Trae IDE `.code-workspace` file format
+- Supports Cursor/Trae `.code-workspace` files and Claude Code workspace directories
+- Claude Code workspaces use symlinks for component folders
 - Stores workspace metadata in UserDefaults
 - Requires file system access for reading/writing workspace files
 
@@ -143,5 +146,5 @@ For issues, feature requests, or questions, please open an issue on GitHub.
 
 ---
 
-**Made with ❤️ for the Cursor and Trae IDE community**
+**Made with ❤️ for the Cursor, Trae, and Claude Code community**
 
