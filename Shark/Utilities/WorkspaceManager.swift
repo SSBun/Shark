@@ -196,6 +196,57 @@ class WorkspaceManager: ObservableObject {
         }
     }
 
+    /// Duplicate a Cursor workspace as a new Claude workspace
+    func duplicateAsClaude(_ workspace: Workspace) throws -> Workspace {
+        guard workspace.type == .cursor else {
+            throw NSError(domain: "WorkspaceManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "Only Cursor workspaces can be duplicated as Claude workspaces."])
+        }
+
+        let fileURL = URL(fileURLWithPath: workspace.filePath)
+        let cursorFile = try CursorWorkspaceFile.parse(from: fileURL)
+
+        let dirURL = try settingsManager.getNewClaudeWorkspaceURL(baseName: workspace.name)
+        var claudeFile = ClaudeWorkspaceFile.createEmpty(name: workspace.name)
+
+        var existingNames = Set<String>()
+        for folder in cursorFile.folders {
+            let folderName = URL(fileURLWithPath: folder.path).lastPathComponent
+            let parentFolder = folder.name != nil ? URL(fileURLWithPath: folder.path).deletingLastPathComponent().lastPathComponent : nil
+            let symlinkName = SymlinkManager.resolveSymlinkName(
+                preferredName: folderName,
+                parentFolder: parentFolder,
+                existingNames: existingNames
+            )
+            existingNames.insert(symlinkName)
+            claudeFile.addLink(originalPath: folder.path, symlinkName: symlinkName, parentFolder: parentFolder)
+        }
+
+        try claudeFile.save(toDirectory: dirURL)
+        try SymlinkManager.recreateAllSymlinks(links: claudeFile.links, in: dirURL.path)
+
+        return claudeFile.toWorkspace(directoryPath: dirURL.path)
+    }
+
+    /// Duplicate a Claude workspace as a new Cursor workspace
+    func duplicateAsCursor(_ workspace: Workspace) throws -> Workspace {
+        guard workspace.type == .claude else {
+            throw NSError(domain: "WorkspaceManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "Only Claude workspaces can be duplicated as Cursor workspaces."])
+        }
+
+        let dirURL = URL(fileURLWithPath: workspace.filePath)
+        let claudeFile = try ClaudeWorkspaceFile.parse(fromDirectory: dirURL)
+
+        let fileURL = try settingsManager.getNewWorkspaceURL(baseName: workspace.name)
+        var cursorFile = CursorWorkspaceFile.createEmpty()
+
+        for link in claudeFile.links {
+            cursorFile.addFolder(path: link.originalPath)
+        }
+
+        try cursorFile.save(to: fileURL)
+        return cursorFile.toWorkspace(filePath: fileURL.path)
+    }
+
     /// Refresh workspaces from disk
     func refreshWorkspaces() {
         workspaces = []

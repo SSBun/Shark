@@ -196,6 +196,9 @@ struct WorkspaceListView: View {
                             },
                             onOpenInFork: {
                                 openGitFoldersInFork(workspace)
+                            },
+                            onDuplicate: {
+                                duplicateWorkspace(workspace)
                             }
                         )
                         .tag(workspace)
@@ -356,6 +359,31 @@ struct WorkspaceListView: View {
         }
     }
 
+    private func duplicateWorkspace(_ workspace: Workspace) {
+        Task {
+            let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
+            guard authorized else { return }
+
+            do {
+                let newWorkspace: Workspace
+                switch workspace.type {
+                case .cursor:
+                    newWorkspace = try WorkspaceManager.shared.duplicateAsClaude(workspace)
+                case .claude:
+                    newWorkspace = try WorkspaceManager.shared.duplicateAsCursor(workspace)
+                }
+                await MainActor.run {
+                    workspaces.append(newWorkspace)
+                    selectedWorkspace = newWorkspace
+                    WorkspaceManager.shared.addWorkspace(newWorkspace)
+                    AlertManager.shared.show(type: .success, title: "Duplicated", message: "Duplicated as \(newWorkspace.type.displayName) workspace")
+                }
+            } catch {
+                AlertManager.shared.show(type: .error, title: "Error", message: "Failed to duplicate workspace: \(error.localizedDescription)")
+            }
+        }
+    }
+
     private func openGitFoldersInFork(_ workspace: Workspace) {
         guard workspace.type == .cursor else { return }
 
@@ -389,6 +417,7 @@ struct WorkspaceRow: View {
     let onRename: (String) -> Void
     let onRemove: () -> Void
     let onOpenInFork: () -> Void
+    let onDuplicate: (() -> Void)?
 
     @State private var isHovered = false
     @State private var isEditing = false
@@ -476,6 +505,15 @@ struct WorkspaceRow: View {
             }
 
             Divider()
+
+            if let onDuplicate {
+                Button(action: onDuplicate) {
+                    HStack {
+                        Image(systemName: "doc.on.doc")
+                        Text(workspace.type == .cursor ? "Duplicate as Claude Workspace" : "Duplicate as Cursor Workspace")
+                    }
+                }
+            }
 
             if workspace.type == .cursor {
                 // Git tools only for Cursor workspaces
