@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2026-05-16
+
+### Added
+- "Open In Fork Workspace" context menu for workspace cells — finds or creates a named Fork workspace with all git repos as tabs
+- Shared `gitRepoPaths(for:)` helper on WorkspaceManager for both Cursor and Claude workspace types
+
+### Changed
+- Disabled App Sandbox for full filesystem and AppleScript access
+- Simplified ForkOpener to resolve `fork` CLI via PATH
+
 ## [1.6.0] - 2026-05-14
 
 ### Added
