@@ -138,6 +138,24 @@ class WorkspaceManager: ObservableObject {
         return claudeFile.toWorkspace(directoryPath: dirURL.path)
     }
 
+    /// Get git repo paths for a workspace (works for both Cursor and Claude types)
+    func gitRepoPaths(for workspace: Workspace) throws -> [String] {
+        switch workspace.type {
+        case .cursor:
+            let fileURL = URL(fileURLWithPath: workspace.filePath)
+            let workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
+            return workspaceFile.toFolders()
+                .filter { $0.isGitRepository }
+                .map { $0.path }
+        case .claude:
+            let dirURL = URL(fileURLWithPath: workspace.filePath)
+            let claudeFile = try ClaudeWorkspaceFile.parse(fromDirectory: dirURL)
+            return claudeFile.toFolders()
+                .filter { $0.isGitRepository }
+                .map { $0.path }
+        }
+    }
+
     /// Rename a workspace and its corresponding file/directory on disk
     func renameWorkspace(_ workspace: Workspace, to newName: String) throws -> Workspace {
         let oldURL = URL(fileURLWithPath: workspace.filePath)

@@ -197,6 +197,9 @@ struct WorkspaceListView: View {
                             onOpenInFork: {
                                 openGitFoldersInFork(workspace)
                             },
+                            onOpenInForkWorkspace: {
+                                openInForkWorkspace(workspace)
+                            },
                             onDuplicate: {
                                 duplicateWorkspace(workspace)
                             }
@@ -384,6 +387,43 @@ struct WorkspaceListView: View {
         }
     }
 
+    private func openInForkWorkspace(_ workspace: Workspace) {
+        Log.info("openInForkWorkspace called: \(workspace.name) (\(workspace.type.rawValue))", category: .workspace)
+        Task {
+            let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
+            guard authorized else {
+                Log.error("Authorization denied for Fork workspace open", category: .workspace)
+                return
+            }
+
+            do {
+                let repoPaths = try WorkspaceManager.shared.gitRepoPaths(for: workspace)
+
+                Log.info("Found \(repoPaths.count) git repo paths", category: .workspace)
+                guard !repoPaths.isEmpty else {
+                    await MainActor.run {
+                        AlertManager.shared.show(type: .warning, title: "No Git Repos", message: "No git repositories found in this workspace.")
+                    }
+                    return
+                }
+
+                let result = try await ForkWorkspaceManager.findOrCreateAndOpen(named: workspace.name, repoPaths: repoPaths)
+
+                await MainActor.run {
+                    let message = result.created
+                        ? "Created Fork workspace '\(workspace.name)' with \(repoPaths.count) repos."
+                        : "Switched to Fork workspace '\(workspace.name)' with \(repoPaths.count) repos."
+                    AlertManager.shared.show(type: .info, title: "Fork Workspace", message: message)
+                }
+            } catch {
+                Log.error("openInForkWorkspace error: \(error)", category: .workspace)
+                await MainActor.run {
+                    AlertManager.shared.show(type: .error, title: "Error", message: "Failed to open Fork workspace: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
     private func openGitFoldersInFork(_ workspace: Workspace) {
         guard workspace.type == .cursor else { return }
 
@@ -417,6 +457,7 @@ struct WorkspaceRow: View {
     let onRename: (String) -> Void
     let onRemove: () -> Void
     let onOpenInFork: () -> Void
+    let onOpenInForkWorkspace: (() -> Void)?
     let onDuplicate: (() -> Void)?
 
     @State private var isHovered = false
@@ -511,6 +552,15 @@ struct WorkspaceRow: View {
                     HStack {
                         Image(systemName: "doc.on.doc")
                         Text(workspace.type == .cursor ? "Duplicate as Claude Workspace" : "Duplicate as Cursor Workspace")
+                    }
+                }
+            }
+
+            if let onOpenInForkWorkspace {
+                Button(action: onOpenInForkWorkspace) {
+                    HStack {
+                        Image(systemName: "square.grid.2x2")
+                        Text("Open In Fork Workspace")
                     }
                 }
             }
