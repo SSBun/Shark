@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-05-20
+
+### Added
+- Pin workspaces to top of list with context menu toggle
+- Drag-and-drop reordering within pinned and unpinned sections
+- Orange pin indicator icon on pinned workspace rows
+- Sort order persists across app restarts
+
 ## [1.7.0] - 2026-05-16
 
 ### Added
