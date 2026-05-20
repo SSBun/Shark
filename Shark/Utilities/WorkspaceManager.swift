@@ -88,7 +88,7 @@ class WorkspaceManager: ObservableObject {
                 }
             }
 
-            workspaces = foundWorkspaces.sorted { $0.createdAt > $1.createdAt }
+            workspaces = foundWorkspaces.sorted(by: workspaceSort)
             saveWorkspaces()
         } catch {
             workspaces = []
@@ -111,7 +111,10 @@ class WorkspaceManager: ObservableObject {
     /// Add a workspace
     func addWorkspace(_ workspace: Workspace) {
         if !workspaces.contains(where: { $0.filePath == workspace.filePath }) {
-            workspaces.append(workspace)
+            var ws = workspace
+            let unpinned = workspaces.filter { !$0.isPinned }
+            ws.sortOrder = unpinned.count
+            workspaces.append(ws)
             saveWorkspaces()
         }
     }
@@ -329,7 +332,10 @@ class WorkspaceManager: ObservableObject {
 
         for scanned in scannedWorkspaces {
             if !mergedWorkspaces.contains(where: { $0.filePath == scanned.filePath }) {
-                mergedWorkspaces.append(scanned)
+                var ws = scanned
+                let unpinned = mergedWorkspaces.filter { !$0.isPinned }
+                ws.sortOrder = unpinned.count
+                mergedWorkspaces.append(ws)
             }
         }
 
@@ -342,7 +348,50 @@ class WorkspaceManager: ObservableObject {
             return !workspace.filePath.hasPrefix(settingsFolderPath)
         }
 
-        workspaces = mergedWorkspaces.sorted { $0.createdAt > $1.createdAt }
+        workspaces = mergedWorkspaces.sorted(by: workspaceSort)
         saveWorkspaces()
+    }
+
+    // MARK: - Pin & Reorder
+
+    private func workspaceSort(lhs: Workspace, rhs: Workspace) -> Bool {
+        if lhs.isPinned != rhs.isPinned { return lhs.isPinned }
+        if lhs.sortOrder != rhs.sortOrder { return lhs.sortOrder < rhs.sortOrder }
+        return lhs.createdAt > rhs.createdAt
+    }
+
+    func togglePin(_ workspace: Workspace) {
+        guard let index = workspaces.firstIndex(where: { $0.id == workspace.id }) else { return }
+        workspaces[index].isPinned.toggle()
+
+        reassignSortOrders()
+        workspaces.sort(by: workspaceSort)
+        saveWorkspaces()
+    }
+
+    func applyReorder(_ reordered: [Workspace]) {
+        for (i, ws) in reordered.enumerated() {
+            if let index = workspaces.firstIndex(where: { $0.id == ws.id }) {
+                workspaces[index].sortOrder = i
+            }
+        }
+        workspaces.sort(by: workspaceSort)
+        saveWorkspaces()
+    }
+
+    private func reassignSortOrders() {
+        let pinned = workspaces.filter { $0.isPinned }.sorted(by: workspaceSort)
+        let unpinned = workspaces.filter { !$0.isPinned }.sorted(by: workspaceSort)
+
+        for (i, ws) in pinned.enumerated() {
+            if let index = workspaces.firstIndex(where: { $0.id == ws.id }) {
+                workspaces[index].sortOrder = i
+            }
+        }
+        for (i, ws) in unpinned.enumerated() {
+            if let index = workspaces.firstIndex(where: { $0.id == ws.id }) {
+                workspaces[index].sortOrder = i
+            }
+        }
     }
 }

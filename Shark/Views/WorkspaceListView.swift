@@ -34,6 +34,14 @@ struct WorkspaceListView: View {
         }
     }
 
+    private var pinnedWorkspaces: [Workspace] {
+        filteredWorkspaces.filter { $0.isPinned }
+    }
+
+    private var unpinnedWorkspaces: [Workspace] {
+        filteredWorkspaces.filter { !$0.isPinned }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Header with Add and Import buttons
@@ -180,32 +188,26 @@ struct WorkspaceListView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(selection: $selectedWorkspace) {
-                    ForEach(filteredWorkspaces) { workspace in
-                        WorkspaceRow(
-                            workspace: workspace,
-                            onOpen: {
-                                WorkspaceOpener.openWorkspace(workspace)
-                            },
-                            onShowInFinder: {
-                                showWorkspaceInFinder(workspace)
-                            },
-                            onRename: { newName in
-                                renameWorkspace(workspace, to: newName)
-                            },
-                            onRemove: {
-                                workspaceToRemove = workspace
-                            },
-                            onOpenInFork: {
-                                openGitFoldersInFork(workspace)
-                            },
-                            onOpenInForkWorkspace: {
-                                openInForkWorkspace(workspace)
-                            },
-                            onDuplicate: {
-                                duplicateWorkspace(workspace)
+                    if !pinnedWorkspaces.isEmpty {
+                        Section("Pinned") {
+                            ForEach(pinnedWorkspaces) { workspace in
+                                makeWorkspaceRow(workspace, isPinned: true)
+                                    .tag(workspace)
                             }
-                        )
-                        .tag(workspace)
+                            .onMove { from, to in
+                                moveWorkspaces(from: from, to: to, pinned: true)
+                            }
+                        }
+                    }
+
+                    Section("Workspaces") {
+                        ForEach(unpinnedWorkspaces) { workspace in
+                            makeWorkspaceRow(workspace, isPinned: false)
+                                .tag(workspace)
+                        }
+                        .onMove { from, to in
+                            moveWorkspaces(from: from, to: to, pinned: false)
+                        }
                     }
                 }
                 .listStyle(.sidebar)
@@ -248,6 +250,50 @@ struct WorkspaceListView: View {
         } message: {
             Text("Are you sure you want to remove \"\(workspaceToRemove?.name ?? "")\"?")
         }
+    }
+
+    @ViewBuilder
+    private func makeWorkspaceRow(_ workspace: Workspace, isPinned: Bool) -> some View {
+        WorkspaceRow(
+            workspace: workspace,
+            isPinned: isPinned,
+            onTogglePin: { togglePin(workspace) },
+            onOpen: {
+                WorkspaceOpener.openWorkspace(workspace)
+            },
+            onShowInFinder: {
+                showWorkspaceInFinder(workspace)
+            },
+            onRename: { newName in
+                renameWorkspace(workspace, to: newName)
+            },
+            onRemove: {
+                workspaceToRemove = workspace
+            },
+            onOpenInFork: {
+                openGitFoldersInFork(workspace)
+            },
+            onOpenInForkWorkspace: {
+                openInForkWorkspace(workspace)
+            },
+            onDuplicate: {
+                duplicateWorkspace(workspace)
+            }
+        )
+    }
+
+    private func togglePin(_ workspace: Workspace) {
+        WorkspaceManager.shared.togglePin(workspace)
+    }
+
+    private func moveWorkspaces(from source: IndexSet, to destination: Int, pinned: Bool) {
+        guard searchText.isEmpty else { return }
+
+        let sectionWorkspaces = pinned ? pinnedWorkspaces : unpinnedWorkspaces
+        var reordered = sectionWorkspaces
+        reordered.move(fromOffsets: source, toOffset: destination)
+
+        WorkspaceManager.shared.applyReorder(reordered)
     }
 
     private func setupKeyboardShortcuts() {
@@ -473,6 +519,8 @@ struct WorkspaceListView: View {
 
 struct WorkspaceRow: View {
     let workspace: Workspace
+    var isPinned: Bool = false
+    var onTogglePin: (() -> Void)? = nil
     let onOpen: () -> Void
     let onShowInFinder: () -> Void
     let onRename: (String) -> Void
@@ -510,8 +558,15 @@ struct WorkspaceRow: View {
                             cancelRename()
                         }
                 } else {
-                    Text(workspace.name)
-                        .font(.system(size: 14, weight: .medium))
+                    HStack(spacing: 4) {
+                        Text(workspace.name)
+                            .font(.system(size: 14, weight: .medium))
+                        if isPinned {
+                            Image(systemName: "pin.fill")
+                                .font(.system(size: 9))
+                                .foregroundColor(.orange)
+                        }
+                    }
                 }
                 Text(workspace.filePath)
                     .font(.system(size: 11))
@@ -543,6 +598,15 @@ struct WorkspaceRow: View {
             }
         }
         .contextMenu {
+            if let onTogglePin {
+                Button(action: onTogglePin) {
+                    HStack {
+                        Image(systemName: isPinned ? "pin.slash" : "pin")
+                        Text(isPinned ? "Unpin" : "Pin to Top")
+                    }
+                }
+            }
+
             if let onOpenInForkWorkspace {
                 Button(action: onOpenInForkWorkspace) {
                     HStack {

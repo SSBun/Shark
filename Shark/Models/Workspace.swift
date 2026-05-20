@@ -41,13 +41,17 @@ struct Workspace: Identifiable, Hashable, Codable {
     var filePath: String // Cursor: path to .code-workspace file; Claude: path to workspace directory
     var createdAt: Date
     var type: WorkspaceType
+    var isPinned: Bool
+    var sortOrder: Int
 
-    init(id: UUID = UUID(), name: String, filePath: String, createdAt: Date = Date(), type: WorkspaceType = .cursor) {
+    init(id: UUID = UUID(), name: String, filePath: String, createdAt: Date = Date(), type: WorkspaceType = .cursor, isPinned: Bool = false, sortOrder: Int = 0) {
         self.id = id
         self.name = name
         self.filePath = filePath
         self.createdAt = createdAt
         self.type = type
+        self.isPinned = isPinned
+        self.sortOrder = sortOrder
     }
 
     init(from decoder: Decoder) throws {
@@ -57,6 +61,8 @@ struct Workspace: Identifiable, Hashable, Codable {
         filePath = try container.decode(String.self, forKey: .filePath)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         type = (try? container.decode(WorkspaceType.self, forKey: .type)) ?? .cursor
+        isPinned = (try? container.decode(Bool.self, forKey: .isPinned)) ?? false
+        sortOrder = (try? container.decode(Int.self, forKey: .sortOrder)) ?? 0
     }
 }
 
