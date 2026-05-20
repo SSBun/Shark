@@ -19,6 +19,7 @@ struct WorkspaceListView: View {
     @FocusState private var isTextFieldFocused: Bool
     @Binding var isRefreshingVenomfiles: Bool
     @State private var showWorkspaceTypePicker = false
+    @State private var workspaceToRemove: Workspace?
 
     let onRefreshAllVenomfiles: (() -> Void)?
 
@@ -192,7 +193,7 @@ struct WorkspaceListView: View {
                                 renameWorkspace(workspace, to: newName)
                             },
                             onRemove: {
-                                removeWorkspace(workspace)
+                                workspaceToRemove = workspace
                             },
                             onOpenInFork: {
                                 openGitFoldersInFork(workspace)
@@ -226,6 +227,26 @@ struct WorkspaceListView: View {
         }
         .onAppear {
             setupKeyboardShortcuts()
+        }
+        .confirmationDialog(
+            "Remove Workspace",
+            isPresented: Binding(
+                get: { workspaceToRemove != nil },
+                set: { if !$0 { workspaceToRemove = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Remove", role: .destructive) {
+                if let workspace = workspaceToRemove {
+                    removeWorkspace(workspace)
+                    workspaceToRemove = nil
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                workspaceToRemove = nil
+            }
+        } message: {
+            Text("Are you sure you want to remove \"\(workspaceToRemove?.name ?? "")\"?")
         }
     }
 
@@ -522,10 +543,12 @@ struct WorkspaceRow: View {
             }
         }
         .contextMenu {
-            Button(role: .destructive, action: onRemove) {
-                HStack {
-                    Image(systemName: "trash")
-                    Text("Remove")
+            if let onOpenInForkWorkspace {
+                Button(action: onOpenInForkWorkspace) {
+                    HStack {
+                        Image(systemName: "square.grid.2x2")
+                        Text("Open In Fork Workspace")
+                    }
                 }
             }
 
@@ -556,15 +579,6 @@ struct WorkspaceRow: View {
                 }
             }
 
-            if let onOpenInForkWorkspace {
-                Button(action: onOpenInForkWorkspace) {
-                    HStack {
-                        Image(systemName: "square.grid.2x2")
-                        Text("Open In Fork Workspace")
-                    }
-                }
-            }
-
             if workspace.type == .cursor {
                 // Git tools only for Cursor workspaces
                 Button(action: onOpenInFork) {
@@ -581,6 +595,13 @@ struct WorkspaceRow: View {
                         if let icon = SourceTreeOpener.appIcon { Image(nsImage: icon).resizable().frame(width: 14, height: 14) } else { Image(systemName: "arrow.triangle.branch") }
                         Text("Open in SourceTree")
                     }
+                }
+            }
+
+            Button(role: .destructive, action: onRemove) {
+                HStack {
+                    Image(systemName: "trash")
+                    Text("Remove")
                 }
             }
         }
