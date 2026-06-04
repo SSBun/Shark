@@ -12,6 +12,7 @@ A macOS workspace manager for Cursor, Trae, and Claude Code. Organize projects i
 - **Cursor / Trae Workspaces** - Create, import, and manage `.code-workspace` files
 - **Claude Code Workspaces** - Create workspace directories with symlinked component folders, ready for Claude Code CLI
 - **Multiple Workspace Support** - Manage all your workspaces in one place
+- **Workspace Grouping** - Cursor and Claude workspaces sharing the same project name are grouped together for easy access
 - **Rename Workspaces** - Easily rename your workspaces to keep them organized
 
 ### Folder Management

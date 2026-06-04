@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.8.0] - 2026-05-20
+## [1.9.0] - 2026-06-04
+
+### Added
+- Workspace grouping: same-name cursor + claude workspaces shown under shared section header
+- TypeScript build-tool (`scripts/build-tool.ts`) replacing shell script for DMG creation and npm publishing
+- `build-tool publish <version>` command — bumps version, creates DMG, publishes to npm
+- `build-tool create-dmg [version]` command — build + DMG packaging with spinner UI
+
+### Changed
+- `scripts/create-dmg.sh` replaced by `scripts/build-tool.ts` (uses commander + @clack/prompts)
+- Workspace list groups workspaces by name instead of flat list under "Pinned"/"Workspaces" sections
+- Build output is now silent, only showing errors on failure
 
 ### Added
 - Pin workspaces to top of list with context menu toggle

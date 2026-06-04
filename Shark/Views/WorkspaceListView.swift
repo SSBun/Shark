@@ -34,12 +34,8 @@ struct WorkspaceListView: View {
         }
     }
 
-    private var pinnedWorkspaces: [Workspace] {
-        filteredWorkspaces.filter { $0.isPinned }
-    }
-
-    private var unpinnedWorkspaces: [Workspace] {
-        filteredWorkspaces.filter { !$0.isPinned }
+    private var workspaceGroups: [WorkspaceGroup] {
+        WorkspaceGroup.groups(from: filteredWorkspaces)
     }
 
     var body: some View {
@@ -188,25 +184,22 @@ struct WorkspaceListView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(selection: $selectedWorkspace) {
-                    if !pinnedWorkspaces.isEmpty {
-                        Section("Pinned") {
-                            ForEach(pinnedWorkspaces) { workspace in
-                                makeWorkspaceRow(workspace, isPinned: true)
+                    ForEach(workspaceGroups) { group in
+                        Section {
+                            ForEach(group.workspaces) { workspace in
+                                makeWorkspaceRow(workspace, isPinned: group.isPinned)
                                     .tag(workspace)
                             }
-                            .onMove { from, to in
-                                moveWorkspaces(from: from, to: to, pinned: true)
+                        } header: {
+                            HStack(spacing: 4) {
+                                Text(group.name)
+                                    .font(.system(size: 13, weight: .semibold))
+                                if group.isPinned {
+                                    Image(systemName: "pin.fill")
+                                        .font(.system(size: 8))
+                                        .foregroundColor(.orange)
+                                }
                             }
-                        }
-                    }
-
-                    Section("Workspaces") {
-                        ForEach(unpinnedWorkspaces) { workspace in
-                            makeWorkspaceRow(workspace, isPinned: false)
-                                .tag(workspace)
-                        }
-                        .onMove { from, to in
-                            moveWorkspaces(from: from, to: to, pinned: false)
                         }
                     }
                 }
@@ -284,16 +277,6 @@ struct WorkspaceListView: View {
 
     private func togglePin(_ workspace: Workspace) {
         WorkspaceManager.shared.togglePin(workspace)
-    }
-
-    private func moveWorkspaces(from source: IndexSet, to destination: Int, pinned: Bool) {
-        guard searchText.isEmpty else { return }
-
-        let sectionWorkspaces = pinned ? pinnedWorkspaces : unpinnedWorkspaces
-        var reordered = sectionWorkspaces
-        reordered.move(fromOffsets: source, toOffset: destination)
-
-        WorkspaceManager.shared.applyReorder(reordered)
     }
 
     private func setupKeyboardShortcuts() {

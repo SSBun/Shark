@@ -116,3 +116,11 @@ iOSInjectionProject/
 *.dmg
 *.dmg.sha256
 
+# Build output
+dist/
+
+# Node.js
+node_modules/
+
+
+

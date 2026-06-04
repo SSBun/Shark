@@ -1,16 +1,22 @@
 # Release Checklist
 
-Follow these steps to release a new version of Shark.
+Follow these steps to release a new version of SharkSpace.
 
-## 1. Update Version in Xcode Project
-
-Before building, update the version numbers in `Shark.xcodeproj/project.pbxproj`:
+## 1. Create a Release Branch
 
 ```bash
-# Update MARKETING_VERSION (e.g., 1.1.4)
+git checkout -b release/vX.X.X
+```
+
+## 2. Update Version in Xcode Project
+
+Update the version numbers in `Shark.xcodeproj/project.pbxproj`:
+
+```bash
+# Update MARKETING_VERSION (e.g., 1.9.0)
 sed -i '' 's/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = X.X.X;/g' Shark.xcodeproj/project.pbxproj
 
-# Update CURRENT_PROJECT_VERSION (build number, e.g., 4)
+# Update CURRENT_PROJECT_VERSION (build number, e.g., 10)
 sed -i '' 's/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = N;/g' Shark.xcodeproj/project.pbxproj
 ```
 
@@ -19,48 +25,74 @@ Verify the changes:
 grep -E "MARKETING_VERSION|CURRENT_PROJECT_VERSION" Shark.xcodeproj/project.pbxproj
 ```
 
-## 2. Build the Code
+## 3. Update Documentation
 
-Build the project using Xcode:
+- Add changelog entry to `CHANGELOG.md`
+- Update README.md if needed
+
+## 4. Build & Package
+
+Build the app and create a DMG using the build-tool:
 
 ```bash
-# Option 1: Build via command line
-xcodebuild -project Shark.xcodeproj -scheme Shark -configuration Release build
+# Build + create DMG
+npx tsx scripts/build-tool.ts create-dmg X.X.X
 ```
 
-Or open in Xcode and build with `Cmd + B`, then archive with `Cmd + Shift + E`.
+Or skip the build step if you already have a built .app:
 
-## 3. Verify Build
+```bash
+npx tsx scripts/build-tool.ts create-dmg X.X.X --no-build
+```
+
+## 5. Verify Build
 
 - Check the build succeeded without errors
 - Verify the app version shows correctly in Settings > About tab
 - Test basic functionality
+- DMG is at `dist/SharkSpace-X.X.X.dmg`
 
-## 4. Create Version Tag
+## 6. Create Version Tag
 
 Create and push a git tag with the version number:
 
 ```bash
-# Create tag (use v prefix, e.g., v1.1.4)
+# Create tag (use v prefix, e.g., v1.9.0)
 git tag -a vX.X.X -m "Release vX.X.X"
 
 # Push tag to remote
 git push origin vX.X.X
 ```
 
-## 5. Verify GitHub Action
+## 7. Publish to npm
+
+Publish the DMG to npm:
+
+```bash
+npx tsx scripts/build-tool.ts publish X.X.X --no-build
+```
+
+This bumps `package.json`, re-creates the DMG, and runs `npm publish --access public`.
+
+During publish you'll need npm OTP if 2FA is enabled:
+
+```bash
+npx tsx scripts/build-tool.ts publish X.X.X --no-build --otp 123456
+```
+
+## 8. Verify GitHub Action
 
 - Go to [GitHub Actions](https://github.com/SSBun/Shark/actions)
 - Check the release workflow is running
 - Verify the DMG is uploaded to the release
 
-## 6. Verify Release
+## 9. Verify Release
 
 - Check the release is created at https://github.com/SSBun/Shark/releases
 - Verify the DMG file is attached
 - Test the install script works:
   ```bash
-  curl -sL https://github.com/SSBun/Shark/raw/main/install_latest.sh | bash
+  npx @ssbun/sharkspace shark
   ```
 
 ---
@@ -71,6 +103,7 @@ git push origin vX.X.X
 |------|---------|
 | Update version | `sed -i '' 's/MARKETING_VERSION = .*/MARKETING_VERSION = X.X.X;/g' Shark.xcodeproj/project.pbxproj` |
 | Update build | `sed -i '' 's/CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = N;/g' Shark.xcodeproj/project.pbxproj` |
-| Build | `xcodebuild -project Shark.xcodeproj -scheme Shark -configuration Release build` |
+| Build + DMG | `npx tsx scripts/build-tool.ts create-dmg X.X.X` |
+| Publish | `npx tsx scripts/build-tool.ts publish X.X.X --no-build --otp CODE` |
 | Create tag | `git tag -a vX.X.X -m "Release vX.X.X"` |
 | Push tag | `git push origin vX.X.X` |
