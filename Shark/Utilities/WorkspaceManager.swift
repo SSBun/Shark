@@ -160,8 +160,6 @@ class WorkspaceManager: ObservableObject {
 
     /// Refresh workspaces from disk
     func refreshWorkspaces() {
-        workspaces = []
-
         var scannedWorkspaces: [Workspace] = []
 
         do {

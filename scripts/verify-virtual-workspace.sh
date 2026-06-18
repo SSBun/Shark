@@ -13,4 +13,9 @@ if ! rg -q 'legacyMetadataFileName = "\.claude-workspace\.json"' Shark/Models/Vi
   exit 1
 fi
 
+if awk '/func refreshWorkspaces/,/MARK: - Pin/ { print }' Shark/Utilities/WorkspaceManager.swift | rg -n 'workspaces = \[\]'; then
+  echo "refresh must not clear saved workspace state before scanning" >&2
+  exit 1
+fi
+
 echo "virtual workspace cleanup verified"
