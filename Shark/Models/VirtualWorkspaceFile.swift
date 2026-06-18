@@ -10,6 +10,7 @@ struct VirtualWorkspaceFile: Codable {
     var name: String
     var links: [LinkedFolder]
     var createdAt: Date
+    var codexSessionDisplayNames: [String: String]?
 
     struct LinkedFolder: Codable {
         let originalPath: String
@@ -86,6 +87,16 @@ extension VirtualWorkspaceFile {
                 hasVenomfiles: cachedHasVenomfiles
             )
         }
+    }
+
+    mutating func setCodexSessionDisplayName(_ name: String?, for sessionID: String) {
+        var names = codexSessionDisplayNames ?? [:]
+        if let name, !name.isEmpty {
+            names[sessionID] = name
+        } else {
+            names.removeValue(forKey: sessionID)
+        }
+        codexSessionDisplayNames = names.isEmpty ? nil : names
     }
 
     mutating func addLink(originalPath: String, symlinkName: String, parentFolder: String?) {

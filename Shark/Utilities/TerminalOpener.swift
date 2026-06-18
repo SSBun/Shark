@@ -114,9 +114,123 @@ struct TerminalOpener {
             openWithTerminator(path: path)
         }
     }
-    
+
+    static func runCommand(_ executable: String, arguments: [String], inFolder path: String, terminalApp: TerminalApp? = nil) {
+        let command = ([executable] + arguments).map(shellEscaped).joined(separator: " ")
+        let script = """
+        #!/bin/zsh
+        cd \(shellEscaped(path)) || exit 1
+        \(command)
+        """
+        let scriptURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("shark-command-\(UUID().uuidString)")
+            .appendingPathExtension("command")
+
+        do {
+            try script.write(to: scriptURL, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: scriptURL.path)
+            openCommandFile(scriptURL, terminalApp: terminalApp ?? SettingsManager.shared.defaultTerminalApp)
+        } catch {
+            Log.error("Failed to run command in terminal: \(error)", category: .terminal)
+        }
+    }
+
+    static func jumpToITermTab(tty: String) {
+        let fullTTY = tty.hasPrefix("/dev/") ? tty : "/dev/\(tty)"
+        jumpToITermTab(iTermSessionID: nil, tty: fullTTY)
+    }
+
+    static func jumpToITermTab(iTermSessionID: String?, tty: String?) {
+        let fullTTY = tty.map { $0.hasPrefix("/dev/") ? $0 : "/dev/\($0)" } ?? ""
+        let sessionID = iTermSessionID ?? ""
+        let script = """
+        tell application "iTerm2"
+            if not running then return false
+            repeat with terminalWindow in windows
+                if miniaturized of terminalWindow then set miniaturized of terminalWindow to false
+                repeat with terminalTab in tabs of terminalWindow
+                    repeat with terminalSession in sessions of terminalTab
+                        try
+                            if "\(appleScriptEscaped(sessionID))" is not "" and unique ID of terminalSession is "\(appleScriptEscaped(sessionID))" then
+                                try
+                                    select terminalWindow
+                                end try
+                                select terminalTab
+                                select terminalSession
+                                set index of terminalWindow to 1
+                                activate
+                                return true
+                            end if
+                        end try
+                        try
+                            if "\(appleScriptEscaped(fullTTY))" is not "" and tty of terminalSession is "\(appleScriptEscaped(fullTTY))" then
+                                try
+                                    select terminalWindow
+                                end try
+                                select terminalTab
+                                select terminalSession
+                                set index of terminalWindow to 1
+                                activate
+                                return true
+                            end if
+                        end try
+                    end repeat
+                end repeat
+            end repeat
+            activate
+            return false
+        end tell
+        """
+        runAppleScript(script, label: "iTermTTYJump")
+    }
+
     // MARK: - Private Methods
-    
+
+    private static func openCommandFile(_ url: URL, terminalApp: TerminalApp) {
+        guard let bundleId = terminalApp.bundleIdentifier,
+              let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) else {
+            NSWorkspace.shared.open(url)
+            return
+        }
+
+        NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration()) { _, error in
+            if let error {
+                Log.error("Failed to open command file with \(terminalApp.displayName): \(error)", category: .terminal)
+                NSWorkspace.shared.open(url)
+            }
+        }
+    }
+
+    private static func shellEscaped(_ value: String) -> String {
+        "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    private static func appleScriptEscaped(_ value: String) -> String {
+        value.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+    }
+
+    private static func runAppleScript(_ script: String, label: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+
+        let output = Pipe()
+        let error = Pipe()
+        process.standardOutput = output
+        process.standardError = error
+
+        do {
+            try process.run()
+            let stdout = String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+            let stderr = String(data: error.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+            process.waitUntilExit()
+            Log.info("[\(label)] status=\(process.terminationStatus) stdout=\(stdout.trimmingCharacters(in: .whitespacesAndNewlines)) stderr=\(stderr.trimmingCharacters(in: .whitespacesAndNewlines))", category: .terminal)
+        } catch {
+            Log.error("[\(label)] failed: \(error)", category: .terminal)
+        }
+    }
+
     private static func openWithSystemDefault(path: String) {
         let url = URL(fileURLWithPath: path)
         

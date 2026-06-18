@@ -16,8 +16,10 @@ final class WorkspaceStore {
     var workspaces: [Workspace]
     var selectedWorkspace: Workspace?
     var folders: [Folder] = []
+    var codexSessions: [CodexSession] = []
     var isLoadingFolders = false
     var isRefreshingVenomfiles = false
+    var isLoadingCodexSessions = false
 
     @ObservationIgnored private let workspaceManager: WorkspaceManager
     @ObservationIgnored private let settingsManager: SettingsManager
@@ -70,6 +72,7 @@ final class WorkspaceStore {
         if selectedWorkspace?.id == workspace.id {
             selectedWorkspace = nil
             folders = []
+            codexSessions = []
         }
 
         if workspace.filePath.hasPrefix(settingsManager.settingsFolderPath) {
@@ -135,6 +138,7 @@ final class WorkspaceStore {
     func loadFoldersForSelectedWorkspace(authManager: AuthorizationManager) async {
         guard let workspace = selectedWorkspace else {
             folders = []
+            codexSessions = []
             return
         }
 
@@ -153,6 +157,8 @@ final class WorkspaceStore {
         } catch {
             folders = []
         }
+
+        await loadCodexSessions()
     }
 
     func addFolder(authManager: AuthorizationManager) async {
@@ -166,6 +172,7 @@ final class WorkspaceStore {
 
         let newFolders = await folders(from: selectedURLs)
         folders.append(contentsOf: newFolders)
+        await loadCodexSessions()
     }
 
     func addSelectedFolders(_ selectedFolders: [Folder]) async {
@@ -179,10 +186,93 @@ final class WorkspaceStore {
             newFolders.append(newFolder)
         }
         folders.append(contentsOf: newFolders)
+        await loadCodexSessions()
     }
 
     func handleDroppedFolders(_ droppedFolders: [Folder]) async {
         await addSelectedFolders(droppedFolders)
+    }
+
+    func loadCodexSessions() async {
+        guard let workspace = selectedWorkspace else {
+            codexSessions = []
+            return
+        }
+
+        isLoadingCodexSessions = true
+        defer { isLoadingCodexSessions = false }
+
+        let workspacePath = workspace.filePath
+        let folderPaths = folders.map(\.path)
+        let displayNames = codexSessionDisplayNames(for: workspace)
+        let sessions = await Task.detached(priority: .utility) {
+            CodexSessionManager.sessions(matching: workspacePath, folderPaths: folderPaths, displayNames: displayNames)
+        }.value
+        codexSessions = sessions
+    }
+
+    func openCodexSession(_ session: CodexSession) {
+        NSWorkspace.shared.open(URL(fileURLWithPath: session.filePath))
+    }
+
+    func showCodexSessionsInFinder(_ sessions: [CodexSession]) {
+        NSWorkspace.shared.activateFileViewerSelecting(sessions.map { URL(fileURLWithPath: $0.filePath) })
+    }
+
+    func copyCodexSessionPaths(_ sessions: [CodexSession]) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(sessions.map(\.filePath).joined(separator: "\n"), forType: .string)
+    }
+
+    func resumeCodexSessionsInTerminal(_ sessions: [CodexSession]) {
+        for session in sessions {
+            TerminalOpener.runCommand(
+                "codex",
+                arguments: ["resume", session.id],
+                inFolder: session.cwd
+            )
+        }
+    }
+
+    func jumpToCodexSessionInITerm(_ session: CodexSession) {
+        TerminalOpener.jumpToITermTab(
+            iTermSessionID: session.runtimeState.iTermSessionID,
+            tty: session.runtimeState.terminalTTY
+        )
+    }
+
+    func copyCodexSessionIDs(_ sessions: [CodexSession]) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(sessions.map(\.id).joined(separator: "\n"), forType: .string)
+    }
+
+    func renameCodexSessionDisplayName(_ session: CodexSession) async {
+        guard let workspace = selectedWorkspace,
+              let newName = promptForCodexSessionDisplayName(currentName: session.title) else {
+            return
+        }
+
+        do {
+            let dirURL = URL(fileURLWithPath: workspace.filePath)
+            var workspaceFile = try VirtualWorkspaceFile.parse(fromDirectory: dirURL)
+            let trimmedName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+            workspaceFile.setCodexSessionDisplayName(trimmedName.isEmpty ? nil : trimmedName, for: session.id)
+            try workspaceFile.save(toDirectory: dirURL)
+            await loadCodexSessions()
+        } catch {
+            print("Failed to rename Codex session display name: \(error)")
+        }
+    }
+
+    func archiveCodexSessions(_ sessions: [CodexSession]) async {
+        await runCodexSessionCommand("archive", sessions: sessions)
+        await loadCodexSessions()
+    }
+
+    func deleteCodexSessions(_ sessions: [CodexSession]) async {
+        guard confirmDeleteCodexSessions(sessions) else { return }
+        await runCodexSessionCommand("delete", sessions: sessions)
+        await loadCodexSessions()
     }
 
     func saveFoldersToWorkspace(authManager: AuthorizationManager) async {
@@ -264,6 +354,56 @@ final class WorkspaceStore {
         return newFolders
     }
 
+    private func confirmDeleteCodexSessions(_ sessions: [CodexSession]) -> Bool {
+        let alert = NSAlert()
+        alert.alertStyle = .critical
+        alert.messageText = "Delete \(sessions.count) Codex session\(sessions.count == 1 ? "" : "s")?"
+        alert.informativeText = "This permanently deletes the selected Codex session data."
+        alert.addButton(withTitle: "Delete")
+        alert.addButton(withTitle: "Cancel")
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
+    private func runCodexSessionCommand(_ command: String, sessions: [CodexSession]) async {
+        let ids = sessions.map(\.id)
+        await Task.detached(priority: .utility) {
+            for id in ids {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+                process.arguments = command == "delete" ? ["codex", command, "--force", id] : ["codex", command, id]
+                process.standardOutput = Pipe()
+                process.standardError = Pipe()
+                do {
+                    try process.run()
+                    process.waitUntilExit()
+                } catch {
+                    print("Failed to run codex \(command) for \(id): \(error)")
+                }
+            }
+        }.value
+    }
+
+    private func codexSessionDisplayNames(for workspace: Workspace) -> [String: String] {
+        let dirURL = URL(fileURLWithPath: workspace.filePath)
+        let workspaceFile = try? VirtualWorkspaceFile.parse(fromDirectory: dirURL)
+        return workspaceFile?.codexSessionDisplayNames ?? [:]
+    }
+
+    private func promptForCodexSessionDisplayName(currentName: String) -> String? {
+        let alert = NSAlert()
+        alert.messageText = "Rename Codex Session"
+        alert.informativeText = "Leave empty to use the Codex title."
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Cancel")
+
+        let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
+        textField.stringValue = currentName
+        alert.accessoryView = textField
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        return textField.stringValue
+    }
+
     private func saveVirtualWorkspace(_ workspace: Workspace) throws {
         Self.logger.debug("saveVirtualWorkspace: workspace.filePath=\(workspace.filePath), folders.count=\(self.folders.count)")
 
@@ -307,6 +447,7 @@ final class WorkspaceStore {
         } else {
             self.selectedWorkspace = nil
             folders = []
+            codexSessions = []
         }
     }
 }

@@ -35,6 +35,8 @@ struct SettingsView: View {
     @State private var selectedLocationType: LocationType = .default
     @State private var authorizedFolders: [String] = []
     @State private var selectedTerminalApp: TerminalApp = .systemDefault
+    @State private var codexHooksInstalled = false
+    @State private var codexHooksMessage = ""
     private let settingsManager = SettingsManager.shared
 
     enum LocationType: String, CaseIterable {
@@ -66,6 +68,7 @@ struct SettingsView: View {
             componentsSearchPaths = settingsManager.componentsSearchPaths
             authorizedFolders = settingsManager.authorizedFolders
             selectedTerminalApp = settingsManager.defaultTerminalApp
+            refreshCodexHooksStatus()
             // Determine if current path is default or custom
             if settingsFolderPath == settingsManager.defaultSettingsFolderPath {
                 selectedLocationType = .default
@@ -106,7 +109,7 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.menu)
                     .labelsHidden()
-                    .frame(maxWidth: 300)
+                    .frame(maxWidth: 300, alignment: .leading)
                     HStack(spacing: 8) {
                         Text(displayPath)
                             .font(.system(size: 12))
@@ -264,6 +267,34 @@ struct SettingsView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                     Text("Choose the terminal application to use when opening folders in terminal.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                Divider()
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Codex hooks")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("Install Shark's Codex hooks to capture stable terminal identifiers for session jumping.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                    HStack(spacing: 8) {
+                        Button(action: installCodexHooks) {
+                            Label(codexHooksInstalled ? "Reinstall Codex Hooks" : "Install Codex Hooks", systemImage: "link.badge.plus")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+
+                        Label(codexHooksInstalled ? "Installed" : "Not installed", systemImage: codexHooksInstalled ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 11))
+                            .foregroundStyle(codexHooksInstalled ? .green : .secondary)
+                    }
+                    if !codexHooksMessage.isEmpty {
+                        Text(codexHooksMessage)
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
+                    Text("After installing, run /hooks in Codex and trust the new Shark hook if Codex asks for review.")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
@@ -472,6 +503,22 @@ struct SettingsView: View {
             alert.alertStyle = .informational
             alert.addButton(withTitle: "OK")
             alert.runModal()
+        }
+    }
+
+    private func refreshCodexHooksStatus() {
+        codexHooksInstalled = CodexHookInstaller.isInstalled
+        codexHooksMessage = codexHooksInstalled ? "Hooks file: \(CodexHookInstaller.hooksPath)" : ""
+    }
+
+    private func installCodexHooks() {
+        do {
+            try CodexHookInstaller.install()
+            refreshCodexHooksStatus()
+            codexHooksMessage = "Installed to \(CodexHookInstaller.hooksPath)"
+        } catch {
+            codexHooksInstalled = false
+            codexHooksMessage = "Install failed: \(error.localizedDescription)"
         }
     }
 }
