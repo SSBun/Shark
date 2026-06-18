@@ -37,3 +37,18 @@
 ## Review
 - 已完成实现和验证。
 - 构建中仍有既有 warning：`SettingsView.swift` 的 `allowedFileTypes` 已废弃、`AlertManager.swift` 有未使用变量；这两个不属于本次 virtual folder 重构范围。
+
+# SwiftUI 结构优化
+
+## 计划
+- [x] 提交 virtual folder 重构现有改动。
+- [x] 添加最小结构检查脚本。
+- [x] 引入 `@MainActor @Observable` 的 `WorkspaceStore`。
+- [x] 简化 `MainWorkspaceView`，让它只负责布局和 presentation。
+- [x] 让 `WorkspaceListView` 通过 store 执行动作，移除 workspace manager glue。
+- [x] 运行结构检查、virtual workspace 检查和 Debug 构建。
+
+## 验证
+- `bash scripts/verify-swiftui-structure.sh` 通过。
+- `bash scripts/verify-virtual-workspace.sh` 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。

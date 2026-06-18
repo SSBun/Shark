@@ -9,25 +9,21 @@ import SwiftUI
 import AppKit
 
 struct WorkspaceListView: View {
-    @Binding var workspaces: [Workspace]
-    @Binding var selectedWorkspace: Workspace?
+    @Bindable var store: WorkspaceStore
     @EnvironmentObject var authManager: AuthorizationManager
     @State private var lastSelectedWorkspace: Workspace?
     @State private var lastSelectionTime: Date?
     @State private var searchText: String = ""
     @State private var isSearchFocused: Bool = false
     @FocusState private var isTextFieldFocused: Bool
-    @Binding var isRefreshingVenomfiles: Bool
     @State private var workspaceToRemove: Workspace?
-
-    let onRefreshAllVenomfiles: (() -> Void)?
 
     private var filteredWorkspaces: [Workspace] {
         if searchText.isEmpty {
-            return workspaces
+            return store.workspaces
         }
         let lowercased = searchText.lowercased()
-        return workspaces.filter {
+        return store.workspaces.filter {
             $0.name.lowercased().contains(lowercased) ||
             $0.filePath.lowercased().contains(lowercased)
         }
@@ -44,9 +40,9 @@ struct WorkspaceListView: View {
 
                 // Refresh button
                 Button(action: {
-                    onRefreshAllVenomfiles?()
+                    Task { await store.refreshAllVenomfilesStatus(authManager: authManager) }
                 }) {
-                    if isRefreshingVenomfiles {
+                    if store.isRefreshingVenomfiles {
                         ProgressView()
                             .scaleEffect(0.6)
                             .frame(width: 14, height: 14)
@@ -57,7 +53,7 @@ struct WorkspaceListView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Refresh Venomfiles status for all components")
-                .disabled(isRefreshingVenomfiles)
+                .disabled(store.isRefreshingVenomfiles)
 
                 // Search button (⌘F)
                 Button(action: {
@@ -70,7 +66,7 @@ struct WorkspaceListView: View {
                 .help("Search workspaces (⌘F)")
 
                 Button(action: {
-                    createWorkspace()
+                    Task { await store.createWorkspace(authManager: authManager) }
                 }) {
                     Image(systemName: "plus")
                         .font(.system(size: 14, weight: .medium))
@@ -138,14 +134,14 @@ struct WorkspaceListView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(selection: $selectedWorkspace) {
+                List(selection: $store.selectedWorkspace) {
                     ForEach(filteredWorkspaces) { workspace in
                         makeWorkspaceRow(workspace, isPinned: workspace.isPinned)
                             .tag(workspace)
                     }
                 }
                 .listStyle(.sidebar)
-                .onChange(of: selectedWorkspace) { oldValue, newValue in
+                .onChange(of: store.selectedWorkspace) { oldValue, newValue in
                     // Handle double-click detection
                     if let newValue = newValue {
                         let now = Date()
@@ -174,7 +170,7 @@ struct WorkspaceListView: View {
         ) {
             Button("Remove", role: .destructive) {
                 if let workspace = workspaceToRemove {
-                    removeWorkspace(workspace)
+                    store.removeWorkspace(workspace)
                     workspaceToRemove = nil
                 }
             }
@@ -191,30 +187,26 @@ struct WorkspaceListView: View {
         WorkspaceRow(
             workspace: workspace,
             isPinned: isPinned,
-            onTogglePin: { togglePin(workspace) },
+            onTogglePin: { store.togglePin(workspace) },
             onOpen: {
                 WorkspaceOpener.openWorkspace(workspace)
             },
             onShowInFinder: {
-                showWorkspaceInFinder(workspace)
+                store.showWorkspaceInFinder(workspace)
             },
             onRename: { newName in
-                renameWorkspace(workspace, to: newName)
+                store.renameWorkspace(workspace, to: newName)
             },
             onRemove: {
                 workspaceToRemove = workspace
             },
             onOpenInForkWorkspace: {
-                openInForkWorkspace(workspace)
+                Task { await store.openInForkWorkspace(workspace, authManager: authManager) }
             },
             onOpenInSourceTree: {
-                openGitFoldersInSourceTree(workspace)
+                Task { await store.openGitFoldersInSourceTree(workspace, authManager: authManager) }
             }
         )
-    }
-
-    private func togglePin(_ workspace: Workspace) {
-        WorkspaceManager.shared.togglePin(workspace)
     }
 
     private func setupKeyboardShortcuts() {
@@ -229,120 +221,6 @@ struct WorkspaceListView: View {
         }
     }
 
-    private func createWorkspace() {
-        Task {
-            let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
-            guard authorized else { return }
-
-            do {
-                let workspace = try WorkspaceManager.shared.createWorkspace()
-                await MainActor.run {
-                    workspaces.append(workspace)
-                    selectedWorkspace = workspace
-                    WorkspaceManager.shared.addWorkspace(workspace)
-                }
-            } catch {
-                print("Failed to create workspace: \(error)")
-            }
-        }
-    }
-
-    private func renameWorkspace(_ workspace: Workspace, to newName: String) {
-        do {
-            let updatedWorkspace = try WorkspaceManager.shared.renameWorkspace(workspace, to: newName)
-
-            if let index = workspaces.firstIndex(where: { $0.id == workspace.id }) {
-                workspaces[index] = updatedWorkspace
-
-                if selectedWorkspace?.id == workspace.id {
-                    selectedWorkspace = updatedWorkspace
-                }
-            }
-        } catch {
-            print("Failed to rename workspace: \(error)")
-        }
-    }
-
-    private func showWorkspaceInFinder(_ workspace: Workspace) {
-        let fileURL = URL(fileURLWithPath: workspace.filePath)
-        NSWorkspace.shared.activateFileViewerSelecting([fileURL])
-    }
-
-    private func removeWorkspace(_ workspace: Workspace) {
-        Task {
-            workspaces.removeAll { $0.id == workspace.id }
-            WorkspaceManager.shared.removeWorkspace(workspace)
-
-            if selectedWorkspace?.id == workspace.id {
-                selectedWorkspace = nil
-            }
-
-            let settingsManager = SettingsManager.shared
-            let settingsFolderPath = settingsManager.settingsFolderPath
-
-            if workspace.filePath.hasPrefix(settingsFolderPath) {
-                do {
-                    try FileManager.default.removeItem(atPath: workspace.filePath)
-                } catch {
-                    print("Could not delete workspace: \(error)")
-                }
-            }
-        }
-    }
-
-    private func openInForkWorkspace(_ workspace: Workspace) {
-        Log.info("openInForkWorkspace called: \(workspace.name)", category: .workspace)
-        Task {
-            let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
-            guard authorized else {
-                Log.error("Authorization denied for Fork workspace open", category: .workspace)
-                return
-            }
-
-            do {
-                let repoPaths = try WorkspaceManager.shared.gitRepoPaths(for: workspace)
-
-                Log.info("Found \(repoPaths.count) git repo paths", category: .workspace)
-                guard !repoPaths.isEmpty else {
-                    await MainActor.run {
-                        AlertManager.shared.show(type: .warning, title: "No Git Repos", message: "No git repositories found in this workspace.")
-                    }
-                    return
-                }
-
-                let result = try await ForkWorkspaceManager.findOrCreateAndOpen(named: workspace.name, repoPaths: repoPaths)
-
-                await MainActor.run {
-                    let message = result.created
-                        ? "Created Fork workspace '\(workspace.name)' with \(repoPaths.count) repos."
-                        : "Switched to Fork workspace '\(workspace.name)' with \(repoPaths.count) repos."
-                    AlertManager.shared.show(type: .info, title: "Fork Workspace", message: message)
-                }
-            } catch {
-                Log.error("openInForkWorkspace error: \(error)", category: .workspace)
-                await MainActor.run {
-                    AlertManager.shared.show(type: .error, title: "Error", message: "Failed to open Fork workspace: \(error.localizedDescription)")
-                }
-            }
-        }
-    }
-
-    private func openGitFoldersInSourceTree(_ workspace: Workspace) {
-        Task {
-            let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
-            guard authorized else {
-                return
-            }
-
-            do {
-                for path in try WorkspaceManager.shared.gitRepoPaths(for: workspace) {
-                    SourceTreeOpener.openRepository(at: path)
-                }
-            } catch {
-                print("Failed to load workspace: \(error)")
-            }
-        }
-    }
 }
 
 struct WorkspaceRow: View {
