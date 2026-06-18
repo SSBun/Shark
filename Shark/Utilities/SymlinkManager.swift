@@ -73,7 +73,7 @@ struct SymlinkManager {
         }
     }
 
-    /// Remove all symlinks in workspace directory (excluding .claude-workspace.json and other dotfiles).
+    /// Remove all symlinks in workspace directory (excluding dotfiles).
     static func removeAllSymlinks(in workspaceDirectory: String) throws {
         logger.debug("removeAllSymlinks: workspaceDirectory=\(workspaceDirectory)")
         let fileManager = FileManager.default
@@ -94,15 +94,15 @@ struct SymlinkManager {
     /// Removes old symlinks first, then creates new ones.
     @discardableResult
     static func recreateAllSymlinks(
-        links: [ClaudeWorkspaceFile.LinkedFolder],
+        links: [VirtualWorkspaceFile.LinkedFolder],
         in workspaceDirectory: String
-    ) throws -> [ClaudeWorkspaceFile.LinkedFolder] {
+    ) throws -> [VirtualWorkspaceFile.LinkedFolder] {
         logger.debug("recreateAllSymlinks: workspaceDirectory=\(workspaceDirectory), links.count=\(links.count)")
         // Remove existing symlinks
         try removeAllSymlinks(in: workspaceDirectory)
 
         var existingNames = Set<String>()
-        var updatedLinks: [ClaudeWorkspaceFile.LinkedFolder] = []
+        var updatedLinks: [VirtualWorkspaceFile.LinkedFolder] = []
 
         for link in links {
             logger.debug("recreateAllSymlinks: processing link originalPath=\(link.originalPath), folderName=\(link.folderName), parentFolder=\(link.parentFolder ?? "nil")")
@@ -121,7 +121,7 @@ struct SymlinkManager {
                 )
                 logger.info("recreateAllSymlinks: created \(symlinkName) → \(link.originalPath)")
                 existingNames.insert(symlinkName)
-                updatedLinks.append(ClaudeWorkspaceFile.LinkedFolder(
+                updatedLinks.append(VirtualWorkspaceFile.LinkedFolder(
                     originalPath: link.originalPath,
                     symlinkName: symlinkName,
                     parentFolder: link.parentFolder

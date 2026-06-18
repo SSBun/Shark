@@ -19,7 +19,6 @@ class SettingsManager {
     private let legacyComponentsSearchPathBookmarkKey = "componentsSearchPathBookmark"
     private let authorizedFoldersKey = "authorizedFolders"
     private let defaultTerminalAppKey = "defaultTerminalApp"
-    private let defaultIDEAppKey = "defaultIDEApp"
 
     private init() {
         migrateLegacySearchPath()
@@ -213,29 +212,8 @@ class SettingsManager {
         return url
     }
 
-    /// Generate a unique workspace filename
-    func generateWorkspaceFilename(baseName: String = "workspace") -> String {
-        let folderURL = URL(fileURLWithPath: settingsFolderPath)
-        var filename = "\(baseName).code-workspace"
-        var counter = 1
-
-        while FileManager.default.fileExists(atPath: folderURL.appendingPathComponent(filename).path) {
-            filename = "\(baseName)-\(counter).code-workspace"
-            counter += 1
-        }
-
-        return filename
-    }
-
-    /// Get the full URL for a new workspace file
-    func getNewWorkspaceURL(baseName: String = "workspace") throws -> URL {
-        let folderURL = try getSettingsFolderURL()
-        let filename = generateWorkspaceFilename(baseName: baseName)
-        return folderURL.appendingPathComponent(filename)
-    }
-
-    /// Get the full URL for a new Claude workspace directory
-    func getNewClaudeWorkspaceURL(baseName: String = "claude-workspace") throws -> URL {
+    /// Get the full URL for a new virtual workspace directory.
+    func getNewWorkspaceDirectoryURL(baseName: String = "workspace") throws -> URL {
         let folderURL = try getSettingsFolderURL()
         var dirName = baseName
         var counter = 1
@@ -266,17 +244,4 @@ class SettingsManager {
         }
     }
 
-    /// Get the default IDE app, defaults to Cursor
-    var defaultIDEApp: IDEApp {
-        get {
-            if let savedValue = UserDefaults.standard.string(forKey: defaultIDEAppKey),
-               let ideApp = IDEApp(rawValue: savedValue) {
-                return ideApp
-            }
-            return .cursor
-        }
-        set {
-            UserDefaults.standard.set(newValue.rawValue, forKey: defaultIDEAppKey)
-        }
-    }
 }

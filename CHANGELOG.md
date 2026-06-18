@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- 移除 Cursor workspace 类型和旧 workspace 文件管理流程。
+- 只保留 virtual folder workspace：真实目录 + metadata + symlink。
+- Workspace 打开行为改为打开虚拟工作区目录。
+
 ## [1.9.0] - 2026-06-04
 
 ### Added
@@ -75,7 +82,7 @@ All notable changes to this project will be documented in this file.
 - Edit button to open dependency source file in default editor
 
 ### Changed
-- Removed Zed from IDE selector due to lack of `.code-workspace` support
+- Removed Zed from IDE selector due to lack of legacy workspace-file support
 
 ## [1.2.1] - 2026-03-26
 

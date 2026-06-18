@@ -16,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C4796DDF2EC4265200E6093E"
-               BuildableName = "Shark.app"
+               BuildableName = "SharkSpace.app"
                BlueprintName = "Shark"
                ReferencedContainer = "container:Shark.xcodeproj">
             </BuildableReference>
@@ -45,7 +45,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C4796DDF2EC4265200E6093E"
-            BuildableName = "Shark.app"
+            BuildableName = "SharkSpace.app"
             BlueprintName = "Shark"
             ReferencedContainer = "container:Shark.xcodeproj">
          </BuildableReference>
@@ -62,7 +62,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C4796DDF2EC4265200E6093E"
-            BuildableName = "Shark.app"
+            BuildableName = "SharkSpace.app"
             BlueprintName = "Shark"
             ReferencedContainer = "container:Shark.xcodeproj">
          </BuildableReference>

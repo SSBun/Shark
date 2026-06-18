@@ -1,6 +1,6 @@
 # Shark 🦈
 
-A macOS workspace manager for Cursor, Trae, and Claude Code. Organize projects into workspaces, manage Venomfiles dependencies, and quickly open everything in your preferred IDE.
+一个 macOS 虚拟工作区管理器。Shark 用真实目录和符号链接组织多个项目/组件文件夹，让各类 Agent 工具和终端都能像打开普通项目一样打开整个工作区。
 
 ![Shark Screenshot](resources/screen.png)
 
@@ -9,10 +9,8 @@ A macOS workspace manager for Cursor, Trae, and Claude Code. Organize projects i
 ## ✨ Features
 
 ### Workspace Management
-- **Cursor / Trae Workspaces** - Create, import, and manage `.code-workspace` files
-- **Claude Code Workspaces** - Create workspace directories with symlinked component folders, ready for Claude Code CLI
+- **Virtual Folder Workspaces** - 创建真实目录，并用符号链接挂载多个项目/组件文件夹
 - **Multiple Workspace Support** - Manage all your workspaces in one place
-- **Workspace Grouping** - Cursor and Claude workspaces sharing the same project name are grouped together for easy access
 - **Rename Workspaces** - Easily rename your workspaces to keep them organized
 
 ### Folder Management
@@ -23,15 +21,14 @@ A macOS workspace manager for Cursor, Trae, and Claude Code. Organize projects i
 - **Automatic Saving** - Changes are automatically saved to your workspace files
 
 ### Quick Actions
-- **Double-Click to Open** - Open workspaces in Cursor, Trae, or terminal (for Claude Code) with a double-click
+- **Double-Click to Open** - 双击即可在终端打开虚拟工作区目录
 - **Context Menu** - Right-click for quick actions:
-  - Open workspace in Cursor, Trae, or terminal
+  - Open workspace in terminal
   - Show workspace file in Finder
   - Rename workspace
   - Remove workspace
 
 ### Settings
-- **IDE Selector** - Switch between Cursor, Trae, or terminal for opening workspaces
 - **Components Search Paths** - Configure multiple directories to search for components
 - **Venomfiles Support** - Check dependencies for components with Venomfiles folders
 - **Refresh Dependencies** - Refresh Venomfiles status for all components
@@ -44,7 +41,7 @@ A macOS workspace manager for Cursor, Trae, and Claude Code. Organize projects i
 
 ## 🚀 Why Use Shark?
 
-### For Developers Who Use Cursor, Trae, or Claude Code
+### For Developers Who Use Agent Tools
 If you work with multiple projects or need to organize your development environment, Shark makes it effortless to:
 - Switch between different project workspaces
 - Organize related folders into workspaces
@@ -103,7 +100,7 @@ cd Shark
 
 ### System Requirements
 - macOS 14.0 or later
-- Cursor IDE, Trae IDE, or Claude Code CLI (for opening workspaces)
+- A terminal application for opening virtual workspaces
 
 ## 🎯 Getting Started
 
@@ -113,11 +110,11 @@ cd Shark
    - Click the **+** button to create a new workspace
    - Click the **↓** button to import an existing workspace file
 4. **Add Folders** - Select a workspace and click "Add Folder", "Select Components", or drag folders directly into the folder area
-5. **Open in IDE** - Double-click a workspace or use the context menu to open it in your configured IDE
+5. **Open Workspace** - Double-click a workspace or use the context menu to open its virtual folder
 
 ## 💡 Tips
 
-- **Double-click** any workspace to quickly open it in your IDE
+- **Double-click** any workspace to quickly open its virtual folder
 - **Drag & Drop** folders directly into the folder list to add them to your workspace
 - **Right-click** workspaces for additional options
 - Workspaces are automatically saved when you make changes
@@ -128,8 +125,7 @@ cd Shark
 
 - Built with **SwiftUI** and **Swift 6**
 - Native macOS application
-- Supports Cursor/Trae `.code-workspace` files and Claude Code workspace directories
-- Claude Code workspaces use symlinks for component folders
+- Virtual folder workspaces use symlinks for component folders
 - Stores workspace metadata in UserDefaults
 - Requires file system access for reading/writing workspace files
 
@@ -147,5 +143,4 @@ For issues, feature requests, or questions, please open an issue on GitHub.
 
 ---
 
-**Made with ❤️ for the Cursor, Trae, and Claude Code community**
-
+**Made for developers who organize projects for agent tools**

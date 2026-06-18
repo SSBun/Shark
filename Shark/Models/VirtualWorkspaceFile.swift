@@ -1,11 +1,11 @@
 //
-//  ClaudeWorkspaceFile.swift
+//  VirtualWorkspaceFile.swift
 //  Shark
 //
 
 import Foundation
 
-struct ClaudeWorkspaceFile: Codable {
+struct VirtualWorkspaceFile: Codable {
     var version: Int = 1
     var name: String
     var links: [LinkedFolder]
@@ -21,18 +21,35 @@ struct ClaudeWorkspaceFile: Codable {
         }
     }
 
-    static let metadataFileName = ".claude-workspace.json"
+    static let metadataFileName = ".shark-workspace.json"
+    private static let legacyMetadataFileName = ".claude-workspace.json"
 }
 
-extension ClaudeWorkspaceFile {
-    static func parse(from url: URL) throws -> ClaudeWorkspaceFile {
-        let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(ClaudeWorkspaceFile.self, from: data)
+extension VirtualWorkspaceFile {
+    static func metadataURL(in directoryURL: URL) -> URL? {
+        let currentURL = directoryURL.appendingPathComponent(metadataFileName)
+        if FileManager.default.fileExists(atPath: currentURL.path) {
+            return currentURL
+        }
+
+        let legacyURL = directoryURL.appendingPathComponent(legacyMetadataFileName)
+        if FileManager.default.fileExists(atPath: legacyURL.path) {
+            return legacyURL
+        }
+
+        return nil
     }
 
-    static func parse(fromDirectory directoryURL: URL) throws -> ClaudeWorkspaceFile {
-        let metadataURL = directoryURL.appendingPathComponent(metadataFileName)
-        return try parse(from: metadataURL)
+    static func parse(from url: URL) throws -> VirtualWorkspaceFile {
+        let data = try Data(contentsOf: url)
+        return try JSONDecoder().decode(VirtualWorkspaceFile.self, from: data)
+    }
+
+    static func parse(fromDirectory directoryURL: URL) throws -> VirtualWorkspaceFile {
+        guard let url = metadataURL(in: directoryURL) else {
+            throw CocoaError(.fileNoSuchFile)
+        }
+        return try parse(from: url)
     }
 
     func save(to url: URL) throws {
@@ -43,20 +60,15 @@ extension ClaudeWorkspaceFile {
     }
 
     func save(toDirectory directoryURL: URL) throws {
-        let metadataURL = directoryURL.appendingPathComponent(Self.metadataFileName)
-        try save(to: metadataURL)
+        try save(to: directoryURL.appendingPathComponent(Self.metadataFileName))
     }
 
-    static func createEmpty(name: String) -> ClaudeWorkspaceFile {
-        ClaudeWorkspaceFile(name: name, links: [], createdAt: Date())
+    static func createEmpty(name: String) -> VirtualWorkspaceFile {
+        VirtualWorkspaceFile(name: name, links: [], createdAt: Date())
     }
 
     func toWorkspace(directoryPath: String) -> Workspace {
-        Workspace(
-            name: name,
-            filePath: directoryPath,
-            type: .claude
-        )
+        Workspace(name: name, filePath: directoryPath)
     }
 
     func toFolders() -> [Folder] {
@@ -77,11 +89,6 @@ extension ClaudeWorkspaceFile {
     }
 
     mutating func addLink(originalPath: String, symlinkName: String, parentFolder: String?) {
-        let link = LinkedFolder(originalPath: originalPath, symlinkName: symlinkName, parentFolder: parentFolder)
-        links.append(link)
-    }
-
-    mutating func removeLink(originalPath: String) {
-        links.removeAll { $0.originalPath == originalPath }
+        links.append(LinkedFolder(originalPath: originalPath, symlinkName: symlinkName, parentFolder: parentFolder))
     }
 }

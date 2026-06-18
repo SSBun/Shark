@@ -103,20 +103,11 @@ struct MainWorkspaceView: View {
             }
 
             do {
-                if workspace.type == .claude {
-                    let dirURL = URL(fileURLWithPath: workspace.filePath)
-                    let claudeFile = try ClaudeWorkspaceFile.parse(fromDirectory: dirURL)
-                    await MainActor.run {
-                        folders = claudeFile.toFolders()
-                        isLoadingFolders = false
-                    }
-                } else {
-                    let fileURL = URL(fileURLWithPath: workspace.filePath)
-                    let workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
-                    await MainActor.run {
-                        folders = workspaceFile.toFolders()
-                        isLoadingFolders = false
-                    }
+                let dirURL = URL(fileURLWithPath: workspace.filePath)
+                let workspaceFile = try VirtualWorkspaceFile.parse(fromDirectory: dirURL)
+                await MainActor.run {
+                    folders = workspaceFile.toFolders()
+                    isLoadingFolders = false
                 }
             } catch {
                 await MainActor.run {
@@ -243,43 +234,25 @@ struct MainWorkspaceView: View {
             }
 
             do {
-                if workspace.type == .claude {
-                    try saveClaudeWorkspace(workspace)
-                } else {
-                    try saveCursorWorkspace(workspace)
-                }
+                try saveVirtualWorkspace(workspace)
             } catch {
                 print("Failed to save workspace: \(error)")
             }
         }
     }
 
-    private func saveCursorWorkspace(_ workspace: Workspace) throws {
-        let fileURL = URL(fileURLWithPath: workspace.filePath)
-
-        var workspaceFile: CursorWorkspaceFile
-        if FileManager.default.fileExists(atPath: workspace.filePath) {
-            workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
-        } else {
-            workspaceFile = CursorWorkspaceFile.createEmpty()
-        }
-
-        workspaceFile.updateFolders(from: folders)
-        try workspaceFile.save(to: fileURL)
-    }
-
-    private func saveClaudeWorkspace(_ workspace: Workspace) throws {
-        Self.logger.debug("saveClaudeWorkspace: workspace.filePath=\(workspace.filePath), folders.count=\(folders.count)")
+    private func saveVirtualWorkspace(_ workspace: Workspace) throws {
+        Self.logger.debug("saveVirtualWorkspace: workspace.filePath=\(workspace.filePath), folders.count=\(folders.count)")
         let dirURL = URL(fileURLWithPath: workspace.filePath)
 
         // Build links from current folders
-        var links: [ClaudeWorkspaceFile.LinkedFolder] = []
+        var links: [VirtualWorkspaceFile.LinkedFolder] = []
         var existingNames = Set<String>()
 
         for folder in folders {
             let preferredName = folder.name
             let parentFolder = URL(fileURLWithPath: folder.path).deletingLastPathComponent().lastPathComponent
-            Self.logger.debug("saveClaudeWorkspace: folder name=\(folder.name), path=\(folder.path), preferredName=\(preferredName), parentFolder=\(parentFolder)")
+            Self.logger.debug("saveVirtualWorkspace: folder name=\(folder.name), path=\(folder.path), preferredName=\(preferredName), parentFolder=\(parentFolder)")
 
             let symlinkName = SymlinkManager.resolveSymlinkName(
                 preferredName: preferredName,
@@ -294,29 +267,29 @@ struct MainWorkspaceView: View {
                 UserDefaults.standard.set(bookmarkData, forKey: bookmarkKey)
             }
 
-            links.append(ClaudeWorkspaceFile.LinkedFolder(
+            links.append(VirtualWorkspaceFile.LinkedFolder(
                 originalPath: folder.path,
                 symlinkName: symlinkName,
                 parentFolder: parentFolder
             ))
-            Self.logger.debug("saveClaudeWorkspace: resolved symlinkName=\(symlinkName)")
+            Self.logger.debug("saveVirtualWorkspace: resolved symlinkName=\(symlinkName)")
         }
 
         // Recreate symlinks on disk
-        Self.logger.debug("saveClaudeWorkspace: recreating \(links.count) symlinks in \(workspace.filePath)")
+        Self.logger.debug("saveVirtualWorkspace: recreating \(links.count) symlinks in \(workspace.filePath)")
         let updatedLinks = try SymlinkManager.recreateAllSymlinks(links: links, in: workspace.filePath)
-        Self.logger.info("saveClaudeWorkspace: created \(updatedLinks.count) symlinks")
+        Self.logger.info("saveVirtualWorkspace: created \(updatedLinks.count) symlinks")
 
         // Save metadata
-        let metadataURL = dirURL.appendingPathComponent(ClaudeWorkspaceFile.metadataFileName)
-        var claudeFile: ClaudeWorkspaceFile
+        let metadataURL = dirURL.appendingPathComponent(VirtualWorkspaceFile.metadataFileName)
+        var workspaceFile: VirtualWorkspaceFile
         if FileManager.default.fileExists(atPath: metadataURL.path) {
-            claudeFile = try ClaudeWorkspaceFile.parse(from: metadataURL)
-            claudeFile.links = updatedLinks
+            workspaceFile = try VirtualWorkspaceFile.parse(from: metadataURL)
+            workspaceFile.links = updatedLinks
         } else {
-            claudeFile = ClaudeWorkspaceFile(name: workspace.name, links: updatedLinks, createdAt: Date())
+            workspaceFile = VirtualWorkspaceFile(name: workspace.name, links: updatedLinks, createdAt: Date())
         }
-        try claudeFile.save(to: metadataURL)
+        try workspaceFile.save(to: metadataURL)
     }
 
     private func refreshAllVenomfilesStatus() {
@@ -357,15 +330,9 @@ struct MainWorkspaceView: View {
 
                 do {
                     let otherFolders: [Folder]
-                    if workspace.type == .claude {
-                        let dirURL = URL(fileURLWithPath: workspace.filePath)
-                        let claudeFile = try ClaudeWorkspaceFile.parse(fromDirectory: dirURL)
-                        otherFolders = claudeFile.toFolders()
-                    } else {
-                        let fileURL = URL(fileURLWithPath: workspace.filePath)
-                        var workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
-                        otherFolders = workspaceFile.toFolders()
-                    }
+                    let dirURL = URL(fileURLWithPath: workspace.filePath)
+                    let workspaceFile = try VirtualWorkspaceFile.parse(fromDirectory: dirURL)
+                    otherFolders = workspaceFile.toFolders()
 
                     var updatedFolders = otherFolders
                     for i in 0..<updatedFolders.count {
@@ -375,14 +342,7 @@ struct MainWorkspaceView: View {
                         )
                     }
 
-                    // Save updated status back to workspace file
-                    if workspace.type == .cursor {
-                        let fileURL = URL(fileURLWithPath: workspace.filePath)
-                        var workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
-                        workspaceFile.updateFolders(from: updatedFolders)
-                        try workspaceFile.save(to: fileURL)
-                    }
-                    // Claude workspaces: bookmarks are already cached in UserDefaults
+                    // Virtual workspaces store Venomfiles status in UserDefaults.
                 } catch {
                     print("Failed to refresh Venomfiles for workspace \(workspace.name): \(error)")
                 }

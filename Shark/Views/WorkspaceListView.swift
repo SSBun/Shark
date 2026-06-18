@@ -18,7 +18,6 @@ struct WorkspaceListView: View {
     @State private var isSearchFocused: Bool = false
     @FocusState private var isTextFieldFocused: Bool
     @Binding var isRefreshingVenomfiles: Bool
-    @State private var showWorkspaceTypePicker = false
     @State private var workspaceToRemove: Workspace?
 
     let onRefreshAllVenomfiles: (() -> Void)?
@@ -32,10 +31,6 @@ struct WorkspaceListView: View {
             $0.name.lowercased().contains(lowercased) ||
             $0.filePath.lowercased().contains(lowercased)
         }
-    }
-
-    private var workspaceGroups: [WorkspaceGroup] {
-        WorkspaceGroup.groups(from: filteredWorkspaces)
     }
 
     var body: some View {
@@ -74,54 +69,14 @@ struct WorkspaceListView: View {
                 .buttonStyle(.plain)
                 .help("Search workspaces (⌘F)")
 
-                // Import button
                 Button(action: {
-                    importWorkspace()
-                }) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 14, weight: .medium))
-                }
-                .buttonStyle(.plain)
-                .help("Import existing workspace")
-
-                // Add button with type picker
-                Button(action: {
-                    showWorkspaceTypePicker = true
+                    createWorkspace()
                 }) {
                     Image(systemName: "plus")
                         .font(.system(size: 14, weight: .medium))
                 }
                 .buttonStyle(.plain)
-                .help("Create new workspace (⌘N)")
-                .popover(isPresented: $showWorkspaceTypePicker, arrowEdge: .bottom) {
-                    VStack(spacing: 6) {
-                        Button(action: {
-                            showWorkspaceTypePicker = false
-                            createNewWorkspace()
-                        }) {
-                            Label("Cursor Workspace", systemImage: "cursor.rays")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-
-                        Divider()
-
-                        Button(action: {
-                            showWorkspaceTypePicker = false
-                            createClaudeWorkspace()
-                        }) {
-                            Label("Claude Code Workspace", systemImage: "terminal.fill")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                    }
-                    .padding(.vertical, 8)
-                    .frame(width: 200)
-                }
+                .help("Create virtual workspace")
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -184,23 +139,9 @@ struct WorkspaceListView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(selection: $selectedWorkspace) {
-                    ForEach(workspaceGroups) { group in
-                        Section {
-                            ForEach(group.workspaces) { workspace in
-                                makeWorkspaceRow(workspace, isPinned: group.isPinned)
-                                    .tag(workspace)
-                            }
-                        } header: {
-                            HStack(spacing: 4) {
-                                Text(group.name)
-                                    .font(.system(size: 13, weight: .semibold))
-                                if group.isPinned {
-                                    Image(systemName: "pin.fill")
-                                        .font(.system(size: 8))
-                                        .foregroundColor(.orange)
-                                }
-                            }
-                        }
+                    ForEach(filteredWorkspaces) { workspace in
+                        makeWorkspaceRow(workspace, isPinned: workspace.isPinned)
+                            .tag(workspace)
                     }
                 }
                 .listStyle(.sidebar)
@@ -263,14 +204,11 @@ struct WorkspaceListView: View {
             onRemove: {
                 workspaceToRemove = workspace
             },
-            onOpenInFork: {
-                openGitFoldersInFork(workspace)
-            },
             onOpenInForkWorkspace: {
                 openInForkWorkspace(workspace)
             },
-            onDuplicate: {
-                duplicateWorkspace(workspace)
+            onOpenInSourceTree: {
+                openGitFoldersInSourceTree(workspace)
             }
         )
     }
@@ -291,80 +229,20 @@ struct WorkspaceListView: View {
         }
     }
 
-    private func createNewWorkspace() {
-        Task {
-            let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
-            guard authorized else {
-                return
-            }
-
-            let settingsManager = SettingsManager.shared
-
-            do {
-                let url = try settingsManager.getNewWorkspaceURL()
-                let emptyWorkspace = CursorWorkspaceFile.createEmpty()
-                try emptyWorkspace.save(to: url)
-
-                let filePath = url.path
-                let newWorkspace = emptyWorkspace.toWorkspace(filePath: filePath)
-                await MainActor.run {
-                    workspaces.append(newWorkspace)
-                    selectedWorkspace = newWorkspace
-                    WorkspaceManager.shared.addWorkspace(newWorkspace)
-                }
-            } catch {
-                print("Failed to create workspace file: \(error)")
-            }
-        }
-    }
-
-    private func createClaudeWorkspace() {
+    private func createWorkspace() {
         Task {
             let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
             guard authorized else { return }
 
             do {
-                let workspace = try WorkspaceManager.shared.createClaudeWorkspace()
+                let workspace = try WorkspaceManager.shared.createWorkspace()
                 await MainActor.run {
                     workspaces.append(workspace)
                     selectedWorkspace = workspace
                     WorkspaceManager.shared.addWorkspace(workspace)
                 }
             } catch {
-                print("Failed to create Claude workspace: \(error)")
-            }
-        }
-    }
-
-    private func importWorkspace() {
-        Task {
-            let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
-            guard authorized else {
-                return
-            }
-
-            guard let url = FileDialogHelper.selectWorkspaceFile() else {
-                return
-            }
-
-            // Check if it's a .code-workspace file
-            if url.pathExtension == "code-workspace" {
-                do {
-                    let workspaceFile = try CursorWorkspaceFile.parse(from: url)
-                    let filePath = url.path
-                    let workspace = workspaceFile.toWorkspace(filePath: filePath)
-
-                    await MainActor.run {
-                        if workspaces.contains(where: { $0.filePath == workspace.filePath }) {
-                            return
-                        }
-                        workspaces.append(workspace)
-                        selectedWorkspace = workspace
-                        WorkspaceManager.shared.addWorkspace(workspace)
-                    }
-                } catch {
-                    print("Failed to import workspace file: \(error)")
-                }
+                print("Failed to create workspace: \(error)")
             }
         }
     }
@@ -412,33 +290,8 @@ struct WorkspaceListView: View {
         }
     }
 
-    private func duplicateWorkspace(_ workspace: Workspace) {
-        Task {
-            let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
-            guard authorized else { return }
-
-            do {
-                let newWorkspace: Workspace
-                switch workspace.type {
-                case .cursor:
-                    newWorkspace = try WorkspaceManager.shared.duplicateAsClaude(workspace)
-                case .claude:
-                    newWorkspace = try WorkspaceManager.shared.duplicateAsCursor(workspace)
-                }
-                await MainActor.run {
-                    workspaces.append(newWorkspace)
-                    selectedWorkspace = newWorkspace
-                    WorkspaceManager.shared.addWorkspace(newWorkspace)
-                    AlertManager.shared.show(type: .success, title: "Duplicated", message: "Duplicated as \(newWorkspace.type.displayName) workspace")
-                }
-            } catch {
-                AlertManager.shared.show(type: .error, title: "Error", message: "Failed to duplicate workspace: \(error.localizedDescription)")
-            }
-        }
-    }
-
     private func openInForkWorkspace(_ workspace: Workspace) {
-        Log.info("openInForkWorkspace called: \(workspace.name) (\(workspace.type.rawValue))", category: .workspace)
+        Log.info("openInForkWorkspace called: \(workspace.name)", category: .workspace)
         Task {
             let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
             guard authorized else {
@@ -474,9 +327,7 @@ struct WorkspaceListView: View {
         }
     }
 
-    private func openGitFoldersInFork(_ workspace: Workspace) {
-        guard workspace.type == .cursor else { return }
-
+    private func openGitFoldersInSourceTree(_ workspace: Workspace) {
         Task {
             let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
             guard authorized else {
@@ -484,17 +335,11 @@ struct WorkspaceListView: View {
             }
 
             do {
-                let fileURL = URL(fileURLWithPath: workspace.filePath)
-                let workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
-                let folders = workspaceFile.toFolders()
-
-                for folder in folders {
-                    if folder.isGitRepository {
-                        ForkOpener.openRepository(at: folder.path)
-                    }
+                for path in try WorkspaceManager.shared.gitRepoPaths(for: workspace) {
+                    SourceTreeOpener.openRepository(at: path)
                 }
             } catch {
-                print("Failed to load workspace file: \(error)")
+                print("Failed to load workspace: \(error)")
             }
         }
     }
@@ -508,9 +353,8 @@ struct WorkspaceRow: View {
     let onShowInFinder: () -> Void
     let onRename: (String) -> Void
     let onRemove: () -> Void
-    let onOpenInFork: () -> Void
     let onOpenInForkWorkspace: (() -> Void)?
-    let onDuplicate: (() -> Void)?
+    let onOpenInSourceTree: (() -> Void)?
 
     @State private var isHovered = false
     @State private var isEditing = false
@@ -519,10 +363,9 @@ struct WorkspaceRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            // Workspace type icon
-            Image(systemName: workspace.type.systemImageName)
+            Image(systemName: "folder.fill")
                 .font(.system(size: 12))
-                .foregroundColor(workspace.type == .cursor ? .blue : .orange)
+                .foregroundColor(.blue)
 
             VStack(alignment: .leading, spacing: 4) {
                 if isEditing {
@@ -617,26 +460,9 @@ struct WorkspaceRow: View {
 
             Divider()
 
-            if let onDuplicate {
-                Button(action: onDuplicate) {
-                    HStack {
-                        Image(systemName: "doc.on.doc")
-                        Text(workspace.type == .cursor ? "Duplicate as Claude Workspace" : "Duplicate as Cursor Workspace")
-                    }
-                }
-            }
-
-            if workspace.type == .cursor {
-                // Git tools only for Cursor workspaces
-                Button(action: onOpenInFork) {
-                    HStack {
-                        Image(systemName: "arrow.branch")
-                        Text("Open in Fork")
-                    }
-                }
-
+            if let onOpenInSourceTree {
                 Button(action: {
-                    openGitFoldersInSourceTree()
+                    onOpenInSourceTree()
                 }) {
                     HStack {
                         if let icon = SourceTreeOpener.appIcon { Image(nsImage: icon).resizable().frame(width: 14, height: 14) } else { Image(systemName: "arrow.triangle.branch") }
@@ -655,12 +481,7 @@ struct WorkspaceRow: View {
     }
 
     private var openActionLabel: String {
-        switch workspace.type {
-        case .cursor:
-            return "Open workspace in \(SettingsManager.shared.defaultIDEApp.displayName)"
-        case .claude:
-            return "Open workspace in Terminal with claude"
-        }
+        "Open virtual workspace"
     }
 
     private func startEditing() {
@@ -685,23 +506,4 @@ struct WorkspaceRow: View {
         editedName = workspace.name
     }
 
-    private func openGitFoldersInSourceTree() {
-        guard workspace.type == .cursor else { return }
-
-        Task {
-            let fileURL = URL(fileURLWithPath: workspace.filePath)
-            do {
-                let workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
-                let folders = workspaceFile.toFolders()
-
-                for folder in folders {
-                    if folder.isGitRepository {
-                        SourceTreeOpener.openRepository(at: folder.path)
-                    }
-                }
-            } catch {
-                print("Failed to load workspace file: \(error)")
-            }
-        }
-    }
 }

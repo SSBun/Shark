@@ -32,7 +32,7 @@ class WorkspaceManager: ObservableObject {
         scanSettingsFolderForWorkspaces()
     }
 
-    /// Scan settings folder for workspace files
+    /// Scan settings folder for virtual workspace directories.
     func scanSettingsFolderForWorkspaces() {
         do {
             let folderURL = try settingsManager.getSettingsFolderURL()
@@ -47,44 +47,22 @@ class WorkspaceManager: ObservableObject {
             for itemURL in contents {
                 var isDir: ObjCBool = false
                 fileManager.fileExists(atPath: itemURL.path, isDirectory: &isDir)
+                guard isDir.boolValue else { continue }
 
-                if !isDir.boolValue, itemURL.pathExtension == "code-workspace" {
-                    // Cursor workspace file
-                    do {
-                        let workspaceFile = try CursorWorkspaceFile.parse(from: itemURL)
-                        let workspace = workspaceFile.toWorkspace(filePath: itemURL.path)
-                        let attributes = try fileManager.attributesOfItem(atPath: itemURL.path)
-                        let creationDate = attributes[.creationDate] as? Date ?? Date()
+                guard let metadataURL = VirtualWorkspaceFile.metadataURL(in: itemURL) else { continue }
 
-                        foundWorkspaces.append(Workspace(
-                            id: workspace.id,
-                            name: workspace.name,
-                            filePath: workspace.filePath,
-                            createdAt: creationDate,
-                            type: .cursor
-                        ))
-                    } catch {
-                        continue
-                    }
-                } else if isDir.boolValue {
-                    // Check for Claude workspace directory
-                    let metadataURL = itemURL.appendingPathComponent(ClaudeWorkspaceFile.metadataFileName)
-                    guard fileManager.fileExists(atPath: metadataURL.path) else { continue }
+                do {
+                    let workspaceFile = try VirtualWorkspaceFile.parse(from: metadataURL)
+                    let attributes = try fileManager.attributesOfItem(atPath: itemURL.path)
+                    let creationDate = attributes[.creationDate] as? Date ?? Date()
 
-                    do {
-                        let claudeFile = try ClaudeWorkspaceFile.parse(from: metadataURL)
-                        let attributes = try fileManager.attributesOfItem(atPath: itemURL.path)
-                        let creationDate = attributes[.creationDate] as? Date ?? Date()
-
-                        foundWorkspaces.append(Workspace(
-                            name: claudeFile.name,
-                            filePath: itemURL.path,
-                            createdAt: creationDate,
-                            type: .claude
-                        ))
-                    } catch {
-                        continue
-                    }
+                    foundWorkspaces.append(Workspace(
+                        name: workspaceFile.name,
+                        filePath: itemURL.path,
+                        createdAt: creationDate
+                    ))
+                } catch {
+                    continue
                 }
             }
 
@@ -133,139 +111,51 @@ class WorkspaceManager: ObservableObject {
         }
     }
 
-    /// Create a new Claude workspace directory with metadata
-    func createClaudeWorkspace(name: String = "claude-workspace") throws -> Workspace {
-        let dirURL = try settingsManager.getNewClaudeWorkspaceURL(baseName: name)
-        var claudeFile = ClaudeWorkspaceFile.createEmpty(name: name)
-        try claudeFile.save(toDirectory: dirURL)
-        return claudeFile.toWorkspace(directoryPath: dirURL.path)
+    /// Create a new virtual workspace directory with metadata.
+    func createWorkspace(name: String = "workspace") throws -> Workspace {
+        let dirURL = try settingsManager.getNewWorkspaceDirectoryURL(baseName: name)
+        let workspaceFile = VirtualWorkspaceFile.createEmpty(name: name)
+        try workspaceFile.save(toDirectory: dirURL)
+        return workspaceFile.toWorkspace(directoryPath: dirURL.path)
     }
 
-    /// Get git repo paths for a workspace (works for both Cursor and Claude types)
+    /// Get git repo paths for a workspace.
     func gitRepoPaths(for workspace: Workspace) throws -> [String] {
-        switch workspace.type {
-        case .cursor:
-            let fileURL = URL(fileURLWithPath: workspace.filePath)
-            let workspaceFile = try CursorWorkspaceFile.parse(from: fileURL)
-            return workspaceFile.toFolders()
-                .filter { $0.isGitRepository }
-                .map { $0.path }
-        case .claude:
-            let dirURL = URL(fileURLWithPath: workspace.filePath)
-            let claudeFile = try ClaudeWorkspaceFile.parse(fromDirectory: dirURL)
-            return claudeFile.toFolders()
-                .filter { $0.isGitRepository }
-                .map { $0.path }
-        }
+        let dirURL = URL(fileURLWithPath: workspace.filePath)
+        let workspaceFile = try VirtualWorkspaceFile.parse(fromDirectory: dirURL)
+        return workspaceFile.toFolders()
+            .filter { $0.isGitRepository }
+            .map { $0.path }
     }
 
     /// Rename a workspace and its corresponding file/directory on disk
     func renameWorkspace(_ workspace: Workspace, to newName: String) throws -> Workspace {
         let oldURL = URL(fileURLWithPath: workspace.filePath)
         let parentURL = oldURL.deletingLastPathComponent()
+        let newURL = parentURL.appendingPathComponent(newName)
 
-        if workspace.type == .claude {
-            let newURL = parentURL.appendingPathComponent(newName)
-
-            if oldURL.path == newURL.path {
-                // Just update name in metadata
-                var updated = workspace
-                updated.name = newName
-                updateWorkspace(updated)
-                return updated
-            }
-
-            if FileManager.default.fileExists(atPath: newURL.path) {
-                throw NSError(domain: "WorkspaceManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "A workspace directory with this name already exists."])
-            }
-
-            try FileManager.default.moveItem(at: oldURL, to: newURL)
-
-            // Update name in metadata file
-            let metadataURL = newURL.appendingPathComponent(ClaudeWorkspaceFile.metadataFileName)
-            var claudeFile = try ClaudeWorkspaceFile.parse(from: metadataURL)
-            claudeFile.name = newName
-            try claudeFile.save(to: metadataURL)
-
+        if oldURL.path == newURL.path {
             var updated = workspace
             updated.name = newName
-            updated.filePath = newURL.path
-            updateWorkspace(updated)
-            return updated
-        } else {
-            // Cursor workspace
-            let newURL = parentURL.appendingPathComponent("\(newName).code-workspace")
-
-            if oldURL.path == newURL.path {
-                var updated = workspace
-                updated.name = newName
-                updateWorkspace(updated)
-                return updated
-            }
-
-            if FileManager.default.fileExists(atPath: newURL.path) {
-                throw NSError(domain: "WorkspaceManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "A workspace file with this name already exists."])
-            }
-
-            try FileManager.default.moveItem(at: oldURL, to: newURL)
-
-            var updated = workspace
-            updated.name = newName
-            updated.filePath = newURL.path
             updateWorkspace(updated)
             return updated
         }
-    }
 
-    /// Duplicate a Cursor workspace as a new Claude workspace
-    func duplicateAsClaude(_ workspace: Workspace) throws -> Workspace {
-        guard workspace.type == .cursor else {
-            throw NSError(domain: "WorkspaceManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "Only Cursor workspaces can be duplicated as Claude workspaces."])
+        if FileManager.default.fileExists(atPath: newURL.path) {
+            throw NSError(domain: "WorkspaceManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "A workspace directory with this name already exists."])
         }
 
-        let fileURL = URL(fileURLWithPath: workspace.filePath)
-        let cursorFile = try CursorWorkspaceFile.parse(from: fileURL)
+        try FileManager.default.moveItem(at: oldURL, to: newURL)
 
-        let dirURL = try settingsManager.getNewClaudeWorkspaceURL(baseName: workspace.name)
-        var claudeFile = ClaudeWorkspaceFile.createEmpty(name: workspace.name)
+        var workspaceFile = try VirtualWorkspaceFile.parse(fromDirectory: newURL)
+        workspaceFile.name = newName
+        try workspaceFile.save(toDirectory: newURL)
 
-        var existingNames = Set<String>()
-        for folder in cursorFile.folders {
-            let folderName = URL(fileURLWithPath: folder.path).lastPathComponent
-            let parentFolder = folder.name != nil ? URL(fileURLWithPath: folder.path).deletingLastPathComponent().lastPathComponent : nil
-            let symlinkName = SymlinkManager.resolveSymlinkName(
-                preferredName: folderName,
-                parentFolder: parentFolder,
-                existingNames: existingNames
-            )
-            existingNames.insert(symlinkName)
-            claudeFile.addLink(originalPath: folder.path, symlinkName: symlinkName, parentFolder: parentFolder)
-        }
-
-        try claudeFile.save(toDirectory: dirURL)
-        try SymlinkManager.recreateAllSymlinks(links: claudeFile.links, in: dirURL.path)
-
-        return claudeFile.toWorkspace(directoryPath: dirURL.path)
-    }
-
-    /// Duplicate a Claude workspace as a new Cursor workspace
-    func duplicateAsCursor(_ workspace: Workspace) throws -> Workspace {
-        guard workspace.type == .claude else {
-            throw NSError(domain: "WorkspaceManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "Only Claude workspaces can be duplicated as Cursor workspaces."])
-        }
-
-        let dirURL = URL(fileURLWithPath: workspace.filePath)
-        let claudeFile = try ClaudeWorkspaceFile.parse(fromDirectory: dirURL)
-
-        let fileURL = try settingsManager.getNewWorkspaceURL(baseName: workspace.name)
-        var cursorFile = CursorWorkspaceFile.createEmpty()
-
-        for link in claudeFile.links {
-            cursorFile.addFolder(path: link.originalPath)
-        }
-
-        try cursorFile.save(to: fileURL)
-        return cursorFile.toWorkspace(filePath: fileURL.path)
+        var updated = workspace
+        updated.name = newName
+        updated.filePath = newURL.path
+        updateWorkspace(updated)
+        return updated
     }
 
     /// Refresh workspaces from disk
@@ -285,42 +175,22 @@ class WorkspaceManager: ObservableObject {
             for itemURL in contents {
                 var isDir: ObjCBool = false
                 fileManager.fileExists(atPath: itemURL.path, isDirectory: &isDir)
+                guard isDir.boolValue else { continue }
 
-                if !isDir.boolValue, itemURL.pathExtension == "code-workspace" {
-                    do {
-                        let workspaceFile = try CursorWorkspaceFile.parse(from: itemURL)
-                        let workspace = workspaceFile.toWorkspace(filePath: itemURL.path)
-                        let attributes = try fileManager.attributesOfItem(atPath: itemURL.path)
-                        let creationDate = attributes[.creationDate] as? Date ?? Date()
+                guard let metadataURL = VirtualWorkspaceFile.metadataURL(in: itemURL) else { continue }
 
-                        scannedWorkspaces.append(Workspace(
-                            id: workspace.id,
-                            name: workspace.name,
-                            filePath: workspace.filePath,
-                            createdAt: creationDate,
-                            type: .cursor
-                        ))
-                    } catch {
-                        continue
-                    }
-                } else if isDir.boolValue {
-                    let metadataURL = itemURL.appendingPathComponent(ClaudeWorkspaceFile.metadataFileName)
-                    guard fileManager.fileExists(atPath: metadataURL.path) else { continue }
+                do {
+                    let workspaceFile = try VirtualWorkspaceFile.parse(from: metadataURL)
+                    let attributes = try fileManager.attributesOfItem(atPath: itemURL.path)
+                    let creationDate = attributes[.creationDate] as? Date ?? Date()
 
-                    do {
-                        let claudeFile = try ClaudeWorkspaceFile.parse(from: metadataURL)
-                        let attributes = try fileManager.attributesOfItem(atPath: itemURL.path)
-                        let creationDate = attributes[.creationDate] as? Date ?? Date()
-
-                        scannedWorkspaces.append(Workspace(
-                            name: claudeFile.name,
-                            filePath: itemURL.path,
-                            createdAt: creationDate,
-                            type: .claude
-                        ))
-                    } catch {
-                        continue
-                    }
+                    scannedWorkspaces.append(Workspace(
+                        name: workspaceFile.name,
+                        filePath: itemURL.path,
+                        createdAt: creationDate
+                    ))
+                } catch {
+                    continue
                 }
             }
         } catch {
