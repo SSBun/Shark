@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-06-18
+
+### Added
+- 新增 Codex Sessions 面板，按当前 workspace 展示相关 Codex 会话。
+- 支持 Codex session 多选、归档、删除、复制 ID、复制路径和在终端恢复。
+- 支持检测 Codex CLI session 是否正在终端运行，并跳转到对应 iTerm2 session。
+- 新增 Codex hooks 安装入口，用于捕获稳定的终端 session 标识。
+- 支持为 Codex session 设置 Shark 内部显示名，并保存到 workspace 的 `.shark-workspace.json`。
+
 ### Changed
 - 移除 Cursor workspace 类型和旧 workspace 文件管理流程。
 - 只保留 virtual folder workspace：真实目录 + metadata + symlink。

@@ -251,7 +251,7 @@
 				CODE_SIGN_ENTITLEMENTS = Shark/Shark.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_ASSET_PATHS = "\"Shark/Preview Content\"";
 				DEVELOPMENT_TEAM = 2795FFTPWT;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -264,7 +264,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.9.0;
+				MARKETING_VERSION = 1.10.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.csl.cool.Shark;
 				PRODUCT_NAME = SharkSpace;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -280,7 +280,7 @@
 				CODE_SIGN_ENTITLEMENTS = Shark/Shark.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				DEVELOPMENT_ASSET_PATHS = "\"Shark/Preview Content\"";
 				DEVELOPMENT_TEAM = 2795FFTPWT;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -293,7 +293,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.9.0;
+				MARKETING_VERSION = 1.10.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.csl.cool.Shark;
 				PRODUCT_NAME = SharkSpace;
 				SWIFT_EMIT_LOC_STRINGS = YES;
