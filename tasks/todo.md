@@ -55,6 +55,40 @@
 
 # Codex Sessions 面板
 
+## Workspace Health 菜单入口
+
+### 假设
+- 入口放在 workspace 右键菜单。
+- 本次先实现检查结果 sheet，不做自动修复。
+- 菜单项需要带图标，符合现有 context menu 样式。
+
+### 计划
+- [x] 在 workspace context menu 增加 `Check Health...` 图标菜单项。
+- [x] 增加当前 workspace 的最小 health report。
+- [x] 运行 SwiftUI 结构检查和 Debug 构建。
+
+### 验证
+- `bash scripts/verify-swiftui-structure.sh` 通过。
+- `bash scripts/verify-codex-sessions-ui.sh` 通过。
+- `git diff --check` 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+
+### Review
+- Workspace 右键菜单新增带 `stethoscope` 图标的 `Check Health...`。
+- Sheet 显示 workspace directory、metadata、linked folders、symlinks、unexpected symlinks、Codex hooks 状态。
+- 暂不做修复动作，先只读检查。
+
+### 后续计划
+- [x] 增加 `Recreate Symlinks` 修复动作。
+- [x] 增加 `Remove Missing Links` 修复动作，并在写 metadata 前确认。
+- [x] 修复后刷新 health report。
+
+### 后续验证
+- `bash scripts/verify-swiftui-structure.sh` 通过。
+- `bash scripts/verify-codex-sessions-ui.sh` 通过。
+- `git diff --check` 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+
 ## Codex Session 时间分组
 
 ### 假设

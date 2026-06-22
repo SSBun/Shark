@@ -15,4 +15,14 @@ if rg -n -e '@StateObject private var workspaceManager' -e 'Binding\(' Shark/Vie
   exit 1
 fi
 
+if ! rg -Fq 'Check Health...' Shark/Views/WorkspaceListView.swift || ! rg -Fq 'stethoscope' Shark/Views/WorkspaceListView.swift; then
+  echo "Workspace context menu must expose health check with an icon" >&2
+  exit 1
+fi
+
+if ! rg -Fq 'Recreate Symlinks' Shark/Views/WorkspaceListView.swift || ! rg -Fq 'Remove Missing Links' Shark/Views/WorkspaceListView.swift; then
+  echo "Workspace health sheet must expose repair actions" >&2
+  exit 1
+fi
+
 echo "swiftui structure verified"

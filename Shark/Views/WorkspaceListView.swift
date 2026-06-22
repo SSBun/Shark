@@ -17,6 +17,7 @@ struct WorkspaceListView: View {
     @State private var isSearchFocused: Bool = false
     @FocusState private var isTextFieldFocused: Bool
     @State private var workspaceToRemove: Workspace?
+    @State private var healthReport: WorkspaceHealthReport?
 
     private var filteredWorkspaces: [Workspace] {
         if searchText.isEmpty {
@@ -180,6 +181,21 @@ struct WorkspaceListView: View {
         } message: {
             Text("Are you sure you want to remove \"\(workspaceToRemove?.name ?? "")\"?")
         }
+        .sheet(item: $healthReport) { report in
+            WorkspaceHealthView(
+                report: report,
+                onRevealWorkspace: {
+                    showWorkspaceInFinder(report.workspace)
+                },
+                onRecreateSymlinks: {
+                    repairSymlinks(for: report.workspace, removingMissingLinks: false)
+                },
+                onRemoveMissingLinks: {
+                    guard confirmRemoveMissingLinks(count: report.missingLinkCount) else { return }
+                    repairSymlinks(for: report.workspace, removingMissingLinks: true)
+                }
+            )
+        }
     }
 
     @ViewBuilder
@@ -199,6 +215,9 @@ struct WorkspaceListView: View {
             },
             onRemove: {
                 workspaceToRemove = workspace
+            },
+            onCheckHealth: {
+                healthReport = WorkspaceHealthReport.inspect(workspace)
             },
             onOpenInForkWorkspace: {
                 Task { await store.openInForkWorkspace(workspace, authManager: authManager) }
@@ -221,6 +240,39 @@ struct WorkspaceListView: View {
         }
     }
 
+    private func showWorkspaceInFinder(_ workspace: Workspace) {
+        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: workspace.filePath)])
+    }
+
+    private func repairSymlinks(for workspace: Workspace, removingMissingLinks: Bool) {
+        do {
+            let dirURL = URL(fileURLWithPath: workspace.filePath)
+            var workspaceFile = try VirtualWorkspaceFile.parse(fromDirectory: dirURL)
+            if removingMissingLinks {
+                workspaceFile.links.removeAll { !FileManager.default.fileExists(atPath: $0.originalPath) }
+            }
+            workspaceFile.links = try SymlinkManager.recreateAllSymlinks(links: workspaceFile.links, in: workspace.filePath)
+            try workspaceFile.save(toDirectory: dirURL)
+            healthReport = WorkspaceHealthReport.inspect(workspace)
+            if store.selectedWorkspace?.id == workspace.id {
+                Task { await store.loadFoldersForSelectedWorkspace(authManager: authManager) }
+            }
+        } catch {
+            print("Failed to repair workspace health: \(error)")
+        }
+    }
+
+    private func confirmRemoveMissingLinks(count: Int) -> Bool {
+        guard count > 0 else { return false }
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Remove \(count) missing folder link\(count == 1 ? "" : "s")?"
+        alert.informativeText = "This updates the workspace metadata and recreates symlinks."
+        alert.addButton(withTitle: "Remove")
+        alert.addButton(withTitle: "Cancel")
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
 }
 
 struct WorkspaceRow: View {
@@ -231,6 +283,7 @@ struct WorkspaceRow: View {
     let onShowInFinder: () -> Void
     let onRename: (String) -> Void
     let onRemove: () -> Void
+    let onCheckHealth: () -> Void
     let onOpenInForkWorkspace: (() -> Void)?
     let onOpenInSourceTree: (() -> Void)?
 
@@ -336,6 +389,13 @@ struct WorkspaceRow: View {
                 }
             }
 
+            Button(action: onCheckHealth) {
+                HStack {
+                    Image(systemName: "stethoscope")
+                    Text("Check Health...")
+                }
+            }
+
             Divider()
 
             if let onOpenInSourceTree {
@@ -384,4 +444,158 @@ struct WorkspaceRow: View {
         editedName = workspace.name
     }
 
+}
+
+private struct WorkspaceHealthView: View {
+    let report: WorkspaceHealthReport
+    let onRevealWorkspace: () -> Void
+    let onRecreateSymlinks: () -> Void
+    let onRemoveMissingLinks: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Workspace Health")
+                    .font(.headline)
+                Spacer()
+            }
+
+            Text(report.workspaceName)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            List(report.items) { item in
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: item.status.systemImage)
+                        .foregroundColor(item.status.color)
+                        .frame(width: 16)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.title)
+                            .font(.system(size: 13, weight: .medium))
+                        if !item.detail.isEmpty {
+                            Text(item.detail)
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            .listStyle(.inset)
+
+            HStack {
+                Button("Reveal", systemImage: "folder", action: onRevealWorkspace)
+                Spacer()
+                Button("Recreate Symlinks", systemImage: "arrow.triangle.2.circlepath", action: onRecreateSymlinks)
+                    .disabled(!report.canRepairSymlinks)
+                Button("Remove Missing Links", systemImage: "minus.circle", action: onRemoveMissingLinks)
+                    .disabled(report.missingLinkCount == 0)
+            }
+        }
+        .padding(16)
+        .frame(width: 560, height: 400)
+    }
+}
+
+private struct WorkspaceHealthReport: Identifiable {
+    let id = UUID()
+    let workspace: Workspace
+    let workspaceName: String
+    let missingLinkCount: Int
+    let canRepairSymlinks: Bool
+    let items: [WorkspaceHealthItem]
+
+    static func inspect(_ workspace: Workspace) -> WorkspaceHealthReport {
+        let fileManager = FileManager.default
+        let workspaceExists = fileManager.fileExists(atPath: workspace.filePath)
+        let metadataURL = VirtualWorkspaceFile.metadataURL(in: URL(fileURLWithPath: workspace.filePath))
+        let workspaceFile = metadataURL.flatMap { try? VirtualWorkspaceFile.parse(from: $0) }
+        let links = workspaceFile?.links ?? []
+        let missingLinks = links.filter { !fileManager.fileExists(atPath: $0.originalPath) }
+        let brokenSymlinks = workspaceExists ? SymlinkManager.validateSymlinks(in: workspace.filePath) : []
+        let unexpectedSymlinks = workspaceExists ? symlinkNames(in: workspace.filePath).subtracting(links.map(\.symlinkName)) : []
+
+        return WorkspaceHealthReport(
+            workspace: workspace,
+            workspaceName: workspace.name,
+            missingLinkCount: missingLinks.count,
+            canRepairSymlinks: workspaceExists && workspaceFile != nil,
+            items: [
+            WorkspaceHealthItem(
+                title: "Workspace Directory",
+                detail: workspace.filePath,
+                status: workspaceExists ? .ok : .error
+            ),
+            WorkspaceHealthItem(
+                title: "Metadata",
+                detail: metadataURL?.path ?? "Missing .shark-workspace.json",
+                status: workspaceFile == nil ? .error : .ok
+            ),
+            WorkspaceHealthItem(
+                title: "Linked Folders",
+                detail: missingLinks.isEmpty ? "\(links.count) configured" : "\(missingLinks.count) missing",
+                status: missingLinks.isEmpty ? .ok : .warning
+            ),
+            WorkspaceHealthItem(
+                title: "Symlinks",
+                detail: brokenSymlinks.isEmpty ? "No broken symlinks" : "\(brokenSymlinks.count) broken",
+                status: brokenSymlinks.isEmpty ? .ok : .warning
+            ),
+            WorkspaceHealthItem(
+                title: "Unexpected Symlinks",
+                detail: unexpectedSymlinks.isEmpty ? "None" : unexpectedSymlinks.sorted().joined(separator: ", "),
+                status: unexpectedSymlinks.isEmpty ? .ok : .warning
+            ),
+            WorkspaceHealthItem(
+                title: "Codex Hooks",
+                detail: CodexHookInstaller.isInstalled ? "Installed" : "Not installed",
+                status: CodexHookInstaller.isInstalled ? .ok : .warning
+            )
+        ])
+    }
+
+    private static func symlinkNames(in workspacePath: String) -> Set<String> {
+        let fileManager = FileManager.default
+        guard let contents = try? fileManager.contentsOfDirectory(atPath: workspacePath) else { return [] }
+        return Set(contents.compactMap { item in
+            guard !item.hasPrefix(".") else { return nil }
+            let path = (workspacePath as NSString).appendingPathComponent(item)
+            return (try? fileManager.destinationOfSymbolicLink(atPath: path)) == nil ? nil : item
+        })
+    }
+}
+
+private struct WorkspaceHealthItem: Identifiable {
+    let id = UUID()
+    let title: String
+    let detail: String
+    let status: WorkspaceHealthStatus
+}
+
+private enum WorkspaceHealthStatus {
+    case ok
+    case warning
+    case error
+
+    var systemImage: String {
+        switch self {
+        case .ok:
+            return "checkmark.circle.fill"
+        case .warning:
+            return "exclamationmark.triangle.fill"
+        case .error:
+            return "xmark.octagon.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .ok:
+            return .green
+        case .warning:
+            return .orange
+        case .error:
+            return .red
+        }
+    }
 }
