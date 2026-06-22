@@ -55,6 +55,28 @@
 
 # Codex Sessions 面板
 
+## Codex Session 时间分组
+
+### 假设
+- “active date” 使用 session 的 `updatedAt`。
+- 只分组 active sessions；archived sessions 保持原来的折叠分组。
+- 分组为 8 小时内、2 天内、1 周内、更早。
+
+### 计划
+- [x] 在 `CodexSessionListView` 内按 `updatedAt` 分组 active sessions。
+- [x] 保持多选、右键菜单和 archived 折叠行为不变。
+- [x] 更新 Codex sessions UI 检查并运行验证。
+
+### 验证
+- `bash scripts/verify-codex-sessions-ui.sh` 通过。
+- `bash scripts/verify-swiftui-structure.sh` 通过。
+- `git diff --check` 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+
+### Review
+- Active Codex sessions 现在按 `updatedAt` 分为 Last 8 Hours、Last 2 Days、Last Week、Older。
+- Archived sessions 继续保持原来的折叠分组。
+
 ## Codex Session 显示名
 
 ### 假设

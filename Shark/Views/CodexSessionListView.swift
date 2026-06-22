@@ -59,36 +59,18 @@ struct CodexSessionListView: View {
                 }
             } else {
                 List(selection: $selectedSessionIDs) {
-                    ForEach(activeSessions) { session in
-                        CodexSessionRow(
-                            session: session,
-                            onShowInFinder: { onShowInFinder(targetSessions(for: session)) },
-                            onCopyPath: { onCopyPath(targetSessions(for: session)) },
-                            onResumeInTerminal: { onResumeInTerminal(targetSessions(for: session)) },
-                            onJumpToITerm: { onJumpToITerm(session) },
-                            onCopySessionID: { onCopySessionID(targetSessions(for: session)) },
-                            onRename: { onRename(session) },
-                            onArchive: { onArchive(targetSessions(for: session)) },
-                            onDelete: { onDelete(targetSessions(for: session)) }
-                        )
-                        .tag(session.id)
+                    ForEach(groupedActiveSessions) { group in
+                        Section(group.title) {
+                            ForEach(group.sessions) { session in
+                                sessionRow(session)
+                            }
+                        }
                     }
 
                     if !archivedSessions.isEmpty {
                         DisclosureGroup(isExpanded: $isArchivedExpanded) {
                             ForEach(archivedSessions) { session in
-                                CodexSessionRow(
-                                    session: session,
-                                    onShowInFinder: { onShowInFinder(targetSessions(for: session)) },
-                                    onCopyPath: { onCopyPath(targetSessions(for: session)) },
-                                    onResumeInTerminal: { onResumeInTerminal(targetSessions(for: session)) },
-                                    onJumpToITerm: { onJumpToITerm(session) },
-                                    onCopySessionID: { onCopySessionID(targetSessions(for: session)) },
-                                    onRename: { onRename(session) },
-                                    onArchive: { onArchive(targetSessions(for: session)) },
-                                    onDelete: { onDelete(targetSessions(for: session)) }
-                                )
-                                .tag(session.id)
+                                sessionRow(session)
                             }
                         } label: {
                             Label("Archived Sessions (\(archivedSessions.count))", systemImage: "archivebox")
@@ -105,17 +87,78 @@ struct CodexSessionListView: View {
         }
     }
 
-    private var activeSessions: [CodexSession] {
-        sessions.filter { !$0.isArchived }
+    private var groupedActiveSessions: [CodexSessionDateGroup] {
+        CodexSessionDateBucket.allCases.compactMap { bucket in
+            let bucketSessions = sessions.filter { !$0.isArchived && bucket.contains($0.updatedAt) }
+            return bucketSessions.isEmpty ? nil : CodexSessionDateGroup(bucket: bucket, sessions: bucketSessions)
+        }
     }
 
     private var archivedSessions: [CodexSession] {
         sessions.filter(\.isArchived)
     }
 
+    @ViewBuilder
+    private func sessionRow(_ session: CodexSession) -> some View {
+        CodexSessionRow(
+            session: session,
+            onShowInFinder: { onShowInFinder(targetSessions(for: session)) },
+            onCopyPath: { onCopyPath(targetSessions(for: session)) },
+            onResumeInTerminal: { onResumeInTerminal(targetSessions(for: session)) },
+            onJumpToITerm: { onJumpToITerm(session) },
+            onCopySessionID: { onCopySessionID(targetSessions(for: session)) },
+            onRename: { onRename(session) },
+            onArchive: { onArchive(targetSessions(for: session)) },
+            onDelete: { onDelete(targetSessions(for: session)) }
+        )
+        .tag(session.id)
+    }
+
     private func targetSessions(for session: CodexSession) -> [CodexSession] {
         guard selectedSessionIDs.contains(session.id) else { return [session] }
         return sessions.filter { selectedSessionIDs.contains($0.id) }
+    }
+}
+
+private struct CodexSessionDateGroup: Identifiable {
+    let bucket: CodexSessionDateBucket
+    let sessions: [CodexSession]
+
+    var id: CodexSessionDateBucket { bucket }
+    var title: String { "\(bucket.title) (\(sessions.count))" }
+}
+
+private enum CodexSessionDateBucket: CaseIterable {
+    case eightHours
+    case twoDays
+    case oneWeek
+    case older
+
+    var title: String {
+        switch self {
+        case .eightHours:
+            return "Last 8 Hours"
+        case .twoDays:
+            return "Last 2 Days"
+        case .oneWeek:
+            return "Last Week"
+        case .older:
+            return "Older"
+        }
+    }
+
+    func contains(_ date: Date, now: Date = Date()) -> Bool {
+        let age = now.timeIntervalSince(date)
+        switch self {
+        case .eightHours:
+            return age <= 8 * 60 * 60
+        case .twoDays:
+            return age > 8 * 60 * 60 && age <= 2 * 24 * 60 * 60
+        case .oneWeek:
+            return age > 2 * 24 * 60 * 60 && age <= 7 * 24 * 60 * 60
+        case .older:
+            return age > 7 * 24 * 60 * 60
+        }
     }
 }
 

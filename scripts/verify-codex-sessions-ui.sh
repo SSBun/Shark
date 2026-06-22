@@ -35,6 +35,11 @@ if ! rg -q 'DisclosureGroup' Shark/Views/CodexSessionListView.swift; then
   exit 1
 fi
 
+if ! rg -Fq 'Last 8 Hours' Shark/Views/CodexSessionListView.swift || ! rg -Fq 'Last 2 Days' Shark/Views/CodexSessionListView.swift || ! rg -Fq 'Last Week' Shark/Views/CodexSessionListView.swift || ! rg -Fq 'Older' Shark/Views/CodexSessionListView.swift; then
+  echo "Active Codex sessions must be grouped by recent activity" >&2
+  exit 1
+fi
+
 if ! rg -q 'Resume in Terminal' Shark/Views/CodexSessionListView.swift; then
   echo "Codex session rows must support resuming in terminal" >&2
   exit 1
