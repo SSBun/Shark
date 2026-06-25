@@ -4,10 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-06-25
+
 ### Added
 - Codex sessions 现在按 Last 8 Hours、Last 2 Days、Last Week、Older 分组显示 active sessions。
 - Workspace 右键菜单新增 `Check Health...`，可检查 workspace directory、metadata、linked folders、symlinks、unexpected symlinks 和 Codex hooks 状态。
 - Workspace Health 面板新增 `Recreate Symlinks` 和 `Remove Missing Links` 修复动作。
+- Codex hook helper 写入 runtime snapshot 时使用唯一临时文件名，避免并发事件互相覆盖临时文件。
 
 ### Changed
 - 更新 README，使其匹配当前 virtual folder、Codex sessions、Codex hooks 和 workspace health 功能。

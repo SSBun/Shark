@@ -55,6 +55,56 @@
 
 # Codex Sessions 面板
 
+## Release 1.11.0
+
+### 假设
+- 目标版本为 `1.11.0`。
+- 需要创建 DMG，并将新版本安装到 `/Applications/SharkSpace.app`。
+- 不自动 push，不发布 npm。
+
+### 计划
+- [x] 更新 Xcode、npm 和 lockfile 版本号。
+- [x] 将 CHANGELOG Unreleased 内容发布为 `1.11.0`。
+- [x] 运行验证和 Release DMG 打包。
+- [x] 提交 release commit 并创建 `v1.11.0` tag。
+- [x] 替换 `/Applications/SharkSpace.app` 并验证安装版本。
+
+### 验证
+- `bash scripts/verify-virtual-workspace.sh && bash scripts/verify-codex-sessions-ui.sh && bash scripts/verify-swiftui-structure.sh` 通过。
+- `git diff --check` 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+- `npx tsx scripts/build-tool.ts create-dmg 1.11.0` 通过，生成 `dist/SharkSpace-1.11.0.dmg`。
+- DMG SHA-256：`8b40cbe18b96377a82efb1d2e753b6753153cfcf37de263c2320da2ada60e674`。
+- `/Applications/SharkSpace.app` 已安装为 `1.11.0 (12)`。
+
+### Review
+- 版本号更新为 `1.11.0`，build number 更新为 `12`。
+- CHANGELOG 已新增 `1.11.0` 发布条目。
+- 新版 DMG 已创建并安装到 Applications。
+
+## npm 发布准备
+
+### 假设
+- 参考 `/Users/caishilin/Desktop/work/apps/venom-verge` 的 npm 包模式。
+- 当前版本使用已有 `1.11.0` DMG 发布到 npm。
+- 正式 `npm publish` 需要用户明确确认，并且需要有效 npm 登录态。
+
+### 计划
+- [x] 对比 `venom-verge` 的 `package.json` 和 `install.js`。
+- [x] 验证 npm 包内容包含稳定文件名 `SharkSpace.dmg`。
+- [x] 清理 npm publish dry-run 中的 package metadata 警告。
+- [ ] 等待用户确认后执行正式 `npm publish --access public`。
+
+### 验证
+- `npm pack --dry-run` 通过，包内容包含 `README.md`、`SharkSpace.dmg`、`install.js`、`package.json`。
+- `npm publish --dry-run --access public` 通过。
+- `npm view @ssbun/sharkspace version versions --json` 显示 npm 最新为 `1.9.0`。
+- `npm whoami` 返回 401，当前 shell 没有 npm 登录态。
+
+### Review
+- SharkSpace 已具备与 `venom-verge` 相同的 npm 安装包结构。
+- `package.json` 的 bin path 与 lockfile 对齐为 `install.js`。
+
 ## README / CHANGELOG 更新
 
 ### 假设
