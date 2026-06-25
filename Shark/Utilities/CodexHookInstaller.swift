@@ -129,6 +129,7 @@ import os
 import pathlib
 import re
 import sys
+import uuid
 
 def read_payload():
     raw = sys.stdin.read()
@@ -186,8 +187,14 @@ snapshot = {
     "termProgram": os.environ.get("TERM_PROGRAM"),
     "updatedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
 }
-tmp = path.with_suffix(".tmp")
-tmp.write_text(json.dumps(snapshot, separators=(",", ":")), encoding="utf-8")
-tmp.replace(path)
+tmp = path.with_name(f"{path.stem}.{os.getpid()}.{uuid.uuid4().hex}.tmp")
+try:
+    tmp.write_text(json.dumps(snapshot, separators=(",", ":")), encoding="utf-8")
+    tmp.replace(path)
+finally:
+    try:
+        tmp.unlink()
+    except FileNotFoundError:
+        pass
 """
 }

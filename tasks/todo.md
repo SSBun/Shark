@@ -55,6 +55,27 @@
 
 # Codex Sessions 面板
 
+## README / CHANGELOG 更新
+
+### 假设
+- README 需要反映当前 virtual folder、Codex sessions、workspace health 功能。
+- CHANGELOG 的 1.10.0 之后改动放在 Unreleased。
+- 文档必须使用中文。
+
+### 计划
+- [x] 更新 README，移除旧导入说明并补充新功能。
+- [x] 更新 CHANGELOG 的 Unreleased。
+- [x] 运行文档相关检查。
+
+### 验证
+- `bash scripts/verify-virtual-workspace.sh` 通过。
+- `git diff --check` 通过。
+- README 已移除旧 import / `.code-workspace` / UserDefaults metadata 描述。
+
+### Review
+- README 已更新为当前 virtual folder、Codex sessions、Codex hooks 和 workspace health 功能说明。
+- CHANGELOG 的 Unreleased 已记录 session 时间分组、workspace health 和 README 更新。
+
 ## Workspace Health 菜单入口
 
 ### 假设
