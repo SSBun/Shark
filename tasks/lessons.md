@@ -9,3 +9,7 @@
 
 - 如果某个 UI 功能会触发系统级异常（例如输入法/光标卡死），优先移除危险入口；不要继续围绕权限或 AppleScript 做补丁。
 - Codex session 不能用 terminal tab title 做身份匹配；同一个 tab 可能运行多个 session。必须优先使用稳定运行态标识（iTerm session id、tty、pid 等），没有稳定标识就不要声称可以精确跳转。
+
+## 2026-06-25
+- 为原生 App 设计 npm 发布流程时，不要默认把 DMG 文件放进 npm 包；标准方式是让 `install.js` 在 `npm install` 时下载对应版本 DMG 并打开。
+- npm 包名必须带 scope/prefix；如果不能从现有 `package.json`、npm 登录态或项目归属可靠推断，先询问用户。

@@ -55,6 +55,23 @@
 
 # Codex Sessions 面板
 
+## npm 发布 SOP
+
+### 假设
+- 需要一个跨项目可复用的用户级 SOP。
+- SOP 覆盖 CLI 工具和原生 App 通过 npm 分发两类场景。
+- 正式发布到 npm 必须由用户明确确认。
+
+### 计划
+- [x] 创建 `~/.sops/npm-publish-tool-or-native-app.md`。
+- [x] 写入检查、打包、dry-run、发布和错误处理流程。
+- [x] 验证 SOP 文件存在并包含 frontmatter。
+- [x] 按用户纠正改为 DMG 远端下载模型，并要求 npm 包名带 scope/prefix。
+
+### Review
+- SOP 已作为用户级流程沉淀，后续 agent 可在匹配 npm 发布任务时直接读取执行。
+- 原生 App 的标准 npm 模式是包内提供 `install.js`，在 `npm install` 时下载并打开对应版本 DMG。
+
 ## Release 1.11.0
 
 ### 假设
