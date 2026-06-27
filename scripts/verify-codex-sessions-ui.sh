@@ -65,6 +65,26 @@ if ! rg -Fq 'arguments: ["resume", session.id]' Shark/Views/WorkspaceStore.swift
   exit 1
 fi
 
+if ! rg -Fq 'TerminalOpener.runCommands' Shark/Views/WorkspaceStore.swift || ! rg -Fq 'iTermSplitResume' Shark/Utilities/TerminalOpener.swift; then
+  echo "Codex session multi-resume must use one iTerm2 tab with split sessions when available" >&2
+  exit 1
+fi
+
+if ! rg -Fq 'codexResumeInITermSplits' Shark/Utilities/SettingsManager.swift Shark/Views/SettingsView.swift Shark/Utilities/TerminalOpener.swift; then
+  echo "Codex session split resume must be configurable from Settings" >&2
+  exit 1
+fi
+
+if ! rg -Fq 'CodexResumeSplitLayout' Shark/Utilities/TerminalOpener.swift Shark/Utilities/SettingsManager.swift Shark/Views/SettingsView.swift; then
+  echo "Codex session split resume must expose a configurable split layout" >&2
+  exit 1
+fi
+
+if ! rg -Fq 'rightBottomSession' Shark/Utilities/TerminalOpener.swift || ! rg -Fq 'leftBottomSession' Shark/Utilities/TerminalOpener.swift; then
+  echo "Automatic Codex split layout must support three-pane and four-pane layouts" >&2
+  exit 1
+fi
+
 if rg -Fq 'Label("Open"' Shark/Views/CodexSessionListView.swift; then
   echo "Codex session context menu must not include Open" >&2
   exit 1

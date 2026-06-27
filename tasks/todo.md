@@ -55,6 +55,21 @@
 
 # Codex Sessions 面板
 
+## release skill 审计
+
+### 假设
+- 审计对象是 `/Users/caishilin/Desktop/personal/skills/skills/release/SKILL.md`。
+- 重点检查信息泄露、发布安全边界、流程缺陷和不适合现代 npm/native app 发布的设计。
+
+### 计划
+- [x] 读取完整 release skill。
+- [x] 用行号定位高风险规则。
+- [x] 输出按严重度排序的审计结论。
+
+### Review
+- release skill 没有直接硬编码 token，但会诱导输出本地文件路径、版本 grep 结果、tag/remote/publish 状态等信息。
+- npm/native app 发布规则过粗，需要拆分为更安全的专用 SOP。
+
 ## npm 发布 SOP
 
 ### 假设
@@ -121,6 +136,63 @@
 ### Review
 - SharkSpace 已具备与 `venom-verge` 相同的 npm 安装包结构。
 - `package.json` 的 bin path 与 lockfile 对齐为 `install.js`。
+
+## 终端启动 gitconfig lock 修复
+
+### 假设
+- 新终端标签页报错来自 zsh 启动链路。
+- `~/.gitconfig.lock` 是残留锁文件，不是当前 git 进程正在持有。
+- 保持现有 `proxy_on` 行为，只避免每次启动重复写全局 git 配置。
+
+### 计划
+- [x] 检查 shell 启动脚本和残留 lock 文件。
+- [x] 修改 `~/.aliases`，让 git proxy 配置只在值变化时写入。
+- [x] 删除残留 `~/.gitconfig.lock`。
+- [x] 启动新的 zsh 验证不再报错。
+
+### Review
+- 根因是 `~/.zshrc` 每次启动都会调用 `proxy_on`，而 `proxy_on` 每次都会写 `git config --global`。
+- 已保留 `proxy_on` 设置代理的行为，但当前值已正确时不再写 `~/.gitconfig`。
+- `TERM=xterm-256color zsh -lic 'echo shell-start-ok'` 通过，没有再出现 gitconfig lock 报错。
+
+## Release 1.12.0 本地提交
+
+### 假设
+- “new minor version” 表示从 `1.11.0` 升到 `1.12.0`。
+- 本次只做本地版本更新和 commit，不创建 tag、不 push、不 npm publish。
+- 用户要求 commit all changes，因此提交包含当前 Shark 仓库内所有未提交改动。
+
+### 计划
+- [x] 读取 release skill 和 release-orchestrator SOP。
+- [x] 检查工作区状态和当前版本。
+- [x] 更新 npm、Xcode 版本号和 CHANGELOG。
+- [x] 运行现有验证脚本、diff check 和 macOS Debug 构建。
+- [x] 提交所有 Shark 仓库改动。
+
+### Review
+- 目标版本为 `1.12.0`，Xcode build number 为 `13`。
+- `bash scripts/verify-codex-sessions-ui.sh` 通过。
+- `bash scripts/verify-swiftui-structure.sh` 通过。
+- `bash scripts/verify-virtual-workspace.sh` 通过。
+- `git diff --check` 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+
+## 安装 SharkSpace 1.12.0 到 Applications
+
+### 假设
+- 目标是把当前仓库版本 `1.12.0 (13)` 安装到 `/Applications/SharkSpace.app`。
+- 只替换本机 Applications 里的 app，不创建 tag、不 push、不 npm publish。
+- 如果旧版正在运行，先退出再替换。
+
+### 计划
+- [x] 构建 Release 版本。
+- [x] 替换 `/Applications/SharkSpace.app`。
+- [x] 验证 Applications 中安装版本为 `1.12.0 (13)`。
+
+### Review
+- `xcodebuild -scheme Shark -configuration Release -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO clean build` 通过。
+- `/Applications/SharkSpace.app` 已替换为构建产物。
+- Applications 中 `CFBundleShortVersionString` 为 `1.12.0`，`CFBundleVersion` 为 `13`。
 
 ## README / CHANGELOG 更新
 
@@ -222,6 +294,55 @@
 - Codex session display name 现在保存到 workspace 的 `.shark-workspace.json`。
 - 列表标题优先使用 Shark display name，空值回退到 Codex 原始标题。
 - 只支持单个 session 改名；批量改名没有明确语义，先不做。
+
+## Codex Session iTerm Split Resume
+
+### 假设
+- 目标：多选 Codex sessions 后点击 `Resume in Terminal`，在 iTerm2 中使用同一个 tab 的多个 split panes，而不是多个 tabs。
+- iTerm2 支持 AppleScript split session；macOS 自带 Terminal 没有可脚本化 split pane API。
+- 非 iTerm2 终端保持现有 `.command` 文件打开行为作为 fallback。
+
+### 计划
+- [x] 在 `TerminalOpener` 增加批量命令入口，iTerm2 走单 tab 多 split。
+- [x] 将 Codex session resume 改为调用批量入口。
+- [x] 更新最小 UI 验证脚本，检查批量 resume 路径。
+- [x] 运行 Codex sessions UI 检查、diff check 和 macOS Debug 构建。
+
+### 验证
+- `bash scripts/verify-codex-sessions-ui.sh` 通过。
+- `git diff --check` 通过。
+- `osacompile` 编译 iTerm2 split AppleScript 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+
+### Review
+- 多选 Codex sessions 现在会通过 `TerminalOpener.runCommands` 批量 resume。
+- 默认终端为 iTerm2 时，会创建一个 tab，并为每个 session 写入一个 split pane。
+- 非 iTerm2 终端仍回退到现有多 `.command` 文件行为，因为自带 Terminal 没有可脚本化 split pane API。
+
+## Codex Session Split Resume 设置
+
+### 假设
+- “pages” 指多选的 Codex sessions。
+- Settings 里需要一个开关控制多 session resume 是否使用 iTerm2 split panes。
+- Settings 里需要一个 split layout 选择；默认 `Automatic Grid` 按 2/3/4 sessions 使用用户描述的布局。
+- 超过 4 个 sessions 时先继续使用简单 split 链，不额外设计复杂网格。
+
+### 计划
+- [x] 在 `SettingsManager` 增加 split 开关和 layout 持久化。
+- [x] 在 Terminal 设置页增加 Toggle 和 Picker。
+- [x] 让 `TerminalOpener.runCommands` 读取设置并按 layout 生成 iTerm2 split AppleScript。
+- [x] 更新最小验证脚本并跑构建。
+
+### 验证
+- `bash scripts/verify-codex-sessions-ui.sh` 通过。
+- `git diff --check` 通过。
+- `osacompile` 编译 iTerm2 3/4 pane split AppleScript 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+
+### Review
+- Settings > Terminal 新增多 session resume split 开关。
+- Settings > Terminal 新增 split layout 选择：Automatic Grid、Vertical Splits、Horizontal Splits。
+- Automatic Grid 对 2/3/4 sessions 分别使用左右分、左一右二、四象限布局；超过 4 个 sessions 回退为竖向 split 链。
 
 ## 假设
 - 目标：在选中的 workspace 详情区域中增加 Codex sessions 列表。

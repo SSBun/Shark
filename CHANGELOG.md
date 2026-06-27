@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-06-27
+
+### Added
+- Codex sessions 多选 resume 时，iTerm2 可在同一个 tab 中使用 split panes 打开多个 session。
+- Settings > Terminal 新增 Codex resume split 开关和布局选择。
+
 ## [1.11.0] - 2026-06-25
 
 ### Added

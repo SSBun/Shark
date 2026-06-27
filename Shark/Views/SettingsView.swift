@@ -35,6 +35,8 @@ struct SettingsView: View {
     @State private var selectedLocationType: LocationType = .default
     @State private var authorizedFolders: [String] = []
     @State private var selectedTerminalApp: TerminalApp = .systemDefault
+    @State private var codexResumeInITermSplits = true
+    @State private var codexResumeSplitLayout: CodexResumeSplitLayout = .automaticGrid
     @State private var codexHooksInstalled = false
     @State private var codexHooksMessage = ""
     private let settingsManager = SettingsManager.shared
@@ -68,6 +70,8 @@ struct SettingsView: View {
             componentsSearchPaths = settingsManager.componentsSearchPaths
             authorizedFolders = settingsManager.authorizedFolders
             selectedTerminalApp = settingsManager.defaultTerminalApp
+            codexResumeInITermSplits = settingsManager.codexResumeInITermSplits
+            codexResumeSplitLayout = settingsManager.codexResumeSplitLayout
             refreshCodexHooksStatus()
             // Determine if current path is default or custom
             if settingsFolderPath == settingsManager.defaultSettingsFolderPath {
@@ -90,6 +94,12 @@ struct SettingsView: View {
         }
         .onChange(of: selectedTerminalApp) { oldValue, newValue in
             settingsManager.defaultTerminalApp = newValue
+        }
+        .onChange(of: codexResumeInITermSplits) { oldValue, newValue in
+            settingsManager.codexResumeInITermSplits = newValue
+        }
+        .onChange(of: codexResumeSplitLayout) { oldValue, newValue in
+            settingsManager.codexResumeSplitLayout = newValue
         }
     }
 
@@ -267,6 +277,24 @@ struct SettingsView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                     Text("Choose the terminal application to use when opening folders in terminal.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                Divider()
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Codex resume")
+                        .font(.system(size: 13, weight: .semibold))
+                    Toggle("Use iTerm split panes for multiple sessions", isOn: $codexResumeInITermSplits)
+                        .toggleStyle(.checkbox)
+                    Picker("Split Layout", selection: $codexResumeSplitLayout) {
+                        ForEach(CodexResumeSplitLayout.allCases) { layout in
+                            Text(layout.displayName).tag(layout)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: 300)
+                    .disabled(!codexResumeInITermSplits)
+                    Text("Automatic Grid uses left/right for two sessions, left plus two right-side panes for three, and four quadrants for four.")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }

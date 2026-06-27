@@ -77,6 +77,25 @@ enum TerminalApp: String, CaseIterable, Identifiable {
     }
 }
 
+enum CodexResumeSplitLayout: String, CaseIterable, Identifiable {
+    case automaticGrid = "automatic_grid"
+    case vertical = "vertical"
+    case horizontal = "horizontal"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .automaticGrid:
+            return "Automatic Grid"
+        case .vertical:
+            return "Vertical Splits"
+        case .horizontal:
+            return "Horizontal Splits"
+        }
+    }
+}
+
 struct TerminalOpener {
     
     /// Open a folder in the configured terminal application
@@ -132,6 +151,27 @@ struct TerminalOpener {
             openCommandFile(scriptURL, terminalApp: terminalApp ?? SettingsManager.shared.defaultTerminalApp)
         } catch {
             Log.error("Failed to run command in terminal: \(error)", category: .terminal)
+        }
+    }
+
+    static func runCommands(_ commands: [(executable: String, arguments: [String], folder: String)], terminalApp: TerminalApp? = nil) {
+        guard !commands.isEmpty else { return }
+        guard commands.count > 1 else {
+            let command = commands[0]
+            runCommand(command.executable, arguments: command.arguments, inFolder: command.folder, terminalApp: terminalApp)
+            return
+        }
+
+        let settings = SettingsManager.shared
+        let app = terminalApp ?? settings.defaultTerminalApp
+        if app == .iterm2 && settings.codexResumeInITermSplits {
+            runCommandsInITermSplitView(commands, layout: settings.codexResumeSplitLayout)
+            return
+        }
+
+        Log.info("Split resume is only supported for iTerm2; falling back to separate terminal commands", category: .terminal)
+        for command in commands {
+            runCommand(command.executable, arguments: command.arguments, inFolder: command.folder, terminalApp: app)
         }
     }
 
@@ -208,6 +248,101 @@ struct TerminalOpener {
     private static func appleScriptEscaped(_ value: String) -> String {
         value.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
+    }
+
+    private static func shellCommand(_ executable: String, arguments: [String], inFolder path: String) -> String {
+        let command = ([executable] + arguments).map(shellEscaped).joined(separator: " ")
+        return "cd \(shellEscaped(path)) && \(command)"
+    }
+
+    private static func runCommandsInITermSplitView(
+        _ commands: [(executable: String, arguments: [String], folder: String)],
+        layout: CodexResumeSplitLayout
+    ) {
+        let commandLines = commands.map { command in
+            shellCommand(command.executable, arguments: command.arguments, inFolder: command.folder)
+        }
+        let splitLines = splitScriptLines(for: commandLines, layout: layout)
+        let script = """
+        tell application "iTerm2"
+            activate
+            if (count of windows) = 0 then
+                set terminalWindow to (create window with default profile)
+                set terminalTab to current tab of terminalWindow
+            else
+                set terminalWindow to current window
+                tell terminalWindow to set terminalTab to (create tab with default profile)
+            end if
+            set splitSource to current session of terminalTab
+            tell splitSource to write text "\(appleScriptEscaped(commandLines[0]))"
+        \(splitLines)
+            activate
+        end tell
+        """
+        runAppleScript(script, label: "iTermSplitResume")
+    }
+
+    private static func splitScriptLines(for commandLines: [String], layout: CodexResumeSplitLayout) -> String {
+        switch layout {
+        case .automaticGrid:
+            return automaticGridSplitScriptLines(for: commandLines)
+        case .vertical:
+            return linearSplitScriptLines(for: commandLines, command: "split vertically with default profile")
+        case .horizontal:
+            return linearSplitScriptLines(for: commandLines, command: "split horizontally with default profile")
+        }
+    }
+
+    private static func automaticGridSplitScriptLines(for commandLines: [String]) -> String {
+        switch commandLines.count {
+        case 2:
+            return """
+                tell splitSource
+                    set rightSession to (split vertically with default profile)
+                end tell
+                tell rightSession to write text "\(appleScriptEscaped(commandLines[1]))"
+            """
+        case 3:
+            return """
+                tell splitSource
+                    set rightTopSession to (split vertically with default profile)
+                end tell
+                tell rightTopSession to write text "\(appleScriptEscaped(commandLines[1]))"
+                tell rightTopSession
+                    set rightBottomSession to (split horizontally with default profile)
+                end tell
+                tell rightBottomSession to write text "\(appleScriptEscaped(commandLines[2]))"
+            """
+        case 4:
+            return """
+                tell splitSource
+                    set rightTopSession to (split vertically with default profile)
+                end tell
+                tell rightTopSession to write text "\(appleScriptEscaped(commandLines[1]))"
+                tell splitSource
+                    set leftBottomSession to (split horizontally with default profile)
+                end tell
+                tell leftBottomSession to write text "\(appleScriptEscaped(commandLines[2]))"
+                tell rightTopSession
+                    set rightBottomSession to (split horizontally with default profile)
+                end tell
+                tell rightBottomSession to write text "\(appleScriptEscaped(commandLines[3]))"
+            """
+        default:
+            return linearSplitScriptLines(for: commandLines, command: "split vertically with default profile")
+        }
+    }
+
+    private static func linearSplitScriptLines(for commandLines: [String], command: String) -> String {
+        commandLines.dropFirst().map { commandLine in
+            """
+                tell splitSource
+                    set newSession to (\(command))
+                end tell
+                tell newSession to write text "\(appleScriptEscaped(commandLine))"
+                set splitSource to newSession
+            """
+        }.joined(separator: "\n")
     }
 
     private static func runAppleScript(_ script: String, label: String) {

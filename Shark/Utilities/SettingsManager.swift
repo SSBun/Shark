@@ -19,6 +19,8 @@ class SettingsManager {
     private let legacyComponentsSearchPathBookmarkKey = "componentsSearchPathBookmark"
     private let authorizedFoldersKey = "authorizedFolders"
     private let defaultTerminalAppKey = "defaultTerminalApp"
+    private let codexResumeInITermSplitsKey = "codexResumeInITermSplits"
+    private let codexResumeSplitLayoutKey = "codexResumeSplitLayout"
 
     private init() {
         migrateLegacySearchPath()
@@ -241,6 +243,31 @@ class SettingsManager {
         }
         set {
             UserDefaults.standard.set(newValue.rawValue, forKey: defaultTerminalAppKey)
+        }
+    }
+
+    var codexResumeInITermSplits: Bool {
+        get {
+            guard UserDefaults.standard.object(forKey: codexResumeInITermSplitsKey) != nil else {
+                return true
+            }
+            return UserDefaults.standard.bool(forKey: codexResumeInITermSplitsKey)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: codexResumeInITermSplitsKey)
+        }
+    }
+
+    var codexResumeSplitLayout: CodexResumeSplitLayout {
+        get {
+            if let savedValue = UserDefaults.standard.string(forKey: codexResumeSplitLayoutKey),
+               let layout = CodexResumeSplitLayout(rawValue: savedValue) {
+                return layout
+            }
+            return .automaticGrid
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: codexResumeSplitLayoutKey)
         }
     }
 

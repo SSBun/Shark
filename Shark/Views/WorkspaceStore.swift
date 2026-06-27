@@ -225,13 +225,9 @@ final class WorkspaceStore {
     }
 
     func resumeCodexSessionsInTerminal(_ sessions: [CodexSession]) {
-        for session in sessions {
-            TerminalOpener.runCommand(
-                "codex",
-                arguments: ["resume", session.id],
-                inFolder: session.cwd
-            )
-        }
+        TerminalOpener.runCommands(sessions.map { session in
+            (executable: "codex", arguments: ["resume", session.id], folder: session.cwd)
+        })
     }
 
     func jumpToCodexSessionInITerm(_ session: CodexSession) {
