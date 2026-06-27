@@ -215,6 +215,50 @@
 - README 已更新为当前 virtual folder、Codex sessions、Codex hooks 和 workspace health 功能说明。
 - CHANGELOG 的 Unreleased 已记录 session 时间分组、workspace health 和 README 更新。
 
+# iTerm2 工作区打开修复
+
+## 假设
+- 截图中的工作区行箭头调用 `WorkspaceOpener.openWorkspace`，最终走 `TerminalOpener.openFolder`。
+- 用户已在 Settings > Terminal 选择 iTerm2，但点击箭头仍打开 Terminal。
+- 本机 iTerm 应用可通过 bundle id `com.googlecode.iterm2` 找到，但 `open -a iTerm2` 找不到。
+
+## 计划
+- [x] 追踪箭头按钮到终端打开调用链。
+- [x] 验证 iTerm2 app name 与 bundle id 的实际查找行为。
+- [x] 将 iTerm2 打开逻辑改为 bundle id。
+- [x] 增加最小验证脚本，避免回退到 app name。
+- [x] 运行验证脚本和 Debug 构建。
+
+## Review
+- 根因是 `TerminalOpener.openWithITerm2` 使用 `open -a iTerm2`，但本机可解析的应用名是 `iTerm`，导致命令失败后 fallback 到 Terminal。
+- 已改为 `open -b com.googlecode.iterm2`，不再依赖应用名。
+- `bash scripts/verify-terminal-opener.sh` 通过。
+- `git diff --check` 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+
+# Release 1.12.1 本地安装
+
+## 假设
+- “fix version” 表示从 `1.12.0` 发布 patch 版本 `1.12.1`。
+- 只做本地 release：提交、创建本地 tag、构建 DMG、安装到 `/Applications/SharkSpace.app`。
+- 不 push，不 npm publish。
+
+## 计划
+- [x] 更新 Xcode、npm 和 lockfile 版本号。
+- [x] 将 iTerm2 打开修复写入 CHANGELOG。
+- [x] 运行验证脚本、diff check 和 Debug 构建。
+- [x] 构建 Release DMG。
+- [x] 替换 `/Applications/SharkSpace.app` 并验证安装版本。
+- [x] 提交所有改动并创建 `v1.12.1` tag。
+
+## Review
+- `bash scripts/verify-terminal-opener.sh && bash scripts/verify-codex-sessions-ui.sh && bash scripts/verify-swiftui-structure.sh && bash scripts/verify-virtual-workspace.sh` 通过。
+- `git diff --check` 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+- `npx tsx scripts/build-tool.ts create-dmg 1.12.1` 通过，生成 `dist/SharkSpace-1.12.1.dmg`。
+- DMG SHA-256：`183230216aa9eafd8d921e275aa485dcfc1953052f76cdfc5d7f7744a4062cbd`。
+- `/Applications/SharkSpace.app` 已安装为 `1.12.1 (14)`。
+
 ## Workspace Health 菜单入口
 
 ### 假设

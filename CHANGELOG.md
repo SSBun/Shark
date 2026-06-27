@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.12.1] - 2026-06-27
+
+### Fixed
+- 修复工作区箭头在默认终端设置为 iTerm2 时仍回退打开 Terminal 的问题。
+
 ## [1.12.0] - 2026-06-27
 
 ### Added

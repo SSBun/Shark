@@ -412,7 +412,7 @@ struct TerminalOpener {
         // Use open command with iTerm2
         let task = Process()
         task.launchPath = "/usr/bin/open"
-        task.arguments = ["-a", "iTerm2", path]
+        task.arguments = ["-b", "com.googlecode.iterm2", path]
         
         do {
             try task.run()
