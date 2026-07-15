@@ -14,7 +14,14 @@ final class WorkspaceStore {
     private static let logger = Logger(subsystem: "com.shark.app", category: "WorkspaceStore")
 
     var workspaces: [Workspace]
-    var selectedWorkspace: Workspace?
+    var selectedWorkspace: Workspace? {
+        didSet {
+            guard oldValue?.id != selectedWorkspace?.id else { return }
+            codexSessionLoadID = UUID()
+            codexSessions = []
+            isLoadingCodexSessions = false
+        }
+    }
     var folders: [Folder] = []
     var codexSessions: [CodexSession] = []
     var isLoadingFolders = false
@@ -23,6 +30,7 @@ final class WorkspaceStore {
 
     @ObservationIgnored private let workspaceManager: WorkspaceManager
     @ObservationIgnored private let settingsManager: SettingsManager
+    @ObservationIgnored private var codexSessionLoadID = UUID()
 
     init(workspaceManager: WorkspaceManager = .shared, settingsManager: SettingsManager = .shared) {
         self.workspaceManager = workspaceManager
@@ -146,6 +154,7 @@ final class WorkspaceStore {
         defer { isLoadingFolders = false }
 
         let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
+        guard selectedWorkspace?.id == workspace.id else { return }
         guard authorized else {
             folders = []
             return
@@ -195,12 +204,20 @@ final class WorkspaceStore {
 
     func loadCodexSessions() async {
         guard let workspace = selectedWorkspace else {
+            codexSessionLoadID = UUID()
             codexSessions = []
+            isLoadingCodexSessions = false
             return
         }
 
+        let loadID = UUID()
+        codexSessionLoadID = loadID
         isLoadingCodexSessions = true
-        defer { isLoadingCodexSessions = false }
+        defer {
+            if codexSessionLoadID == loadID {
+                isLoadingCodexSessions = false
+            }
+        }
 
         let workspacePath = workspace.filePath
         let folderPaths = folders.map(\.path)
@@ -208,7 +225,19 @@ final class WorkspaceStore {
         let sessions = await Task.detached(priority: .utility) {
             CodexSessionManager.sessions(matching: workspacePath, folderPaths: folderPaths, displayNames: displayNames)
         }.value
+        guard selectedWorkspace?.id == workspace.id, codexSessionLoadID == loadID else { return }
         codexSessions = sessions
+
+        let sessionsWithRuntimeState = await Task.detached(priority: .utility) {
+            let terminalStates = CodexSessionRuntimeDetector.terminalStates()
+            return sessions.map { session in
+                var session = session
+                session.runtimeState = terminalStates[session.id] ?? .inactive
+                return session
+            }
+        }.value
+        guard selectedWorkspace?.id == workspace.id, codexSessionLoadID == loadID else { return }
+        codexSessions = sessionsWithRuntimeState
     }
 
     func openCodexSession(_ session: CodexSession) {

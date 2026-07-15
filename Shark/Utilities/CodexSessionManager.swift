@@ -6,17 +6,40 @@
 import Foundation
 
 enum CodexSessionManager {
-    static func sessions(matching workspacePath: String, folderPaths: [String], displayNames: [String: String] = [:]) -> [CodexSession] {
+    /// Loads Codex session metadata matching the supplied workspace roots.
+    static func sessions(
+        matching workspacePath: String,
+        folderPaths: [String],
+        displayNames: [String: String] = [:],
+        codexURL: URL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex")
+    ) -> [CodexSession] {
         let matchRoots = ([workspacePath] + folderPaths).map(normalizedPath)
         guard !matchRoots.isEmpty else { return [] }
 
-        let codexURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex")
         let threads = threadIndex(in: codexURL)
+        let threadsByPath = threads.values.reduce(into: [String: ThreadRecord]()) { result, thread in
+            result[normalizedPath(thread.filePath)] = thread
+        }
         let titles = sessionIndex(in: codexURL)
         let files = sessionFiles(in: codexURL)
-        let terminalStates = CodexSessionRuntimeDetector.terminalStates()
 
         return files.compactMap { url in
+            if let thread = threadsByPath[normalizedPath(url.path)] {
+                guard matches(cwd: thread.cwd, roots: matchRoots) else { return nil }
+                let indexed = titles[thread.id]
+                return CodexSession(
+                    id: thread.id,
+                    title: bestTitle(displayNames[thread.id], thread.title, thread.firstUserMessage, thread.preview, indexed?.title, fallback: thread.id),
+                    cwd: thread.cwd,
+                    filePath: thread.filePath,
+                    updatedAt: thread.updatedAt,
+                    isArchived: thread.isArchived,
+                    source: thread.source,
+                    model: thread.model,
+                    runtimeState: .inactive
+                )
+            }
+
             guard let meta = sessionMeta(from: url),
                   matches(cwd: meta.cwd, roots: matchRoots) else {
                 return nil
@@ -27,13 +50,13 @@ enum CodexSessionManager {
             return CodexSession(
                 id: meta.id,
                 title: bestTitle(displayNames[meta.id], thread?.title, thread?.firstUserMessage, thread?.preview, indexed?.title, fallback: meta.id),
-                cwd: thread?.cwd ?? meta.cwd,
-                filePath: thread?.filePath ?? url.path,
+                cwd: meta.cwd,
+                filePath: url.path,
                 updatedAt: thread?.updatedAt ?? indexed?.updatedAt ?? meta.updatedAt,
-                isArchived: thread?.isArchived ?? isArchivedSessionFile(url),
+                isArchived: isArchivedSessionFile(url),
                 source: thread?.source,
                 model: thread?.model,
-                runtimeState: terminalStates[meta.id] ?? .inactive
+                runtimeState: .inactive
             )
         }
         .sorted { $0.updatedAt > $1.updatedAt }

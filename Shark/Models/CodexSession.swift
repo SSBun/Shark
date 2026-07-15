@@ -14,5 +14,5 @@ struct CodexSession: Identifiable, Hashable {
     let isArchived: Bool
     let source: String?
     let model: String?
-    let runtimeState: CodexSessionRuntimeState
+    var runtimeState: CodexSessionRuntimeState
 }

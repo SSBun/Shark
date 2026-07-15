@@ -11,9 +11,10 @@ enum CodexSessionRuntimeDetector {
         Log.info("[CodexRuntime] scanning terminal states, processRows=\(rows.count)", category: .terminal)
 
         var states = hookStates()
-        for row in rows {
-            guard row.tty != "??", row.command.contains("codex") else { continue }
-            for sessionID in sessionIDs(openedBy: row.pid) {
+        let codexRows = rows.filter { $0.tty != "??" && $0.command.contains("codex") }
+        let sessionIDsByPID = sessionIDs(openedBy: codexRows.map(\.pid))
+        for row in codexRows {
+            for sessionID in sessionIDsByPID[row.pid, default: []] {
                 Log.info("[CodexRuntime] found running session id=\(sessionID) pid=\(row.pid) tty=\(row.tty)", category: .terminal)
                 let existingITermID = states[sessionID]?.iTermSessionID
                 states[sessionID] = .runningInTerminal(tty: row.tty, pid: row.pid, iTermSessionID: existingITermID)
@@ -47,15 +48,35 @@ enum CodexSessionRuntimeDetector {
         }
     }
 
-    private static func sessionIDs(openedBy pid: Int32) -> [String] {
-        guard let output = commandOutput("/usr/sbin/lsof", arguments: ["-Fn", "-p", String(pid)]) else { return [] }
+    /// Maps each process to the Codex session rollout files it currently has open.
+    static func sessionIDs(openedBy processIDs: [Int32]) -> [Int32: [String]] {
+        guard !processIDs.isEmpty else { return [:] }
 
-        return output.split(separator: "\n").compactMap { line in
-            guard line.first == "n" else { return nil }
-            let path = String(line.dropFirst())
-            guard path.contains("/.codex/sessions/"), path.hasSuffix(".jsonl") else { return nil }
-            return sessionID(fromRolloutPath: path)
+        let processIDList = processIDs.map(String.init).joined(separator: ",")
+        guard let output = commandOutput(
+            "/usr/sbin/lsof",
+            arguments: ["-Fn", "-p", processIDList],
+            allowNonzeroExit: true
+        ) else {
+            return [:]
         }
+
+        var currentProcessID: Int32?
+        var result: [Int32: [String]] = [:]
+        for line in output.split(separator: "\n") {
+            if line.first == "p" {
+                currentProcessID = Int32(line.dropFirst())
+                continue
+            }
+            guard line.first == "n", let currentProcessID else { continue }
+            let path = String(line.dropFirst())
+            guard path.contains("/.codex/sessions/"), path.hasSuffix(".jsonl"),
+                  let sessionID = sessionID(fromRolloutPath: path) else {
+                continue
+            }
+            result[currentProcessID, default: []].append(sessionID)
+        }
+        return result
     }
 
     private static func sessionID(fromRolloutPath path: String) -> String? {
@@ -84,7 +105,11 @@ enum CodexSessionRuntimeDetector {
         }
     }
 
-    private static func commandOutput(_ executable: String, arguments: [String]) -> String? {
+    private static func commandOutput(
+        _ executable: String,
+        arguments: [String],
+        allowNonzeroExit: Bool = false
+    ) -> String? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
@@ -97,9 +122,9 @@ enum CodexSessionRuntimeDetector {
             try process.run()
             let data = output.fileHandleForReading.readDataToEndOfFile()
             process.waitUntilExit()
-            guard process.terminationStatus == 0 else {
+            if process.terminationStatus != 0 {
                 Log.error("[CodexRuntime] command failed executable=\(executable) status=\(process.terminationStatus)", category: .terminal)
-                return nil
+                guard allowNonzeroExit, !data.isEmpty else { return nil }
             }
             return String(data: data, encoding: .utf8)
         } catch {
