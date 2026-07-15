@@ -3,7 +3,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-for file in Shark/Models/CodexSession.swift Shark/Models/CodexSessionRuntimeState.swift Shark/Utilities/CodexSessionManager.swift Shark/Utilities/CodexSessionRuntimeDetector.swift Shark/Utilities/CodexHookInstaller.swift Shark/Views/CodexSessionListView.swift; do
+for file in Shark/Models/CodexSession.swift Shark/Models/CodexSessionRuntimeState.swift Shark/Models/CodexSessionPreview.swift Shark/Utilities/CodexSessionManager.swift Shark/Utilities/CodexSessionRuntimeDetector.swift Shark/Utilities/CodexSessionPreviewLoader.swift Shark/Utilities/CodexHookInstaller.swift Shark/Views/CodexSessionListView.swift Shark/Views/CodexSessionPreviewView.swift; do
   if [[ ! -f "$file" ]]; then
     echo "missing $file" >&2
     exit 1
@@ -17,6 +17,27 @@ fi
 
 if ! rg -q 'loadCodexSessions' Shark/Views/WorkspaceStore.swift; then
   echo "WorkspaceStore must load Codex sessions for selected workspace" >&2
+  exit 1
+fi
+
+workspace_selection_body=$(sed -n '/var selectedWorkspace:/,/var folders:/p' Shark/Views/WorkspaceStore.swift)
+if ! printf '%s\n' "$workspace_selection_body" | rg -Fq 'didSet' ||
+   ! printf '%s\n' "$workspace_selection_body" | rg -Fq 'codexSessions = []' ||
+   ! printf '%s\n' "$workspace_selection_body" | rg -Fq 'isLoadingCodexSessions = false'; then
+  echo "WorkspaceStore must clear stale Codex sessions and loading state when workspace selection changes" >&2
+  exit 1
+fi
+
+session_load_body=$(sed -n '/func loadCodexSessions()/,/func openCodexSession/p' Shark/Views/WorkspaceStore.swift)
+if ! printf '%s\n' "$session_load_body" | rg -Fq 'selectedWorkspace?.id == workspace.id'; then
+  echo "WorkspaceStore must discard Codex session results from a previously selected workspace" >&2
+  exit 1
+fi
+
+if ! printf '%s\n' "$session_load_body" | rg -Fq 'codexSessionLoadID == loadID' ||
+   ! printf '%s\n' "$session_load_body" | rg -q '^[[:space:]]*codexSessions = sessions$' ||
+   ! printf '%s\n' "$session_load_body" | rg -q '^[[:space:]]*codexSessions = sessionsWithRuntimeState$'; then
+  echo "WorkspaceStore must publish metadata before runtime state and discard superseded refreshes" >&2
   exit 1
 fi
 
@@ -120,13 +141,35 @@ if ! rg -q 'lsof' Shark/Utilities/CodexSessionRuntimeDetector.swift; then
   exit 1
 fi
 
+if ! rg -Fq 'processIDList' Shark/Utilities/CodexSessionRuntimeDetector.swift ||
+   ! rg -Fq 'allowNonzeroExit: true' Shark/Utilities/CodexSessionRuntimeDetector.swift; then
+  echo "Codex runtime detector must batch lsof PIDs and preserve partial output" >&2
+  exit 1
+fi
+
+if ! rg -Fq 'threadsByPath' Shark/Utilities/CodexSessionManager.swift ||
+   rg -Fq 'CodexSessionRuntimeDetector.terminalStates()' Shark/Utilities/CodexSessionManager.swift; then
+  echo "Codex session metadata must use the SQLite path index without blocking on runtime detection" >&2
+  exit 1
+fi
+
 if ! rg -Fq 'CodexHookInstaller.runtimeDirectory' Shark/Utilities/CodexSessionRuntimeDetector.swift; then
   echo "Codex runtime detector must read hook snapshots before lsof fallback" >&2
   exit 1
 fi
 
 if rg -Fq 'onTapGesture(count: 2)' Shark/Views/CodexSessionListView.swift; then
-  echo "Codex session rows must not use double-click because it interferes with list selection" >&2
+  echo "Codex session rows must not replace List selection with an onTapGesture double-click" >&2
+  exit 1
+fi
+
+if ! rg -Fq 'simultaneousGesture(' Shark/Views/CodexSessionListView.swift || ! rg -Fq 'TapGesture(count: 2)' Shark/Views/CodexSessionListView.swift; then
+  echo "Codex session rows must preserve List selection while supporting double-click preview" >&2
+  exit 1
+fi
+
+if ! rg -Fq 'event_msg' Shark/Utilities/CodexSessionPreviewLoader.swift || ! rg -Fq 'recentMessageLimit = 8' Shark/Utilities/CodexSessionPreviewLoader.swift; then
+  echo "Codex session preview must load the initial prompt and eight recent user-visible messages" >&2
   exit 1
 fi
 

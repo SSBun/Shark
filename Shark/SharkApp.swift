@@ -11,12 +11,14 @@ import AppKit
 @main
 struct SharkApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @State private var codexSessionPreviewStore = CodexSessionPreviewStore()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .authorizationPanel()
                 .environmentObject(AuthorizationManager.shared)
+                .environment(codexSessionPreviewStore)
         }
         .handlesExternalEvents(matching: Set(arrayLiteral: "*"))
         .commands {
@@ -30,6 +32,13 @@ struct SharkApp: App {
                 .authorizationPanel()
                 .environmentObject(AuthorizationManager.shared)
         }
+
+        Window(CodexSessionPreviewView.windowTitle, id: CodexSessionPreviewView.windowID) {
+            CodexSessionPreviewView()
+                .environment(codexSessionPreviewStore)
+        }
+        .defaultSize(width: 720, height: 560)
+        .windowResizability(.contentMinSize)
     }
 }
 
@@ -125,7 +134,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return window.isVisible &&
                window.styleMask.contains(.titled) &&
                !isSettingsWindow(window) &&
+               !isCodexSessionPreviewWindow(window) &&
                !isDialogWindow(window)
+    }
+
+    private func isCodexSessionPreviewWindow(_ window: NSWindow) -> Bool {
+        window.title == CodexSessionPreviewView.windowTitle
     }
     
     /// Check if a window is a settings window

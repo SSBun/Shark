@@ -9,6 +9,7 @@ struct CodexSessionListView: View {
     let sessions: [CodexSession]
     let isLoading: Bool
     let onRefresh: () -> Void
+    let onPreview: (CodexSession) -> Void
     let onShowInFinder: ([CodexSession]) -> Void
     let onCopyPath: ([CodexSession]) -> Void
     let onResumeInTerminal: ([CodexSession]) -> Void
@@ -102,6 +103,7 @@ struct CodexSessionListView: View {
     private func sessionRow(_ session: CodexSession) -> some View {
         CodexSessionRow(
             session: session,
+            onPreview: { onPreview(session) },
             onShowInFinder: { onShowInFinder(targetSessions(for: session)) },
             onCopyPath: { onCopyPath(targetSessions(for: session)) },
             onResumeInTerminal: { onResumeInTerminal(targetSessions(for: session)) },
@@ -164,6 +166,7 @@ private enum CodexSessionDateBucket: CaseIterable {
 
 private struct CodexSessionRow: View {
     let session: CodexSession
+    let onPreview: () -> Void
     let onShowInFinder: () -> Void
     let onCopyPath: () -> Void
     let onResumeInTerminal: () -> Void
@@ -175,26 +178,35 @@ private struct CodexSessionRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Circle()
-                .fill(session.runtimeState.isRunningInTerminal ? Color.green : Color.secondary.opacity(0.35))
-                .frame(width: 7, height: 7)
-                .help(runtimeHelp)
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(session.runtimeState.isRunningInTerminal ? Color.green : Color.secondary.opacity(0.35))
+                    .frame(width: 7, height: 7)
+                    .help(runtimeHelp)
 
-            Image(systemName: session.isArchived ? "archivebox" : "text.bubble")
-                .font(.system(size: 13))
-                .foregroundColor(session.isArchived ? .secondary : .accentColor)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(session.title)
+                Image(systemName: session.isArchived ? "archivebox" : "text.bubble")
                     .font(.system(size: 13))
-                    .lineLimit(1)
-                Text(sessionSummary)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-            }
+                    .foregroundColor(session.isArchived ? .secondary : .accentColor)
 
-            Spacer()
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(session.title)
+                        .font(.system(size: 13))
+                        .lineLimit(1)
+                    Text(sessionSummary)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+            }
+            .contentShape(.rect)
+            .simultaneousGesture(
+                TapGesture(count: 2)
+                    .onEnded { onPreview() }
+            )
+            .accessibilityAction(named: Text("Preview Session"), onPreview)
+            .help("Double-click to preview session")
 
             if session.runtimeState.isRunningInTerminal {
                 Button(action: onJumpToITerm) {

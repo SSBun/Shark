@@ -1,3 +1,335 @@
+# 缓存 workspace folder 的 Git 状态
+
+## 状态
+- 已完成（2026-07-15）
+
+## 目标
+- [x] 按 repository 路径缓存本次 App 会话已加载的 Git 状态，切回 workspace 时立即复用，不再逐个重扫。
+- [x] 同一路径使用不同 Folder ID 时仍命中缓存；只扫描未缓存的 repository。
+- [x] Git 面板关闭后的本地刷新和 `Fetch & Refresh` 忽略缓存，确保显式刷新不会返回旧状态。
+- [x] 不缓存 unavailable 结果，避免权限或临时错误被长期保留。
+
+## 边界
+- 缓存只存在于 `WorkspaceGitStatusStore` 生命周期内，不增加磁盘格式、过期策略或新依赖。
+- 不改变 Git 状态字段、展示或远端 freshness 语义。
+
+## 验证标准
+- 首次加载路径 A 扫描一次；切换到 B 再返回 A 时，A 不产生第二次 Git status 请求且新 Folder ID 能读取缓存。
+- 强制本地刷新和 fetch refresh 都会重新扫描 A；unavailable 的 A 下次加载会重试。
+- Git Overview 专项检查、Swift parse、diff check 和 Debug 构建通过。
+
+## 验证
+- 新增专项运行检查：A → B → A 后 A 的 status 请求仍为 1 次，且第二个 A 的 Folder ID 立即读取 `scan-1`。
+- 本地 `refresh` 将 A 更新为 `scan-2`；`fetchAndRefresh` 更新为 `scan-3` 且 freshness 为 Fetched。
+- unavailable repository 两次进入产生 2 次请求，确认失败结果未缓存。
+- `bash scripts/verify-git-overview.sh`、`bash scripts/verify-swiftui-structure.sh`、Swift parse、`git diff --check` 和 Debug `xcodebuild` 全部通过。
+
+## Review
+- 根因修复在 `WorkspaceGitStatusStore`：以前 repository 路径集合改变就清空状态并全量扫描；现在先按路径映射会话缓存，只加载缺失项。
+- 默认 workspace 加载复用缓存；Git 面板关闭和 Overview 的 `Fetch & Refresh` 继续强制刷新，没有改变现有显式操作语义。
+- 缓存随 store 生命周期释放，不增加持久化、TTL、后台定时器或依赖。
+
+# 将 Folder Git 状态移到 cell 右侧
+
+## 状态
+- 已完成（2026-07-15）
+
+## 目标
+- [x] Version、Working Tree 和 Upstream 状态在 cell 右侧单行展示，不再占用标题下方的第三行。
+- [x] 保留左侧标题、branch badge 和路径的现有信息层级。
+- [x] 状态位于删除按钮左侧；窄窗口、长 tag、Detached HEAD 和 No Upstream 时仍保持稳定布局。
+
+## 边界
+- 只调整 `FolderRow` 布局，不改变 Git 状态采集、语义或刷新行为。
+- 不新增视图抽象或配置项。
+
+## 验证标准
+- Git 状态组位于最外层横向布局的右侧，而不是左侧内容 `VStack` 内。
+- 状态保持单行，删除按钮仍可见并可点击。
+- 专项回归、Swift parse、diff check 和 Debug 构建通过。
+
+## 验证
+- `FolderRow` 结构检查确认 Git 状态组已移到外层 `HStack` 的 `Spacer(minLength: 12)` 之后、删除按钮之前；左侧 `VStack` 只保留标题和路径。
+- 三个 `GitStatusValueView` 本身保持 `lineLimit(1)`，状态组使用布局优先级；长 tag、Detached HEAD、No Upstream 和窄窗口下不会换回标题下方。
+- `xcrun swiftc -parse Shark/Views/FolderListView.swift`、`bash scripts/verify-git-overview.sh`、`git diff --check` 和 Debug `xcodebuild` 全部通过。
+- Debug App 启动成功；新实例被 macOS Documents 授权弹窗挡住，未在不修改用户系统权限的前提下完成真实 folder 数据截图。
+
+## Review
+- 改动只移动既有状态视图，没有改变状态数据、文案、颜色、刷新或点击行为。
+- 删除按钮仍是最右侧交互控件；状态位于其左侧且不接收点击，标题、branch badge 与路径保持原布局。
+- 未新增视图抽象、状态或配置；这是满足反馈所需的最小布局改动。
+
+# 将 Codex Session 刷新降到亚秒级并分阶段显示
+
+## 状态
+- 已完成（2026-07-15）
+
+## 目标
+- [x] 将逐 PID 串行 `lsof` 改为一次批量查询，并保留 PID → session 映射和进程退出 race 下的有效 stdout。
+- [x] 复用 SQLite `threads` 作为主索引，只读取数据库未覆盖的 JSONL 首行，并保留数据库不可用 fallback。
+- [x] 先发布 session metadata，再异步补充运行状态，让列表尽快出现。
+- [x] 留下可运行的行为/性能回归检查，并完成现有回归和 Debug 构建。
+
+## 验证标准
+- 批量与旧串行路径识别出的运行 session 集合一致。
+- SQLite-first 与旧全量 JSONL 路径得到相同 session ID 和排序；stale DB path 不进入结果。
+- workspace 切换时旧列表仍立即清空，旧 metadata 或 runtime 结果都不能覆盖当前 workspace。
+- 当前 2,500+ session 数据上 metadata 首次发布低于 `0.25s`，完整刷新低于 `0.75s`。
+
+## 验证
+- 修复前真实路径红灯：metadata 加 runtime 耗时 `3.689s`，超过 `0.25s` 目标。
+- 最终 `bash scripts/verify-codex-session-refresh.sh` 通过：231 个匹配 session，metadata `0.156s`，runtime `0.322s`，合计约 `0.478s`。
+- batch lsof fixture 同时传入有效 PID 与不存在 PID，确认非零退出时仍保留有效 session 映射。
+- SQLite fixture 覆盖有效 DB record、JSONL-only fallback、无效 JSONL 首行和 stale DB path。
+- `bash scripts/verify-codex-sessions-ui.sh`、preview、SwiftUI structure、virtual workspace、terminal opener 全部通过。
+- `swiftc -parse`、`git diff --check` 和 Debug `xcodebuild` 全部通过。
+
+## Review
+- 运行态检测保留现有 `ps` 过滤语义，仅将候选 PID 合并到一次 `lsof`；按 `p`/`n` 字段恢复映射。
+- metadata 扫描按 rollout path 复用 SQLite thread record；路径未覆盖时才读取 JSONL，数据库不可用会自然退回全量 JSONL。
+- `WorkspaceStore` 先提交 inactive metadata，再提交 runtime-enriched sessions；load ID 同时阻止 workspace 切换和同 workspace 重刷的旧结果覆盖。
+- workspace 变更或选择清空时同步重置列表与 loading，避免失效任务留下永久 spinner。
+- 没有增加依赖、缓存或额外 SwiftUI 状态；现有列表在 metadata 到达后会直接显示，并继续用刷新按钮 spinner 表示 runtime 尚在加载。
+
+# Workspace Git Overview
+
+## 状态
+- 已完成（2026-07-15）
+
+## 目标
+- [x] 从现有 workspace、folder 和 Codex session 主路径中找出仍未解决的高频摩擦。
+- [x] 排除已有能力、低频装饰功能和需要服务端的新系统。
+- [x] 提出 2–3 个可独立交付的方向，说明用户收益、最小版本与关键边界。
+- [x] 与用户收敛下一项最值得设计或实现的功能。
+
+## 边界
+- 本轮只做产品构想与取舍，不实现产品代码，不创建设计文档。
+- 优先复用现有 session preview、workspace metadata 和 macOS 原生交互。
+- 必须考虑全局历史规模、文件失效、重复匹配和异步切换等边界，不能用新增功能放大当前刷新性能问题。
+
+## 已选择方向：Workspace Git Overview
+- 用户确认 Workspace Git Overview 有价值，下一步收敛其使用目标与交互范围。
+- 面板的核心任务已明确：对 workspace 中的每个 Git repository 回答“最新版本是什么”“是否有未提交改动”“本地提交是否已推送到远端”。
+- “未提交改动”必须区分 staged、unstaged、untracked；submodule 状态是否纳入需要在设计中明确。
+- “已推送”必须区分 synced、ahead、behind、diverged、无 upstream、detached HEAD、远端不可达或认证失败；未知不能显示为已推送。
+- “最新版本”仍需明确是最新 Git tag/release，还是项目文件声明的 package/app version；跨技术栈自动读取版本文件会显著扩大范围。
+- 远端结论必须标明新鲜度：仅比较本地 remote-tracking ref 可能过期，实时 fetch/查询则会引入网络、认证和等待成本。
+- 当前 folder row 只展示 branch/tag；完整 clean、modified、staged、untracked、conflict、ahead/behind 状态仅存在于单仓库 Git 面板。
+- 最小版本应只读并按需刷新；不在 overview 中批量执行 pull、push、commit、stash 等写操作。
+- 必须区分非 Git folder、目录缺失或无权限、detached HEAD、无 upstream 和 Git 命令失败，不能把未知状态显示成 clean。
+- 扫描必须支持 workspace 切换取消与稳定 ID 校验，避免旧 workspace 结果覆盖当前界面；多仓库查询需要限制并发，避免同时启动过多进程。
+
+## 已确认设计
+- `latest version` 指 Git tag；使用 Git version sort 选择最新已知 tag，没有 tag 时明确显示 `No Tag`。
+- Folder cell 直接显示 version、working tree 和 upstream 三项摘要；Overview 使用原生 macOS 表格展示同一份状态。
+- 初次进入 workspace 只读取本地状态和现有 remote-tracking refs，不自动联网；Overview 提供 `Fetch & Refresh`，成功 fetch 后再更新 tag 和 upstream 状态。
+- 保留现有单仓库 Git Operations，避免移除 pull、push、commit、stash 和 branch 能力。
+- submodule 不递归扫描；它在父仓库 `git status` 中产生的改动按普通 working-tree change 计数。
+
+## 实施计划
+- [x] 将 repository status 扫描收敛到 `git status --porcelain=v2 --branch` 与 tag 查询，解析 staged、unstaged、untracked、conflict 和 upstream 状态。
+- [x] 添加 workspace 级共享 Git status store，串行扫描 repository，并用 refresh ID/取消检查阻止旧 workspace 结果覆盖新界面。
+- [x] 在 Folder cells 展示 tag、working tree 和 upstream 的关键状态。
+- [x] 在 Folders header 添加 Workspace Git Overview 入口，使用原生表格和 `Fetch & Refresh`。
+- [x] 添加可运行解析/集成检查，覆盖 clean、dirty、ahead、behind、diverged、无 upstream、detached HEAD、无 tag 和命令失败。
+- [x] 运行专项检查、现有回归、Swift parse、diff check 和 Debug 构建。
+
+## 验证标准
+- 每个 Git folder cell 能回答最新 tag、是否有未提交改动、当前分支提交是否已推送。
+- Overview 与 cells 使用同一状态源；打开 Overview 不重复扫描已加载状态。
+- 非 Git、缺失、无权限、无 upstream、detached HEAD 和 fetch 失败不会显示为 clean/synced。
+- workspace 快速切换或 folders 变化时，旧扫描结果不会写入当前列表。
+
+## 验证
+- `bash scripts/verify-git-overview.sh` 通过；fixture 覆盖 clean/synced、dirty/ahead、behind、diverged、无 upstream、detached HEAD、无 tag 和 unavailable。
+- `bash scripts/verify-codex-session-refresh.sh`、preview、sessions UI、SwiftUI structure、virtual workspace 和 terminal opener 全部通过。
+- 相关 Swift 文件 `swiftc -parse` 与 `git diff --check` 通过。
+- Debug `xcodebuild` 通过；仅保留既有 Settings 和 ComponentSearchFilter warning。
+- 启动 Debug App 进行视觉冒烟：Folder cells 正确显示 tag、Clean/changes 和 Synced/unpushed/behind 等摘要，窄列表下可读。
+
+## Review
+- `GitManager` 从每仓库 4 次查询收敛为 porcelain-v2 status 加 version-sorted tag 查询；Git 子进程离开 MainActor，避免批量扫描阻塞 UI。
+- Folder cells 与原生 `Table` Overview 读取同一个 `WorkspaceGitStatusStore`；串行扫描避免进程风暴，request ID 和任务取消阻止旧结果串台。
+- 初次扫描不会联网，upstream 显示基于现有 tracking refs；显式 `Fetch & Refresh` 后标记为 Fetched，认证或网络失败显示 Fetch Failed。
+- 无 upstream、detached HEAD、diverged、缺失 tag 和不可用状态都有独立语义，不会误报为 Synced 或 Clean。
+- 保留现有单仓库 Git Operations；本次没有加入批量 push/pull/commit 等高风险写操作。
+
+# 研究并量化 Codex Session 刷新优化
+
+## 状态
+- 已完成（2026-07-15）
+
+## 目标
+- [x] 解释当前 `lsof` 检查的输入、输出与用途。
+- [x] 用真实数据复测基线，并验证批量 `lsof`、SQLite 直读和 hooks 快速路径的耗时。
+- [x] 基于第一方资料给出按收益/风险排序的最小优化方案。
+- [x] 将研究结论写入 `docs/research/`，不修改产品代码。
+
+## 验证标准
+- 优化建议有当前机器实测数据与第一方资料共同支撑。
+- 区分“降低实际总耗时”和“仅改善首屏感知时间”。
+- 明确正确性风险、回退路径与不值得现在做的复杂方案。
+
+## 验证
+- 现路径稳态约 `2.6–2.7s`；19 次 Swift `Process` 串行 `lsof` 为 `1.84–1.88s`。
+- 单次批量 `lsof -Fn -p pid1,...` 为 `0.124–0.126s`，返回的 10 个 session 文件与串行调用完全一致。
+- SQLite threads 查询、解码和文件存在检查为 `0.081–0.084s`；排除 4 个缺失 rollout 文件后，228 个 session ID 与现路径完全一致。
+- hooks 的 13 个 active snapshots 中仅 2 个 PID 仍存活，已证伪 hooks-only。
+- 官方 lsof 文档确认 `-p` 支持逗号分隔 PID 集合，`-F` 的 `p`/`n` 字段足以恢复 PID → 文件映射。
+- `git diff --check` 通过；临时 benchmark 与 instrumentation 已删除。
+
+## Review
+- 第一优先级是单次批量 `lsof`，预计完整刷新降到约 `0.9s`，不改变现有进程筛选语义。
+- 第二优先级是 SQLite-first + JSONL delta fallback，预计与批量 `lsof` 组合后约 `0.35–0.45s`。
+- 批量 lsof 必须解析非零退出时的非空 stdout，避免单个 PID 退出导致整批结果丢失。
+- 不采用并行多进程、hooks-only、`lsof -O`、常驻 lsof、libproc 或新缓存；当前收益不足以承担复杂度与正确性风险。
+- 完整报告：`docs/research/codex-session-refresh-performance.md`。
+
+# 诊断 Codex Session 列表刷新缓慢
+
+## 状态
+- 已完成（2026-07-15）
+
+## 目标
+- [x] 建立能测量实际 session 扫描路径的秒级反馈循环。
+- [x] 分解扫描、metadata 和运行态检测成本，确认主耗时来源。
+- [x] 只报告证据与最小优化方向，不修改产品代码。
+
+## 验证标准
+- 给出可复现的计时数据，而不是只根据代码形状猜测。
+- 明确 workspace session 数量或全局历史规模如何影响刷新时间。
+
+## 验证
+- 使用真实 `CodexSessionManager.sessions` 路径连续运行三次：`2.75s`、`2.59s`、`2.60s`。
+- 当前 `~/.codex` 有 2,538 个 JSONL；以用户 home directory 作为匹配根路径时得到 227 个 session。
+- 稳态分项：19 次串行 `lsof` 约 `1.83s`，JSONL metadata 读取与筛选约 `0.52s`，`ps` 约 `0.15s`，SQLite thread index 约 `0.09s`。
+
+## Review
+- 主因是运行态检测对每个命令含 `codex` 的终端进程串行启动一次 `lsof`，约占总时长 70%。
+- 次因是每次刷新先枚举全局历史并读取所有 JSONL 首行，再筛选当前 workspace；成本随全局历史数量增长，而非只随当前列表增长。
+- 临时计时 instrumentation 和 benchmark 已清理，产品代码没有因诊断发生改动。
+
+# Workspace 切换时立即清空 Codex Sessions
+
+## 状态
+- 已完成（2026-07-15）
+
+## 假设
+- 慢扫描期间显示旧列表，是因为切换入口没有先清空 `codexSessions`。
+- 快速连续切换时，旧 workspace 的异步扫描还可能晚于新扫描返回并覆盖当前列表。
+- 修复应留在 `WorkspaceStore` 的共享加载路径，不在 SwiftUI cell 或单个调用方补状态。
+
+## 计划
+- [x] 添加可检测“切换时未清空”和“旧结果覆盖”的回归检查，并确认当前失败。
+- [x] 在 workspace 加载开始时立即清空 session 列表。
+- [x] 在异步扫描提交结果前验证 workspace 仍然匹配。
+- [x] 更新 lessons，并运行专项检查、现有回归、diff check 和 Debug 构建。
+
+## 验证标准
+- 选择另一个 workspace 后，旧 session rows 立即消失。
+- 旧 workspace 的慢扫描完成后不能覆盖当前 workspace 的 sessions。
+- 手动刷新当前 workspace 时仍保留现有加载行为。
+
+## 验证
+- 修复前，新增专项检查按预期失败：`WorkspaceStore must clear stale Codex sessions as soon as workspace selection changes`。
+- `bash scripts/verify-codex-sessions-ui.sh` 通过。
+- `bash scripts/verify-codex-session-preview.sh` 通过。
+- `bash scripts/verify-swiftui-structure.sh` 通过。
+- `bash scripts/verify-virtual-workspace.sh` 通过。
+- `bash scripts/verify-terminal-opener.sh` 通过。
+- `git diff --check` 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+
+## Review
+- `selectedWorkspace` 的稳定 ID 发生变化时同步清空 `codexSessions`；同一 workspace 刷新或重命名不会触发列表闪烁。
+- 文件授权返回和后台 session 扫描完成后都会核对当前 workspace ID，旧请求不能再写入新 workspace 的界面。
+- 修复只修改共享状态入口和结果提交点，没有给 SwiftUI 视图增加重复状态或新抽象。
+- 当前存储依赖具体单例，缺少低成本可注入的运行时单测 seam；本次用先红后绿的专项结构回归覆盖关键约束，并以现有回归和完整 Debug 构建补充验证。
+
+# 实现 Codex Session Preview
+
+## 状态
+- 已完成（2026-07-15）
+
+## 假设
+- 双击 session cell 打开单个可复用、非模态、可缩放的 SwiftUI window。
+- 预览只解析 JSONL `event_msg.user_message` 与 `event_msg.agent_message`。
+- 首条用户消息单独展示；Recent Messages 保留其后的最后 8 条消息。
+- 不改变现有单击、Command 多选、resume、jump、archive 和 delete 行为。
+
+## 计划
+- [x] 添加预览模型与可取消的逐行 JSONL 加载器。
+- [x] 添加最小可运行解析检查，覆盖过滤、截断、损坏行和重复记录。
+- [x] 添加预览状态与原生 SwiftUI 独立窗口。
+- [x] 将 session cell 双击接入预览窗口，并复用现有终端动作。
+- [x] 运行解析检查、现有回归脚本、diff check 和 Debug 构建。
+
+## 验证标准
+- 双击打开/更新同一个预览窗口；单击和多选不受影响。
+- 预览展示 metadata、Initial Prompt 和最近 8 条消息。
+- reasoning、tool、system/developer、`response_item` 和损坏行不会进入预览。
+- 文件读取失败时展示错误状态，不崩溃、不自动 resume。
+
+## 验证
+- `bash scripts/verify-codex-session-preview.sh` 通过。
+- `bash scripts/verify-codex-sessions-ui.sh` 通过。
+- `bash scripts/verify-swiftui-structure.sh` 通过。
+- `bash scripts/verify-virtual-workspace.sh` 通过。
+- `bash scripts/verify-terminal-opener.sh` 通过。
+- `git diff --check` 通过。
+- `xcodebuild -scheme Shark -configuration Debug -derivedDataPath build -destination 'platform=macOS' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build` 通过。
+- Debug 可执行文件启动后保持运行且未崩溃；启动日志仅包含既有 componentsSearchPath bookmark 格式警告。
+
+## Review
+- 使用单个 SwiftUI `Window` 复用预览窗口；AppDelegate 不再把它误识别为主窗口。
+- 双击通过 `simultaneousGesture` 接入内容区域，保留 `List(selection:)`，且不会覆盖右侧 Jump 按钮。
+- JSONL 使用可取消的逐行读取，只解码 user/assistant 可见事件；解析状态和文件错误在窗口内明确展示。
+- 预览操作复用现有 `TerminalOpener`，没有增加终端实现或新依赖。
+- Computer Use 原生管道不可用，因此未完成自动化视觉点击检查；已由静态交互回归、启动冒烟和完整构建覆盖可自动验证部分。
+
+# Shark 下一步实用功能构想
+
+## 状态
+- 已完成（2026-07-15）
+
+## 目标
+- [x] 核实现有功能与近期演进方向，排除重复或偏离定位的想法。
+- [x] 明确下一阶段最重要的用户价值目标：减少日常重复操作。
+- [x] 提出 2–3 组可选方向，说明收益、成本与取舍。
+- [x] 与用户收敛出优先级最高的候选方案。
+
+## 边界
+- 本轮只做产品构想与取舍，不实现代码，不写设计文档。
+- 优先复用 macOS、文件系统和现有工作区模型能力，避免引入服务端或账号系统。
+
+## 已确认现状
+- Shark 的主线已从 IDE 专属 workspace 转为 agent/IDE 无关的 virtual folder。
+- 当前差异化能力集中在 Codex session 浏览、恢复、运行态识别和 iTerm2 跳转。
+- Workspace health 已覆盖 metadata、folder、symlink 和 Codex hooks 的检查与部分修复。
+- 日常主路径可分为三类：组装 workspace、查找/切换 workspace、恢复/跳转 Codex session。
+- 用户选择优先优化 Codex 工作上下文恢复。
+
+## 候选方向
+- Smart Continue：为 workspace 提供统一继续入口，运行中则跳转，已停止则 resume 最近 session。
+- Recent Activity：按最近 session 活动重排或展示 workspace，先找到最近在做什么，再继续。
+- Session Favorites：允许固定少量关键 session，适合长期并行任务，但需要用户主动维护。
+
+## 用户反馈后的方向调整
+- 用户认为 Smart Continue 不能解决“确认目标 session”的问题，因此不采用。
+- 新目标：点击 Codex session cell 后打开预览窗口，通过会话内容确认是否为目标 session。
+- JSONL 已确认包含 `response_item` 下的 user/assistant message；预览可忽略 reasoning、工具调用、system/developer 消息和重复事件记录。
+- 预览内容确定为首条用户消息 + 最近 8 条 user/assistant 消息。
+- 交互确定为双击 session cell 打开预览，保留单击与 Command 多选。
+- 预览采用单个可复用的非模态窗口，包含 metadata、Initial Prompt、Recent Messages，以及 resume/jump 和次要操作。
+- 解析确定为后台逐行读取 JSONL，仅接受 `event_msg.user_message` 和 `event_msg.agent_message`，保留首条用户消息与最后 8 条非重复消息。
+
+## Review
+- 最终方案是 Codex session preview，而不是 Smart Continue。
+- 双击 session cell 打开单个可复用的非模态预览窗口；单击和 Command 多选保持不变。
+- 预览显示 session metadata、首条用户消息和最近 8 条 user/assistant 消息，并提供 resume/jump 等已有动作。
+- 已定义流式解析、重复消息过滤、损坏行容错、加载取消和最小验证范围。
+- 本轮只完成设计确认，未实现功能，也未写入 `docs/plans/`。
+
 # Virtual Folder Workspace 重构
 
 ## 假设
@@ -746,3 +1078,26 @@
 - helper 将 session runtime 快照写入 `~/Library/Application Support/Shark/CodexSessionRuntime`。
 - Session 跳转现在优先用 hook 捕获的 iTerm session id，再回退到 tty 和现有 `lsof` 检测。
 - 未实现卸载、socket server 和 hook trust 管理；Codex 要求时仍需用户在 `/hooks` 中信任。
+
+# npm 发布 1.12.1
+
+## 假设
+- npm 当前最新版为 `1.11.0`，目标版本 `1.12.1` 尚未发布。
+- 原生 App 的 npm 包只包含安装脚本；DMG 由 GitHub Release `v1.12.1` 提供稳定下载地址。
+- 本地 `v1.12.1` tag 尚未推送；发布准备提交后需让 tag 指向最终 release commit。
+- npm 登录、push、GitHub Release 和 `npm publish` 都是独立失败点，正式远端动作前再次确认。
+
+## 计划
+- [x] 将 npm 包改为远端下载 DMG，并同步 lockfile。
+- [x] 验证目标 DMG、npm 包内容和 publish dry-run。
+- [x] 核对 npm 登录态、远端 tag 和 GitHub Release 状态。
+- [ ] 列出正式发布动作并取得用户确认。
+- [ ] 提交发布准备、推送 tag、上传 DMG 并发布 npm 包。
+- [ ] 从 npm registry 验证 `latest` 为 `1.12.1`。
+
+## Review
+- `npm pack --dry-run --json` 与 `npm publish --dry-run --access public --json` 通过，包内只有 `README.md`、`install.js`、`package.json`。
+- 安装脚本模拟验证通过：按 `1.12.1` 生成 GitHub Release URL、写入临时 DMG 并调用 `open`。
+- `dist/SharkSpace-1.12.1.dmg` 已存在，SHA-256 为 `183230216aa9eafd8d921e275aa485dcfc1953052f76cdfc5d7f7744a4062cbd`。
+- 远端尚无 `v1.12.1` tag 和 GitHub Release；DMG URL 当前返回 404。
+- `npm whoami` 返回 `E401`，需完成 npm 登录后才能正式发布。

@@ -22,41 +22,6 @@ enum GitOperation {
     case reset
 }
 
-enum GitStatus: String {
-    case clean = "clean"
-    case modified = "modified"
-    case untracked = "untracked"
-    case staged = "staged"
-    case ahead = "ahead"
-    case behind = "behind"
-    case diverged = "diverged"
-    case conflict = "conflict"
-}
-
-struct GitRepositoryStatus {
-    var isClean: Bool
-    var modifiedFiles: Int
-    var untrackedFiles: Int
-    var stagedFiles: Int
-    var aheadCount: Int
-    var behindCount: Int
-    var hasConflicts: Bool
-    var currentBranch: String
-    var remotes: [String]
-    
-    init() {
-        isClean = true
-        modifiedFiles = 0
-        untrackedFiles = 0
-        stagedFiles = 0
-        aheadCount = 0
-        behindCount = 0
-        hasConflicts = false
-        currentBranch = ""
-        remotes = []
-    }
-}
-
 struct GitBranch: Identifiable, Hashable {
     let id: String
     let name: String
@@ -85,8 +50,6 @@ final class GitManager: ObservableObject {
     @Published var operationError: String?
     @Published var lastOperationResult: String?
     
-    private var cancellables = Set<AnyCancellable>()
-    
     private init() {}
     
     func runGitOperation(_ operation: GitOperation, at repoPath: String) async throws -> String {
@@ -106,7 +69,7 @@ final class GitManager: ObservableObject {
             case .push:
                 result = try await runGitCommand(["push"], at: repoPath)
             case .fetch:
-                result = try await runGitCommand(["fetch", "--all"], at: repoPath)
+                result = try await runGitCommand(["fetch", "--all", "--prune", "--tags"], at: repoPath)
             case .checkout(let branch):
                 result = try await runGitCommand(["checkout", branch], at: repoPath)
             case .createBranch(let name):
@@ -131,57 +94,33 @@ final class GitManager: ObservableObject {
         }
     }
     
-    func getRepositoryStatus(at repoPath: String) async -> GitRepositoryStatus {
-        var status = GitRepositoryStatus()
-        
-        // Get current branch
-        if let branch = try? await runGitCommand(["branch", "--show-current"], at: repoPath) {
-            status.currentBranch = branch.trimmingCharacters(in: .whitespacesAndNewlines)
+    /// Returns the current working-tree, version tag, and upstream status for a repository.
+    func repositoryStatus(at repoPath: String) async -> GitRepositoryStatus {
+        do {
+            let output = try await runGitCommand(
+                ["status", "--porcelain=v2", "--branch", "--untracked-files=normal"],
+                at: repoPath
+            )
+            let tag = try? await runGitCommand(
+                ["for-each-ref", "--sort=-version:refname", "--count=1", "--format=%(refname:short)", "refs/tags"],
+                at: repoPath
+            )
+            let latestTag = tag?.trimmingCharacters(in: .whitespacesAndNewlines)
+            return GitRepositoryStatus(
+                porcelainV2: output,
+                latestTag: latestTag?.isEmpty == false ? latestTag : nil
+            )
+        } catch {
+            return .unavailable(error.localizedDescription)
         }
-        
-        // Get status
-        if let statusOutput = try? await runGitCommand(["status", "--porcelain"], at: repoPath) {
-            let lines = statusOutput.split(separator: "\n")
-            for line in lines {
-                if line.count >= 2 {
-                    let indexStatus = String(line[line.startIndex])
-                    let workTreeStatus = String(line[line.index(after: line.startIndex)])
-                    
-                    if indexStatus == "?" || workTreeStatus == "?" {
-                        status.untrackedFiles += 1
-                        status.isClean = false
-                    }
-                    if indexStatus == "M" || indexStatus == "A" || indexStatus == "D" {
-                        status.stagedFiles += 1
-                        status.isClean = false
-                    }
-                    if workTreeStatus == "M" || workTreeStatus == "D" {
-                        status.modifiedFiles += 1
-                        status.isClean = false
-                    }
-                    if line.contains("UU") || line.contains("AA") || line.contains("DD") {
-                        status.hasConflicts = true
-                        status.isClean = false
-                    }
-                }
-            }
-        }
-        
-        // Get ahead/behind status
-        if let tracking = try? await runGitCommand(["rev-list", "--left-right", "--count", "@{upstream}...HEAD"], at: repoPath) {
-            let parts = tracking.split(separator: "\t")
-            if parts.count == 2 {
-                status.behindCount = Int(parts[0]) ?? 0
-                status.aheadCount = Int(parts[1]) ?? 0
-            }
-        }
-        
-        // Get remotes
-        if let remotes = try? await runGitCommand(["remote"], at: repoPath) {
-            status.remotes = remotes.split(separator: "\n").map { String($0) }
-        }
-        
-        return status
+    }
+
+    /// Fetches remote branches and tags without changing the working tree.
+    nonisolated func fetchRemoteReferences(at repoPath: String) async throws {
+        _ = try await runGitCommand(
+            ["fetch", "--all", "--prune", "--tags", "--quiet"],
+            at: repoPath
+        )
     }
     
     func getBranches(at repoPath: String) async -> [GitBranch] {
@@ -257,31 +196,35 @@ final class GitManager: ObservableObject {
         return commits
     }
     
-    private func runGitCommand(_ arguments: [String], at repoPath: String) async throws -> String {
-        return try await withCheckedThrowingContinuation { continuation in
-            let task = Process()
-            task.executableURL = URL(fileURLWithPath: "/usr/bin/git")
-            task.arguments = ["-C", repoPath] + arguments
-            task.standardOutput = Pipe()
-            task.standardError = Pipe()
-            
-            do {
-                try task.run()
-                task.waitUntilExit()
-                
-                let data = (task.standardOutput as? Pipe)?.fileHandleForReading.readDataToEndOfFile()
-                let output = String(data: data ?? Data(), encoding: .utf8) ?? ""
-                
-                if task.terminationStatus == 0 {
-                    continuation.resume(returning: output)
-                } else {
-                    let errorData = (task.standardError as? Pipe)?.fileHandleForReading.readDataToEndOfFile()
-                    let errorOutput = String(data: errorData ?? Data(), encoding: .utf8) ?? "Unknown error"
-                    continuation.resume(throwing: NSError(domain: "GitManager", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: errorOutput]))
-                }
-            } catch {
-                continuation.resume(throwing: error)
-            }
+    private nonisolated func runGitCommand(_ arguments: [String], at repoPath: String) async throws -> String {
+        try Task.checkCancellation()
+
+        let task = Process()
+        let outputPipe = Pipe()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+        task.arguments = ["-C", repoPath] + arguments
+        task.environment = ProcessInfo.processInfo.environment.merging(
+            ["GIT_TERMINAL_PROMPT": "0"],
+            uniquingKeysWith: { _, newValue in newValue }
+        )
+        task.standardOutput = outputPipe
+        task.standardError = outputPipe
+
+        try task.run()
+        let data = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        task.waitUntilExit()
+        try Task.checkCancellation()
+
+        let output = String(data: data, encoding: .utf8) ?? ""
+        guard task.terminationStatus == 0 else {
+            let message = output.trimmingCharacters(in: .whitespacesAndNewlines)
+            throw NSError(
+                domain: "GitManager",
+                code: Int(task.terminationStatus),
+                userInfo: [NSLocalizedDescriptionKey: message.isEmpty ? "Git command failed" : message]
+            )
         }
+
+        return output
     }
 }

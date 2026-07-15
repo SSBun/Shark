@@ -123,24 +123,26 @@ struct GitPanelView: View {
             }
             
             HStack(spacing: 16) {
-                StatusBadge(
-                    icon: repositoryStatus.isClean ? "checkmark.circle.fill" : "exclamationmark.circle.fill",
-                    value: repositoryStatus.isClean ? "Clean" : "Modified",
-                    color: repositoryStatus.isClean ? .green : .orange
+                GitStatusValueView(
+                    status: repositoryStatus,
+                    kind: .version,
+                    isLoading: false,
+                    showsDetails: true
                 )
-                
-                StatusBadge(
-                    icon: "arrow.up.circle.fill",
-                    value: "\(repositoryStatus.aheadCount) ahead",
-                    color: .blue
+                GitStatusValueView(
+                    status: repositoryStatus,
+                    kind: .workingTree,
+                    isLoading: false,
+                    showsDetails: true
                 )
-                
-                StatusBadge(
-                    icon: "arrow.down.circle.fill",
-                    value: "\(repositoryStatus.behindCount) behind",
-                    color: .purple
+                GitStatusValueView(
+                    status: repositoryStatus,
+                    kind: .upstream,
+                    isLoading: false,
+                    showsDetails: true
                 )
             }
+            .font(.caption)
             
             if !repositoryStatus.isClean {
                 HStack(spacing: 16) {
@@ -282,7 +284,7 @@ struct GitPanelView: View {
     
     private func loadData() async {
         isLoading = true
-        repositoryStatus = await gitManager.getRepositoryStatus(at: folder.path)
+        repositoryStatus = await gitManager.repositoryStatus(at: folder.path)
         branches = await gitManager.getBranches(at: folder.path)
         isLoading = false
     }

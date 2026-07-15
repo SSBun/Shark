@@ -17,4 +17,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(AuthorizationManager.shared)
+        .environment(CodexSessionPreviewStore())
 }

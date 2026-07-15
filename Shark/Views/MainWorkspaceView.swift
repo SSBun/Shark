@@ -11,6 +11,8 @@ struct MainWorkspaceView: View {
     @State private var store = WorkspaceStore()
     @State private var showComponentSelector = false
     @EnvironmentObject var authManager: AuthorizationManager
+    @Environment(CodexSessionPreviewStore.self) private var sessionPreviewStore
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         @Bindable var store = store
@@ -44,6 +46,7 @@ struct MainWorkspaceView: View {
                     onRefresh: {
                         Task { await store.loadCodexSessions() }
                     },
+                    onPreview: previewCodexSession,
                     onShowInFinder: { sessions in
                         store.showCodexSessionsInFinder(sessions)
                     },
@@ -97,10 +100,16 @@ struct MainWorkspaceView: View {
             await store.loadFoldersForSelectedWorkspace(authManager: authManager)
         }
     }
+
+    private func previewCodexSession(_ session: CodexSession) {
+        sessionPreviewStore.loadPreview(for: session)
+        openWindow(id: CodexSessionPreviewView.windowID)
+    }
 }
 
 #Preview {
     MainWorkspaceView()
         .environmentObject(AuthorizationManager.shared)
+        .environment(CodexSessionPreviewStore())
         .frame(width: 800, height: 600)
 }

@@ -1,30 +1,37 @@
 #!/usr/bin/env node
 const { execFile } = require("child_process");
-const path = require("path");
-const fs = require("fs");
+const { writeFileSync, mkdtempSync } = require("fs");
+const { tmpdir } = require("os");
+const { join } = require("path");
+const pkg = require("./package.json");
 
-const dmgPath = path.join(__dirname, "SharkSpace.dmg");
+const dmgUrl = `https://github.com/SSBun/Shark/releases/download/v${pkg.version}/SharkSpace-${pkg.version}.dmg`;
+const dmgPath = join(
+  mkdtempSync(join(tmpdir(), "SharkSpace-")),
+  `SharkSpace-${pkg.version}.dmg`
+);
 
-if (!fs.existsSync(dmgPath)) {
-  console.error("SharkSpace.dmg not found in package.");
-  process.exit(1);
-}
+async function install() {
+  console.log(`Downloading SharkSpace ${pkg.version}...`);
+  const response = await fetch(dmgUrl);
 
-console.log("Opening SharkSpace DMG...");
-console.log("Drag SharkSpace to Applications to install.\n");
-
-execFile("open", [dmgPath], (err) => {
-  if (err) {
-    console.error("Failed to open DMG:", err.message);
-    process.exit(1);
+  if (!response.ok) {
+    throw new Error(`Download failed: ${response.status} ${dmgUrl}`);
   }
 
-  console.log(
-    "\x1b[33m%s\x1b[0m",
-    "⚠  If macOS blocks SharkSpace from opening, run:\n"
-  );
-  console.log("    sudo spctl --master-disable\n");
-  console.log(
-    "Then go to System Settings → Privacy & Security → select 'Anywhere'.\n"
-  );
+  writeFileSync(dmgPath, Buffer.from(await response.arrayBuffer()));
+  console.log("Opening SharkSpace DMG...");
+  console.log("Drag SharkSpace to Applications to install.\n");
+
+  execFile("open", [dmgPath], (err) => {
+    if (err) {
+      console.error("Failed to open DMG:", err.message);
+      process.exitCode = 1;
+    }
+  });
+}
+
+install().catch((err) => {
+  console.error(err.message);
+  process.exit(1);
 });

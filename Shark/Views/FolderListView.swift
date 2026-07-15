@@ -12,6 +12,8 @@ struct FolderListView: View {
     @Binding var folders: [Folder]
     @State private var selectedFolderIDs: Set<Folder.ID> = []
     @State private var isTargeted = false
+    @State private var isGitOverviewPresented = false
+    @State private var gitStatusStore = WorkspaceGitStatusStore()
     let onAddFolder: (() -> Void)?
     let onUpdateFolder: ((Folder) -> Void)?
     let onSelectComponents: (() -> Void)?
@@ -33,6 +35,12 @@ struct FolderListView: View {
                     .font(.headline)
                     .foregroundColor(.secondary)
                 Spacer()
+
+                Button("Git Overview", systemImage: "tablecells", action: showGitOverview)
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.plain)
+                    .help("Show workspace Git overview")
+                    .disabled(!gitStatusStore.hasRepositories)
 
                 // Select Components button
                 Button(action: {
@@ -76,6 +84,8 @@ struct FolderListView: View {
                     ForEach(folders) { folder in
                         FolderRow(
                             folder: folder,
+                            gitStatus: gitStatusStore.status(for: folder),
+                            isGitStatusLoading: gitStatusStore.isLoading && gitStatusStore.isRepository(folder),
                             selectedTargetsProvider: {
                                 selectedTargets(for: folder)
                             },
@@ -92,6 +102,9 @@ struct FolderListView: View {
                                     folders[index] = updatedFolder
                                     onUpdateFolder?(updatedFolder)
                                 }
+                            },
+                            onGitStatusChange: {
+                                Task { await gitStatusStore.refresh(folders: folders) }
                             }
                         )
                         .simultaneousGesture(
@@ -133,6 +146,12 @@ struct FolderListView: View {
             handleDrop(providers: providers)
             return true
         }
+        .sheet(isPresented: $isGitOverviewPresented) {
+            WorkspaceGitOverviewView(folders: folders, store: gitStatusStore)
+        }
+        .task(id: folders.map { "\($0.id):\($0.path)" }) {
+            await gitStatusStore.load(folders: folders)
+        }
     }
     
     private func showFolderInFinder(_ folder: Folder) {
@@ -145,6 +164,10 @@ struct FolderListView: View {
             return folders.filter { selectedFolderIDs.contains($0.id) }
         }
         return [folder]
+    }
+
+    private func showGitOverview() {
+        isGitOverviewPresented = true
     }
 
     private func handleDrop(providers: [NSItemProvider]) {
@@ -202,10 +225,13 @@ struct FolderListView: View {
 
 struct FolderRow: View {
     let folder: Folder
+    let gitStatus: GitRepositoryStatus?
+    let isGitStatusLoading: Bool
     let selectedTargetsProvider: (() -> [Folder])?
     let onShowInFinder: () -> Void
     let onDelete: () -> Void
     let onUpdate: (Folder) -> Void
+    let onGitStatusChange: () -> Void
     @State private var folderExists: Bool = true
     @State private var isGitRepo: Bool = false
     @State private var gitReference: GitReference? = nil
@@ -289,7 +315,33 @@ struct FolderRow: View {
             }
             .allowsHitTesting(false)
             
-            Spacer()
+            Spacer(minLength: 12)
+
+            if isGitRepo, folderExists {
+                HStack(spacing: 8) {
+                    GitStatusValueView(
+                        status: gitStatus,
+                        kind: .version,
+                        isLoading: isGitStatusLoading,
+                        showsDetails: false
+                    )
+                    GitStatusValueView(
+                        status: gitStatus,
+                        kind: .workingTree,
+                        isLoading: isGitStatusLoading,
+                        showsDetails: false
+                    )
+                    GitStatusValueView(
+                        status: gitStatus,
+                        kind: .upstream,
+                        isLoading: isGitStatusLoading,
+                        showsDetails: false
+                    )
+                }
+                .font(.caption)
+                .layoutPriority(1)
+                .allowsHitTesting(false)
+            }
             
             Button(action: onDelete) {
                 Image(systemName: "minus.circle.fill")
@@ -408,7 +460,7 @@ struct FolderRow: View {
                 }
             }
         }
-        .sheet(isPresented: $showGitPanel) {
+        .sheet(isPresented: $showGitPanel, onDismiss: onGitStatusChange) {
             GitPanelView(folder: folder)
         }
         .sheet(isPresented: $showDependencySheet) {

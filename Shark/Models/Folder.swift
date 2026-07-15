@@ -48,7 +48,7 @@ struct Folder: Identifiable, Hashable, Codable {
                url.startAccessingSecurityScopedResource() {
                 defer { url.stopAccessingSecurityScopedResource() }
                 var isDirectory: ObjCBool = false
-                return FileManager.default.fileExists(atPath: gitPath, isDirectory: &isDirectory) && isDirectory.boolValue
+                return FileManager.default.fileExists(atPath: gitPath, isDirectory: &isDirectory)
             }
         }
         
@@ -61,7 +61,7 @@ struct Folder: Identifiable, Hashable, Codable {
                 
                 // CRITICAL: When using a parent bookmark, we MUST check the original path
                 var isDirectory: ObjCBool = false
-                return FileManager.default.fileExists(atPath: gitPath, isDirectory: &isDirectory) && isDirectory.boolValue
+                return FileManager.default.fileExists(atPath: gitPath, isDirectory: &isDirectory)
             }
         }
         
@@ -74,7 +74,7 @@ struct Folder: Identifiable, Hashable, Codable {
         }
         
         var isDirectory: ObjCBool = false
-        return FileManager.default.fileExists(atPath: gitPath, isDirectory: &isDirectory) && isDirectory.boolValue
+        return FileManager.default.fileExists(atPath: gitPath, isDirectory: &isDirectory)
     }
     
     /// Get the current git branch name
