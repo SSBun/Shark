@@ -1,7 +1,7 @@
 # 发布 SharkSpace 1.13.0
 
 ## 状态
-- 进行中（2026-07-16，GitHub Release 已发布，npm publish 等待可绕过 2FA 的认证）
+- 已完成（2026-07-16）
 
 ## 目标
 - [x] 将 npm package 与 Xcode marketing version 从 `1.12.1` 更新到 `1.13.0`，build number 从 `14` 递增到 `15`，同步 lockfile 与 changelog。
@@ -12,17 +12,17 @@
 - [x] 创建并推送 `v1.13.0`；确认 tag workflow 的实际失败原因。
 - [x] 修复 workflow 安装阶段触发 end-user `postinstall` 的递归下载，并重新运行 tag 发布。
 - [x] 验证 GitHub Release DMG 与 SHA256 asset 可公开下载且校验一致。
-- [ ] 使用一次性 OTP、启用 Bypass 2FA 的 granular token，或 Trusted Publishing 发布 `@ssbun/sharkspace@1.13.0` 并确认 latest。
+- [x] 使用启用 Bypass 2FA 的 granular token 发布 `@ssbun/sharkspace@1.13.0` 并确认 latest。
 
 ## 已确认事实
 - 发布前 Git/Xcode/npm 版本为 `1.12.1`、Xcode build number 为 `14`；本地 release 准备已更新为 `1.13.0` / build `15`。
 - release 准备提交 `4eabb3f` 已推送，`main` 与 `origin/main` 一致；npm registry latest 为 `1.12.1`，`1.13.0` 尚未发布。
-- npm token 已可用，`npm whoami` 返回 `ssbun`。
+- 新 granular token 已启用 Bypass 2FA，`npm whoami` 返回 `ssbun`。
 - 首次推送 `v1.13.0` 后，workflow run `29469022625` 在创建 Release 前失败，没有产生错误或不完整的 GitHub Release。
 - 失败根因是 workflow 的 `npm ci` 执行了 package `postinstall`，在 Release asset 尚未创建时下载同版本 DMG 并收到 404；构建依赖 `commander@15` 同时要求 Node `>=22.12`。
 - 修复提交 `2fa92bd` 已推送并安全移动 `v1.13.0`；workflow run `29469146147` 成功创建 GitHub Release。
 - 远端 `SharkSpace-1.13.0.dmg` SHA256 为 `31f5dffed73c6fd8763b8e4c1ce0bca7e6f2943c9ae36acdc2340883cd1d3cc9`，下载后 checksum 验证通过。
-- 正式 `npm publish --access public` 返回 `EOTP`；当前 token 可通过 `npm whoami`，但不能绕过发布 2FA，registry 中 `1.13.0` 仍不存在。
+- 旧 token 的正式 publish 返回 `EOTP`；换用启用 Bypass 2FA 的 token 后发布成功，registry `latest` 为 `1.13.0`。
 - 现有 `scripts/build-tool.ts` 是项目 DMG 构建入口；不新增重复 `create-dmg.sh`。
 
 ## 边界
@@ -40,14 +40,14 @@
 - `npx tsx scripts/build-tool.ts create-dmg 1.13.0` 通过；产物为 `dist/SharkSpace-1.13.0_20260716T024627Z/SharkSpace-1.13.0.dmg`，SHA256 为 `4815003febd8ffd1617f411fd0e3619596c59866af1d85f471e90819d47df1b2`。
 - Release App 的 marketing version 为 `1.13.0`、build number 为 `15`；`hdiutil verify`、checksum 和 `codesign --verify --deep --strict` 通过，DMG 已打开。
 - App 使用 `Apple Development: caishilin@zhihu.com (X27C8L3NVA)` 签名；不是 Developer ID，未 notarized。
-- `npm pack --dry-run --json` 与 `npm publish --dry-run --access public --json` 通过，tarball 仅含 README、install.js、package.json；registry 中 `1.13.0` 尚不存在。
+- `npm pack --dry-run --json` 与 `npm publish --dry-run --access public --json` 通过，tarball 仅含 README、install.js、package.json；正式 publish 后 registry 回读版本与 `latest` 均为 `1.13.0`。
 - Git Overview、Codex preview/refresh/sessions UI、SwiftUI structure、virtual workspace、terminal opener 全部通过；workflow YAML、无效版本拒绝和 `git diff --check` 通过。
 
 ## Review
 - GitHub workflow 改为直接调用现有 build-tool，消除 CI 查找错误 App 名和生成 `Shark-*.dmg` 的分叉逻辑。
 - build-tool 只验证 package version，不再在 publish 命令中单独改 package.json，避免 package-lock、Xcode 与 changelog 漂移。
 - 首次 tag workflow 证实发布仓库安装依赖时必须跳过面向最终用户的 `postinstall`；修复限定为 Node 24 与 `npm ci --ignore-scripts`，不改变 npm 包安装行为。
-- 修复后的 tag workflow 全部通过；GitHub Release 与两个 asset 已完成远端下载和 checksum 验证。npm publish 没有产生半发布版本，剩余阻塞仅为 npm 发布认证策略。
+- 修复后的 tag workflow 全部通过；GitHub Release 与两个 asset 已完成远端下载和 checksum 验证，npm package 的版本、tarball integrity 和 `latest` 已从 registry 回读确认。
 
 # 缓存 workspace folder 的 Git 状态
 
