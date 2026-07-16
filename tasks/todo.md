@@ -1,7 +1,7 @@
 # 发布 SharkSpace 1.13.0
 
 ## 状态
-- 进行中（2026-07-16，本地发布准备完成，等待远端确认与 npm 登录）
+- 进行中（2026-07-16，修复 tag 发布工作流后继续 GitHub Release 与 npm publish）
 
 ## 目标
 - [x] 将 npm package 与 Xcode marketing version 从 `1.12.1` 更新到 `1.13.0`，build number 从 `14` 递增到 `15`，同步 lockfile 与 changelog。
@@ -9,13 +9,16 @@
 - [x] 复用并完善 `scripts/build-tool.ts`，生成带时间戳目录的 DMG 与 SHA256，失败不静默、临时目录可清理，并支持 `NO_SIGN=1` fallback。
 - [x] 构建 Release App 和 DMG，完成 `hdiutil verify`、版本/build number、codesign 与 checksum 检查，然后打开 DMG。
 - [x] 完成 npm pack/publish dry-run 和远端版本检查，提交 release 准备改动。
-- [ ] 在远端动作清单得到确认后创建 `v1.13.0`、推送 `main`/tag、创建 GitHub Release、发布 `@ssbun/sharkspace@1.13.0` 并验证。
+- [x] 创建并推送 `v1.13.0`；确认 tag workflow 的实际失败原因。
+- [ ] 修复 workflow 安装阶段触发 end-user `postinstall` 的递归下载，并重新运行 tag 发布。
+- [ ] 验证 GitHub Release asset 可下载后，发布 `@ssbun/sharkspace@1.13.0` 并确认 latest。
 
 ## 已确认事实
 - 发布前 Git/Xcode/npm 版本为 `1.12.1`、Xcode build number 为 `14`；本地 release 准备已更新为 `1.13.0` / build `15`。
-- release 准备已提交，本地 `main` 比 `origin/main` 领先 1 个提交；npm registry latest 为 `1.12.1`，`1.13.0` 尚未发布。
-- npm 登录态失效；正式 publish 前必须恢复登录。
-- GitHub 当前没有 `v1.12.1` Release；`v1.13.0` tag/release 尚不存在。
+- release 准备提交 `4eabb3f` 已推送，`main` 与 `origin/main` 一致；npm registry latest 为 `1.12.1`，`1.13.0` 尚未发布。
+- npm token 已可用，`npm whoami` 返回 `ssbun`。
+- `v1.13.0` tag 已推送，但首次 workflow run `29469022625` 在创建 Release 前失败，因此 GitHub Release 尚不存在。
+- 失败根因是 workflow 的 `npm ci` 执行了 package `postinstall`，在 Release asset 尚未创建时下载同版本 DMG 并收到 404；构建依赖 `commander@15` 同时要求 Node `>=22.12`。
 - 现有 `scripts/build-tool.ts` 是项目 DMG 构建入口；不新增重复 `create-dmg.sh`。
 
 ## 边界
@@ -39,7 +42,7 @@
 ## Review
 - GitHub workflow 改为直接调用现有 build-tool，消除 CI 查找错误 App 名和生成 `Shark-*.dmg` 的分叉逻辑。
 - build-tool 只验证 package version，不再在 publish 命令中单独改 package.json，避免 package-lock、Xcode 与 changelog 漂移。
-- npm 登录当前返回 E401；正式 npm publish 必须在用户恢复登录后执行。
+- 首次 tag workflow 证实发布仓库安装依赖时必须跳过面向最终用户的 `postinstall`；修复限定为 Node 24 与 `npm ci --ignore-scripts`，不改变 npm 包安装行为。
 
 # 缓存 workspace folder 的 Git 状态
 
