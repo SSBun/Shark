@@ -3,7 +3,7 @@
 //
 // Commands:
 //   create-dmg [version]   Build app and package as DMG
-//   publish <version>      Create DMG and publish to npm
+//   publish <version>      Verify version, create DMG, and publish to npm
 //
 // Options shared by both commands:
 //   --no-build             Skip xcodebuild step
@@ -21,7 +21,7 @@ import { Command } from 'commander'
 import * as p from '@clack/prompts'
 import { execSync } from 'child_process'
 import {
-  copyFileSync, cpSync, existsSync, mkdirSync, rmSync,
+  cpSync, existsSync, mkdirSync, rmSync,
   writeFileSync, readFileSync,
 } from 'fs'
 import { tmpdir } from 'os'
@@ -63,11 +63,28 @@ async function createDMG(
   opts: CreateDMGOpts,
 ): Promise<string> {
   const releaseVersion = version || process.env.npm_package_version || ''
+  if (releaseVersion && !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(releaseVersion)) {
+    p.cancel(`Invalid release version: ${releaseVersion}`)
+    process.exit(1)
+  }
+
   const outputDir = resolve(opts.output)
   const derivedData = resolve(opts.derivedData)
+  const timestamp = new Date().toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}Z$/, 'Z')
+  const releaseOutputDir = releaseVersion
+    ? join(outputDir, `SharkSpace-${releaseVersion}_${timestamp}`)
+    : outputDir
 
   // ---- 1. Build ----
   if (opts.build) {
+    const noSign = process.env.NO_SIGN === '1'
+    const signingArguments = noSign
+      ? ' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO'
+      : ''
+    if (noSign) p.log.warn('Building without code signing (NO_SIGN=1)')
+
     const spinner = p.spinner()
     spinner.start(`Building «${opts.scheme}» (Release)…`)
     try {
@@ -77,7 +94,8 @@ async function createDMG(
         ` -configuration Release` +
         ` -derivedDataPath "${derivedData}"` +
         ` -destination 'platform=macOS'` +
-        ` clean build`,
+        ` clean build` +
+        signingArguments,
         { encoding: 'utf-8', stdio: 'pipe' },
       )
       spinner.stop('Build complete')
@@ -93,10 +111,10 @@ async function createDMG(
   }
 
   // ---- 2. Locate .app ----
-  const appPath = capture(`find "${derivedData}" -name "*.app" -type d | head -1`)
-  if (!appPath) {
+  const appPath = join(derivedData, 'Build/Products/Release/SharkSpace.app')
+  if (!existsSync(appPath)) {
     p.cancel(
-      'No .app found in DerivedData.\n' +
+      `No Release app found at ${appPath}.\n` +
       '  Did you build? Use --no-build if pre-built elsewhere\n' +
       '  and point --derived-data at the parent folder.',
     )
@@ -107,6 +125,8 @@ async function createDMG(
 
   // ---- 3. Stage files ----
   const tmpDir = join(tmpdir(), `sharkspace-dmg-${randomUUID()}`)
+  const cleanup = () => rmSync(tmpDir, { recursive: true, force: true })
+  process.once('exit', cleanup)
   mkdirSync(tmpDir, { recursive: true })
   cpSync(appPath, join(tmpDir, appName), { recursive: true })
 
@@ -128,11 +148,11 @@ async function createDMG(
   ].join('\n'))
 
   // ---- 4. Create DMG ----
-  mkdirSync(outputDir, { recursive: true })
+  mkdirSync(releaseOutputDir, { recursive: true })
   const dmgName = releaseVersion
     ? `SharkSpace-${releaseVersion}.dmg`
     : 'SharkSpace.dmg'
-  const dmgPath = join(outputDir, dmgName)
+  const dmgPath = join(releaseOutputDir, dmgName)
 
   if (existsSync(dmgPath)) rmSync(dmgPath)
   capture(`rm -f rw.*.${dmgName}`)
@@ -144,19 +164,24 @@ async function createDMG(
 
   if (hasCreateDmg) {
     p.log.info('Using create-dmg (visual layout)')
-    capture(
-      `create-dmg` +
-      ` --volname "SharkSpace"` +
-      ` --window-pos 200 120` +
-      ` --window-size 600 400` +
-      ` --icon-size 100` +
-      ` --icon "${appName}" 175 190` +
-      ` --hide-extension "${appName}"` +
-      ` --app-drop-link 425 190` +
-      ` --no-internet-enable` +
-      ` "${dmgPath}"` +
-      ` "${tmpDir}"`,
-    )
+    try {
+      exec(
+        `create-dmg` +
+        ` --volname "SharkSpace"` +
+        ` --window-pos 200 120` +
+        ` --window-size 600 400` +
+        ` --icon-size 100` +
+        ` --icon "${appName}" 175 190` +
+        ` --hide-extension "${appName}"` +
+        ` --app-drop-link 425 190` +
+        ` --no-internet-enable` +
+        ` "${dmgPath}"` +
+        ` "${tmpDir}"`,
+      )
+    } catch {
+      p.log.warn('create-dmg failed; retrying with hdiutil')
+      rmSync(dmgPath, { force: true })
+    }
   }
 
   if (!existsSync(dmgPath)) {
@@ -172,19 +197,21 @@ async function createDMG(
     )
   }
 
+  if (!existsSync(dmgPath)) {
+    throw new Error(`DMG was not created: ${dmgPath}`)
+  }
+
   spinner.stop('DMG created')
 
   // ---- 5. Cleanup ----
-  rmSync(tmpDir, { recursive: true, force: true })
+  cleanup()
+  process.removeListener('exit', cleanup)
   capture(`rm -f rw.*.${dmgName}`)
 
-  // ---- 6. Checksum & stable path ----
+  // ---- 6. Verify & checksum ----
+  exec(`hdiutil verify "${dmgPath}"`)
   const hash = createHash('sha256').update(readFileSync(dmgPath)).digest('hex')
   writeFileSync(`${dmgPath}.sha256`, `${hash}  ${dmgName}\n`)
-
-  const stableDmg = join(projectRoot, 'SharkSpace.dmg')
-  copyFileSync(dmgPath, stableDmg)
-  writeFileSync(`${stableDmg}.sha256`, `${hash}  SharkSpace.dmg\n`)
 
   // ---- 7. Summary ----
   const mb = (readFileSync(dmgPath).length / 1024 / 1024).toFixed(1)
@@ -213,20 +240,19 @@ program
   .option('--derived-data <path>', 'DerivedData path', 'build')
   .action(async (version, opts) => {
     p.intro('📦  SharkSpace DMG Builder')
-    await createDMG(version, {
+    const dmgPath = await createDMG(version, {
       scheme: opts.scheme,
       build: opts.build,
       output: opts.output,
       derivedData: opts.derivedData,
     })
-    const fileName = version ? `SharkSpace-${version}.dmg` : 'SharkSpace.dmg'
-    p.outro(`Done → ${join(resolve(opts.output), fileName)}`)
+    p.outro(`Done → ${dmgPath}`)
   })
 
 // ---- publish -------------------------------------------------------------
 program
   .command('publish')
-  .description('Bump version, create DMG, and publish to npm')
+  .description('Verify version, create DMG, and publish to npm')
   .argument('<version>', 'release version (required, e.g. 1.9.0)')
   .option('--no-build', 'skip xcodebuild (reuse existing .app)')
   .option('-s, --scheme <name>', 'Xcode scheme', 'Shark')
@@ -239,12 +265,14 @@ program
   .action(async (version, opts) => {
     p.intro('🚀  SharkSpace Publish')
 
-    // ---- Bump package.json ----
+    // ---- Verify package version ----
     const pkgPath = join(projectRoot, 'package.json')
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
-    pkg.version = version
-    writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
-    p.log.success(`Version bumped to ${version}`)
+    if (pkg.version !== version) {
+      p.cancel(`package.json is ${pkg.version}; update it to ${version} before publishing`)
+      process.exit(1)
+    }
+    p.log.success(`Version verified: ${version}`)
 
     // ---- Create DMG ----
     await createDMG(version, {

@@ -25,6 +25,15 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install build tool dependencies
+        run: npm ci
       
       - name: Get version
         id: version
@@ -40,52 +49,22 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
       
-      - name: Build app
+      - name: Build app and create DMG
+        env:
+          NO_SIGN: 1
         run: |
-          xcodebuild \
-            -scheme Shark \
-            -configuration Release \
-            -derivedDataPath build \
-            -destination 'platform=macOS' \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            clean build
-      
-      - name: Create DMG
-        run: |
-          APP_PATH=$(find build -name "Shark.app" -type d | head -n 1)
-          
-          if [ -z "$APP_PATH" ]; then
-            echo "Error: Could not find built app"
-            exit 1
-          fi
-          
-          # Create temporary directory
-          TMP_DIR=$(mktemp -d)
-          cp -R "$APP_PATH" "$TMP_DIR/"
-          ln -s /Applications "$TMP_DIR/Applications"
-          
-          DMG_NAME="Shark-${VERSION}.dmg"
-          
-          # Create DMG using hdiutil
-          hdiutil create -volname "Shark" -srcfolder "$TMP_DIR" -ov -format UDZO "$DMG_NAME"
-          
-          # Clean up
-          rm -rf "$TMP_DIR"
-          
-          # Calculate checksum
-          shasum -a 256 "$DMG_NAME" > "${DMG_NAME}.sha256"
-          
-          echo "DMG_NAME=$DMG_NAME" >> $GITHUB_ENV
+          npx tsx scripts/build-tool.ts create-dmg "$VERSION"
+          DMG_PATH=$(find dist -path "*/SharkSpace-${VERSION}.dmg" -type f | head -n 1)
+          test -n "$DMG_PATH"
+          echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
       
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Shark-${{ env.VERSION }}-dmg
+          name: SharkSpace-${{ env.VERSION }}-dmg
           path: |
-            Shark-${{ env.VERSION }}.dmg
-            Shark-${{ env.VERSION }}.dmg.sha256
+            ${{ env.DMG_PATH }}
+            ${{ env.DMG_PATH }}.sha256
           retention-days: 30
       
       - name: Create Release
@@ -93,10 +72,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            Shark-${{ env.VERSION }}.dmg
-            Shark-${{ env.VERSION }}.dmg.sha256
+            ${{ env.DMG_PATH }}
+            ${{ env.DMG_PATH }}.sha256
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

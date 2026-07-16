@@ -1,3 +1,46 @@
+# 发布 SharkSpace 1.13.0
+
+## 状态
+- 进行中（2026-07-16，本地发布准备完成，等待远端确认与 npm 登录）
+
+## 目标
+- [x] 将 npm package 与 Xcode marketing version 从 `1.12.1` 更新到 `1.13.0`，build number 从 `14` 递增到 `15`，同步 lockfile 与 changelog。
+- [x] 修正 DMG 产物命名，使本地构建、GitHub Release、README 和 npm 安装器统一使用 `SharkSpace-1.13.0.dmg`。
+- [x] 复用并完善 `scripts/build-tool.ts`，生成带时间戳目录的 DMG 与 SHA256，失败不静默、临时目录可清理，并支持 `NO_SIGN=1` fallback。
+- [x] 构建 Release App 和 DMG，完成 `hdiutil verify`、版本/build number、codesign 与 checksum 检查，然后打开 DMG。
+- [x] 完成 npm pack/publish dry-run 和远端版本检查，提交 release 准备改动。
+- [ ] 在远端动作清单得到确认后创建 `v1.13.0`、推送 `main`/tag、创建 GitHub Release、发布 `@ssbun/sharkspace@1.13.0` 并验证。
+
+## 已确认事实
+- 发布前 Git/Xcode/npm 版本为 `1.12.1`、Xcode build number 为 `14`；本地 release 准备已更新为 `1.13.0` / build `15`。
+- release 准备已提交，本地 `main` 比 `origin/main` 领先 1 个提交；npm registry latest 为 `1.12.1`，`1.13.0` 尚未发布。
+- npm 登录态失效；正式 publish 前必须恢复登录。
+- GitHub 当前没有 `v1.12.1` Release；`v1.13.0` tag/release 尚不存在。
+- 现有 `scripts/build-tool.ts` 是项目 DMG 构建入口；不新增重复 `create-dmg.sh`。
+
+## 边界
+- 不安装到 `/Applications`；只打开验证后的 DMG。
+- 不增加 notarization、Sparkle appcast 或新的发布依赖。
+- 远端 tag、push、GitHub Release 和 npm publish 必须在发布清单确认后执行。
+
+## 验证标准
+- Release App 的 `CFBundleShortVersionString` 为 `1.13.0`、`CFBundleVersion` 为 `15`。
+- DMG 文件名和 GitHub Release 下载 URL 与 `install.js` 一致，`hdiutil verify` 和 SHA256 校验通过。
+- npm tarball 只含 README、install.js、package.json，dry-run 版本为 `1.13.0`。
+- 最终 `main`、`v1.13.0`、GitHub Release asset 和 npm latest 指向同一版本。
+
+## 本地验证
+- `npx tsx scripts/build-tool.ts create-dmg 1.13.0` 通过；产物为 `dist/SharkSpace-1.13.0_20260716T024627Z/SharkSpace-1.13.0.dmg`，SHA256 为 `4815003febd8ffd1617f411fd0e3619596c59866af1d85f471e90819d47df1b2`。
+- Release App 的 marketing version 为 `1.13.0`、build number 为 `15`；`hdiutil verify`、checksum 和 `codesign --verify --deep --strict` 通过，DMG 已打开。
+- App 使用 `Apple Development: caishilin@zhihu.com (X27C8L3NVA)` 签名；不是 Developer ID，未 notarized。
+- `npm pack --dry-run --json` 与 `npm publish --dry-run --access public --json` 通过，tarball 仅含 README、install.js、package.json；registry 中 `1.13.0` 尚不存在。
+- Git Overview、Codex preview/refresh/sessions UI、SwiftUI structure、virtual workspace、terminal opener 全部通过；workflow YAML、无效版本拒绝和 `git diff --check` 通过。
+
+## Review
+- GitHub workflow 改为直接调用现有 build-tool，消除 CI 查找错误 App 名和生成 `Shark-*.dmg` 的分叉逻辑。
+- build-tool 只验证 package version，不再在 publish 命令中单独改 package.json，避免 package-lock、Xcode 与 changelog 漂移。
+- npm 登录当前返回 E401；正式 npm publish 必须在用户恢复登录后执行。
+
 # 缓存 workspace folder 的 Git 状态
 
 ## 状态

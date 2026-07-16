@@ -19,7 +19,8 @@
 - **Add Folders** - 通过拖拽、文件选择器或组件选择器添加多个目录。
 - **Component Selector** - 从可配置搜索路径中浏览和选择组件。
 - **Copy Path** - 右键复制一个或多个 folder 路径。
-- **Visual Folder List** - 查看 workspace 中的 folders，并显示 git branch/tag badge。
+- **Visual Folder List** - 查看 workspace 中的 folders，并显示 branch、最新 tag、working tree 和 upstream 状态。
+- **Workspace Git Overview** - 在原生表格中集中检查所有 repository 的版本、未提交改动和远端同步状态。
 - **Automatic Saving** - folder 变更会自动保存到 `.shark-workspace.json`。
 
 ### Codex Sessions
@@ -30,6 +31,7 @@
 - **Running Indicator** - 显示 session 是否正在终端中运行。
 - **iTerm Jump** - 安装 Codex hooks 后，可跳转到正在运行的 iTerm2 session。
 - **Display Name** - 可为 session 设置 Shark 内部显示名，保存到当前 workspace metadata。
+- **Session Preview** - 双击 session 可预览首条用户消息和最近对话，再决定是否恢复或跳转。
 
 ### 快捷操作
 - **Double-Click to Open** - 双击即可在终端打开虚拟工作区目录。

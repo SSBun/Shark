@@ -1,6 +1,6 @@
 {
   "name": "@ssbun/sharkspace",
-  "version": "1.12.1",
+  "version": "1.13.0",
   "description": "macOS desktop app for managing multiple IDE workspaces",
   "bin": {
     "shark": "install.js"

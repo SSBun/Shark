@@ -15,4 +15,5 @@
 - Workspace health 可检查 metadata、缺失 folder、symlink 与 Codex hooks，并执行有限修复。
 
 ## Decisions and Conventions
+- Release DMG 由 `scripts/build-tool.ts` 生成到 `dist/SharkSpace-<version>_<timestamp>/`；本地与 GitHub workflow 共用该入口，release asset 固定命名为 `SharkSpace-<version>.dmg`，供 npm installer 按 package version 下载。
 - npm 包只发布 `install.js` 和 README；版本化 DMG 由 GitHub Release 提供，安装脚本按 `package.json.version` 下载。

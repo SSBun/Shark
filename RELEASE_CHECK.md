@@ -50,7 +50,7 @@ npx tsx scripts/build-tool.ts create-dmg X.X.X --no-build
 - Check the build succeeded without errors
 - Verify the app version shows correctly in Settings > About tab
 - Test basic functionality
-- DMG is at `dist/SharkSpace-X.X.X.dmg`
+- DMG is at `dist/SharkSpace-X.X.X_<timestamp>/SharkSpace-X.X.X.dmg`
 
 ## 6. Create Version Tag
 
@@ -66,13 +66,15 @@ git push origin vX.X.X
 
 ## 7. Publish to npm
 
-Publish the DMG to npm:
+After the GitHub Release asset is available, verify the package and publish it:
 
 ```bash
-npx tsx scripts/build-tool.ts publish X.X.X --no-build
+npm pack --dry-run
+npm publish --dry-run --access public
+npm publish --access public
 ```
 
-This bumps `package.json`, re-creates the DMG, and runs `npm publish --access public`.
+The npm package contains only `README.md`, `install.js`, and `package.json`. The installer downloads `SharkSpace-X.X.X.dmg` from the matching GitHub Release.
 
 During publish you'll need npm OTP if 2FA is enabled:
 
@@ -104,6 +106,6 @@ npx tsx scripts/build-tool.ts publish X.X.X --no-build --otp 123456
 | Update version | `sed -i '' 's/MARKETING_VERSION = .*/MARKETING_VERSION = X.X.X;/g' Shark.xcodeproj/project.pbxproj` |
 | Update build | `sed -i '' 's/CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = N;/g' Shark.xcodeproj/project.pbxproj` |
 | Build + DMG | `npx tsx scripts/build-tool.ts create-dmg X.X.X` |
-| Publish | `npx tsx scripts/build-tool.ts publish X.X.X --no-build --otp CODE` |
+| Publish | `npm publish --access public --otp CODE` |
 | Create tag | `git tag -a vX.X.X -m "Release vX.X.X"` |
 | Push tag | `git push origin vX.X.X` |

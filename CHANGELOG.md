@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-07-16
+
+### Added
+- 新增 Workspace Git Overview，集中展示每个 repository 的最新 tag、working tree 和 upstream 状态。
+- Folder cell 新增关键 Git 状态摘要，并支持在 workspace 切换时复用会话缓存。
+- 双击 Codex session 可打开内容预览，通过首条用户消息和最近对话确认目标 session。
+
+### Changed
+- Codex session 刷新改为 SQLite-first metadata 与批量 runtime 查询，显著降低大型历史记录下的等待时间。
+- npm 安装器改为从 GitHub Release 下载与 package version 对应的 DMG。
+
 ## [1.12.1] - 2026-06-27
 
 ### Fixed
