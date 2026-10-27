@@ -15,8 +15,8 @@
 2. `package-shark-1-14-0`：依赖前项源码，构建并核验 Release app、DMG 与 npm dry-run。
 3. `publish-shark-1-14-0`：依赖前项产物及发布清单确认，完成 GitHub 与 npm 发布回读。
 - Current artifacts: 源码阶段与打包阶段均已完成独立审查和验证；本地1.14.0/build16 DMG已验收，无Developer ID/公证。
-- Next action: 在发布子任务等待独立远端清单确认与npm登录恢复。
-- Required input: npm login及用户对GitHub/npm发布清单的明确确认。
+- Next action: 发布子任务恢复；用户本轮已登录并允许继续，重新核实身份、版本与tag后按已展示清单发布。
+- Required input: None；若发布阶段出现新的认证或远端阻塞，再记录实际恢复条件。
 
 ## Target
 
