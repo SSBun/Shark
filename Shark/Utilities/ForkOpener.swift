@@ -125,15 +125,29 @@ struct ForkWorkspaceManager {
     }
 }
 
-// MARK: - Legacy repo opener
+// MARK: - Repository opener
 
+@MainActor
 struct ForkOpener {
     static func openRepository(at path: String) {
-        guard FileManager.default.fileExists(atPath: path) else { return }
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue else {
+            AlertManager.shared.error("Repository folder does not exist: \(path)", title: "Open in Fork")
+            return
+        }
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["fork", path]
-        try? process.run()
+        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.DanPristupov.Fork") else {
+            AlertManager.shared.error("Fork is not installed or could not be found.", title: "Open in Fork")
+            return
+        }
+
+        let repositoryURL = URL(fileURLWithPath: path, isDirectory: true)
+        NSWorkspace.shared.open([repositoryURL], withApplicationAt: appURL, configuration: .init()) { _, error in
+            if let error {
+                Task { @MainActor in
+                    AlertManager.shared.error("Failed to open repository in Fork: \(error.localizedDescription)", title: "Open in Fork")
+                }
+            }
+        }
     }
 }

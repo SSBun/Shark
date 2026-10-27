@@ -1,3 +1,24 @@
+# 修复 Open in Fork 菜单无响应
+
+## 假设
+- 已核实 GUI 进程 PATH 缺少 Fork CLI 所在目录；两个仓库菜单共用 `ForkOpener.openRepository`。
+- 使用 Launch Services 按 bundle identifier 定位 Fork，再传入目录 URL，可去除 shell 环境依赖。
+
+## 计划
+- 仅替换共享仓库打开逻辑，沿用现有 AlertManager 呈现目录失效、应用不可用和异步打开错误。
+- 保留多选调用方式及 Fork workspace 管理逻辑，不触碰已有未提交产品改动。
+
+## 验证项
+- Swift 解析、Debug 构建和 task-owned diff 检查；不运行单元测试。
+- 在受限 PATH 下通过原生 API 做实际打开冒烟检查，区分系统接受请求与 Fork 内部 UI 状态。
+- 对比 Fork workspace 管理代码与修改前内容，确认无变化。
+
+## 结果
+- 共享逻辑已改为按 bundle identifier 定位 Fork 并交付目录 URL；目录失效、Fork 不可用和异步打开失败均走既有 AlertManager，回调内回到 MainActor。
+- Swift 解析和 Debug 构建通过；构建含既有警告，未修改无关代码。
+- 在与 GUI 相同、没有 Homebrew bin 的 PATH 下，原生打开完成并返回 Fork bundle identifier。
+- 字节对比确认 Fork workspace 管理部分未变。未运行单元测试，未替换当前安装的 SharkSpace；Fork 标签页与错误提示视觉效果未做 UI 验收。
+
 # 发布 SharkSpace 1.13.0
 
 ## 状态
