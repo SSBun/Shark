@@ -35,7 +35,9 @@ if ! printf '%s\n' "$session_load_body" | rg -Fq 'selectedWorkspace?.id == works
 fi
 
 if ! printf '%s\n' "$session_load_body" | rg -Fq 'codexSessionLoadID == loadID' ||
-   ! printf '%s\n' "$session_load_body" | rg -q '^[[:space:]]*codexSessions = sessions$' ||
+   ! printf '%s\n' "$session_load_body" | rg -q '^[[:space:]]*codexSessions = visibleSessions$' ||
+   ! printf '%s\n' "$session_load_body" | rg -Fq 'sessions.filter { !isSubagentSession($0) }' ||
+   ! printf '%s\n' "$session_load_body" | rg -Fq 'return visibleSessions.map' ||
    ! printf '%s\n' "$session_load_body" | rg -q '^[[:space:]]*codexSessions = sessionsWithRuntimeState$'; then
   echo "WorkspaceStore must publish metadata before runtime state and discard superseded refreshes" >&2
   exit 1
@@ -116,8 +118,18 @@ if ! rg -Fq 'List(selection:' Shark/Views/CodexSessionListView.swift; then
   exit 1
 fi
 
-if ! rg -Fq 'Label("Archive"' Shark/Views/CodexSessionListView.swift; then
-  echo "Codex session rows must support archive" >&2
+if ! rg -Fq 'Label(session.isArchived ? "Unarchive" : "Archive"' Shark/Views/CodexSessionListView.swift; then
+  echo "Codex session rows must show archive or unarchive for the clicked row" >&2
+  exit 1
+fi
+
+archive_body=$(sed -n '/func setCodexSessions(/,/func deleteCodexSessions(/p' Shark/Views/WorkspaceStore.swift)
+if ! rg -Fq 'onArchive(targetSessions(for: session), !session.isArchived)' Shark/Views/CodexSessionListView.swift ||
+   ! rg -Fq 'store.setCodexSessions(sessions, archived: archived)' Shark/Views/MainWorkspaceView.swift ||
+   ! printf '%s\n' "$archive_body" | rg -Fq 'sessions.filter { $0.isArchived != archived }' ||
+   ! printf '%s\n' "$archive_body" | rg -Fq 'guard !targets.isEmpty else' ||
+   ! printf '%s\n' "$archive_body" | rg -Fq 'runCodexSessionCommand(archived ? "archive" : "unarchive", sessions: targets)'; then
+  echo "Mixed selections must use the menu target state and leave sessions already in that state unchanged" >&2
   exit 1
 fi
 
@@ -126,8 +138,10 @@ if ! rg -Fq 'Label("Delete"' Shark/Views/CodexSessionListView.swift; then
   exit 1
 fi
 
-if ! rg -Fq '["codex", command, "--force", id]' Shark/Views/WorkspaceStore.swift; then
-  echo "WorkspaceStore must delete Codex sessions with codex delete --force <session_id> after app confirmation" >&2
+if ! rg -Fq '[command, "--force", id]' Shark/Views/WorkspaceStore.swift ||
+   ! rg -Fq '["-lic", "codex \"$@\"", "shark-codex"]' Shark/Views/WorkspaceStore.swift ||
+   ! rg -Fq 'guard confirmDeleteCodexSessions(sessions) else' Shark/Views/WorkspaceStore.swift; then
+  echo "WorkspaceStore must pass delete --force <session_id> as shell positional arguments after app confirmation" >&2
   exit 1
 fi
 
@@ -163,8 +177,10 @@ if rg -Fq 'onTapGesture(count: 2)' Shark/Views/CodexSessionListView.swift; then
   exit 1
 fi
 
-if ! rg -Fq 'simultaneousGesture(' Shark/Views/CodexSessionListView.swift || ! rg -Fq 'TapGesture(count: 2)' Shark/Views/CodexSessionListView.swift; then
-  echo "Codex session rows must preserve List selection while supporting double-click preview" >&2
+if ! rg -Fq 'Label("Preview", systemImage: "eye")' Shark/Views/CodexSessionListView.swift ||
+   ! rg -Fq '.accessibilityAction(named: Text("Preview Session"), onPreview)' Shark/Views/CodexSessionListView.swift ||
+   rg -Fq 'TapGesture(count: 2)' Shark/Views/CodexSessionListView.swift; then
+  echo "Codex session rows must preserve List selection and expose context-menu and accessible preview without double-click" >&2
   exit 1
 fi
 
