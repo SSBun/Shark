@@ -1,0 +1,24 @@
+Release DMG 内 App 版本：
+1.14.0
+16
+com.csl.cool.Shark
+15.2
+arm64
+Executable=/private/tmp/shark-1-14-0-dmg/SharkSpace.app/Contents/MacOS/SharkSpace
+Identifier=com.csl.cool.Shark
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20500 size=8819 flags=0x10002(adhoc,runtime) hashes=265+7 location=embedded
+Signature=adhoc
+Info.plist entries=23
+TeamIdentifier=not set
+Runtime Version=26.2.0
+Sealed Resources version=2 rules=13 files=2
+Internal requirements count=0 size=12
+/tmp/shark-1-14-0-dmg/SharkSpace.app: valid on disk
+/tmp/shark-1-14-0-dmg/SharkSpace.app: satisfies its Designated Requirement
+codesign verify exit=0
+Signed entitlements match source: True
+get-task-allow: False
+DMG verify：VALID
+ab77694b49691e0511b7c1d1ba931b55a39f6abf9f957dd48691d7e26d196cbe  /Users/caishilin/Desktop/personal/Shark/dist/SharkSpace-1.14.0_20261027T121549Z/SharkSpace-1.14.0.dmg
+NO_SIGN=1 为完整 ad-hoc bundle 签名；无 Developer ID，无 Apple 公证；签名完整性不代表 Gatekeeper 信任。

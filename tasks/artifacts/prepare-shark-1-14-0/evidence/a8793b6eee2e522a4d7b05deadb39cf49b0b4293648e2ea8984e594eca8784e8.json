@@ -1,0 +1,388 @@
+{
+  "schema": "task-snapshot/v1",
+  "taskId": "prepare-shark-1-14-0",
+  "files": [
+    {
+      "path": ".github/workflows/build-and-release.yml",
+      "sha256": "ce0db3bb637c90e0b7887057b3d88a34bbd4291ee1339d4b27d73bbad6759ff9",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "05bdada4e51c632f23d6e46e519cbd576ca8beb8"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "05bdada4e51c632f23d6e46e519cbd576ca8beb8",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "2f4351bf0243066db2071ba8389db9dac540240712c76156fd1b675d0f060c79",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "448b816e0717e459d48cf6788aebf8055971f258"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "448b816e0717e459d48cf6788aebf8055971f258",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "README.md",
+      "sha256": "c018e38ce90b0938c1e8a8e083bd54980f064bbc13c9f5eee62336e4b1d9912b",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "004b480a50d026779fcee9a79481f42cb14f2387"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "004b480a50d026779fcee9a79481f42cb14f2387",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark.xcodeproj/project.pbxproj",
+      "sha256": "dc32cece621eb2349de7295b4f2c6ab4dfcc60b147df29a2469b65529fdb4ef4",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "b31996910080c949a7f4ec594481d1260b47c5a6"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "b31996910080c949a7f4ec594481d1260b47c5a6",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Models/CodexSession.swift",
+      "sha256": "04c83dc2187a15c4b64fc03b0b81dfa5accce8d3534cd8052074c23bcd4be584",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "0f99436669ae8c54b6bbc79b0c884c383b43479e"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "0f99436669ae8c54b6bbc79b0c884c383b43479e",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Models/Workspace.swift",
+      "sha256": "b910762d417d6c7e81f4d6b10899abf93a8a840ed92e04f25c8a369c64aa2b71",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "ab9ee725995d6633770906bd3035beafc38659e9"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "ab9ee725995d6633770906bd3035beafc38659e9",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Utilities/CodexSessionManager.swift",
+      "sha256": "19f578e2116c0acf0c3a1b89e6d6e43e39e18ae7985c6b8154441d7e15afede6",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "0393b94472f0c21c008098c9f6ca158fd30a35d9"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "0393b94472f0c21c008098c9f6ca158fd30a35d9",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Utilities/ForkOpener.swift",
+      "sha256": "7b611a023716141ee43f2f9bbf3ebe014638e9aefdae0e76d3ca0062eea72e2b",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "7b0a6d918043f59e3ec41c41b542b3e648aab1a1"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "7b0a6d918043f59e3ec41c41b542b3e648aab1a1",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Utilities/SettingsManager.swift",
+      "sha256": "b88b7eea04790898eefab72ba0e87e7a3e2000e91a92fdcc585f38ba6553c9ca",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "57387053722656b3d9ef97e1640ff3414e9404c5"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "57387053722656b3d9ef97e1640ff3414e9404c5",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Utilities/WorkspaceManager.swift",
+      "sha256": "93e905b7b8f1bbe1a71925e84720b4c5f69c47df6407de28736e6bbfea314870",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "777825f7e030de3356bb31ff99f4f99f9cf64d5d"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "777825f7e030de3356bb31ff99f4f99f9cf64d5d",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Views/CodexSessionListView.swift",
+      "sha256": "ea8c535a3847a1f95c7cd7de146a59eb553884ce6e72dadf07ac88adf4db67f9",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "97ea9014863d2fdabf025888eb670a7c02a45373"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "97ea9014863d2fdabf025888eb670a7c02a45373",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Views/MainWorkspaceView.swift",
+      "sha256": "b45d4d70603aa751db1836fc0591ede788aba25d6324dc5ad556c4c1ac904575",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "9e70ec2a43d6bf07cc49cb3769dfa85227d187f0"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "9e70ec2a43d6bf07cc49cb3769dfa85227d187f0",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Views/SettingsView.swift",
+      "sha256": "a3a5655341642df8432c1834cb5627df3e527f5363ae74bc3d4984288cf5b259",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "947d689b4c39fcc75ba04e4408aba0bd5b15310e"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "947d689b4c39fcc75ba04e4408aba0bd5b15310e",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Views/WorkspaceListView.swift",
+      "sha256": "1c3021fab6c41cf4c24e0c0d3152da3069d9a3890441e4424d172bff3a5652e4",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "01c6e18d59f3b71599e4e88e1eed3c875b6c12b8"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "01c6e18d59f3b71599e4e88e1eed3c875b6c12b8",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Views/WorkspaceStore.swift",
+      "sha256": "e6b182f77a3de39c5655316e233b922a1d3c43bcba0aaa30fe09392d1f1cd792",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "d7d5058f994a58bb7e62630c528ae576297dc01d"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "d7d5058f994a58bb7e62630c528ae576297dc01d",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "install.js",
+      "sha256": "07ed437dbd91f2964adca8d5777138b5e68c7971100f67d992e6bb4358b73e32",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "758892693e9a9457283e41b1d67d8f570992e6aa"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "758892693e9a9457283e41b1d67d8f570992e6aa",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "4ce038f97a2e1c71f0a9f34088881e675cf8a5399f23ff8af11457be66f39a21",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "2a21a1f44a4541007400a7aa3d22357bf931a47f"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "2a21a1f44a4541007400a7aa3d22357bf931a47f",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "package.json",
+      "sha256": "d911ad1846df36a2fff99ce02ebf5a8307bf6741f9008da2a481939d4340a142",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "07d612bf1500c764668df8fa8d9722f0da234a32"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "07d612bf1500c764668df8fa8d9722f0da234a32",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "scripts/build-tool.ts",
+      "sha256": "c865925c26ee0e4949c549b4c3145d45cfe304d4d3a9802bd954c1a6da000c7b",
+      "git": {
+        "head": {
+          "mode": "100755",
+          "object": "f3d1c3a36308d2664f85482ad78dbda42d219b43"
+        },
+        "index": [
+          {
+            "mode": "100755",
+            "object": "f3d1c3a36308d2664f85482ad78dbda42d219b43",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "tasks/artifacts/prepare-shark-1-14-0/evidence/checks.log",
+      "sha256": "e6aec84046597d626fc88846d221791372e1bbc22ce3719483050fdce628b4bb",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "806af92473ffb367938da79bb102ad459e03279d"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "806af92473ffb367938da79bb102ad459e03279d",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "tasks/artifacts/prepare-shark-1-14-0/evidence/release-code.diff",
+      "sha256": "dd92f7fbded863bc217d0b006d42f0a565a3ca452d4752fa2ed864d30247d69b",
+      "git": {
+        "head": null,
+        "index": []
+      }
+    },
+    {
+      "path": "tasks/context.md",
+      "sha256": "d713ba4bd42e8ea87de6dd168ccb4dbe85d0d3b736155c1ddffaaae1b9ad1bc7",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "72f1b09ef8be3fa079f1b82250af8253f150232b"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "72f1b09ef8be3fa079f1b82250af8253f150232b",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "tasks/todo.md",
+      "sha256": "613b51d406d26c7ef8c296b84b96346b46ada791d208b7476a324262bd7bf8ad",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "c3a693be27ae0ef903478fe39158a1fb4adce4ce"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "c3a693be27ae0ef903478fe39158a1fb4adce4ce",
+            "stage": 0
+          }
+        ]
+      }
+    }
+  ]
+}

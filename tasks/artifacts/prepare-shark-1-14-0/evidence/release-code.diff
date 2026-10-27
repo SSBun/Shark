@@ -1,0 +1,1031 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ca193c1..448b816 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,9 +1,26 @@
+ # Changelog
+ 
+-All notable changes to this project will be documented in this file.
++记录面向用户的重要变更。
+ 
+ ## [Unreleased]
+ 
++## [1.14.0] - 2026-10-27
++
++### Added
++- 新增 Projects 分组，可直接添加已有项目目录并查看关联的 Codex 会话，无需创建虚拟工作区。
++- 新增隐藏子代理会话设置，默认开启；应用重新激活时刷新会话。
++- 支持取消归档，以及经确认后批量清理当前列表中的已归档会话。
++
++### Changed
++- 会话列表展示消息摘要，来源、模型与目录信息移至悬浮提示。
++- 会话预览改为右键菜单入口，保留辅助功能操作。
++
++### Fixed
++- 修复 Open in Fork 依赖 GUI 环境中的 shell PATH，导致点击无响应的问题；打开失败时显示错误。
++- 移除 Project 条目时仅移除引用，不删除原始项目目录；项目重命名只更改显示名。
++- 子代理过滤在 metadata 与 runtime 两阶段保持一致，避免初次加载时短暂显示隐藏项。
++- Codex 会话操作使用登录 shell 查找 CLI，并在命令失败时提示错误。
++
+ ## [1.13.0] - 2026-07-16
+ 
+ ### Added
+diff --git a/README.md b/README.md
+index d6a5479..004b480 100644
+--- a/README.md
++++ b/README.md
+@@ -15,6 +15,11 @@
+ - **Rename Workspaces** - 重命名 workspace，并同步更新工作区目录和 metadata。
+ - **Workspace Health Check** - 检查 metadata、缺失文件夹、断开的 symlink 和 Codex hooks 状态，并支持重建 symlinks。
+ 
++### Projects
++- **直接添加项目** - 将磁盘上的已有目录加入 Projects 分组，无需创建虚拟工作区。
++- **项目会话** - 选择项目即可查看该目录下的 Codex 会话；打开项目条目会在 Finder 中显示目录。
++- **非破坏性管理** - 重命名只改变显示名称，移除只删除列表引用，不移动或删除项目目录。
++
+ ### Folder 管理
+ - **Add Folders** - 通过拖拽、文件选择器或组件选择器添加多个目录。
+ - **Component Selector** - 从可配置搜索路径中浏览和选择组件。
+@@ -27,11 +32,14 @@
+ - **Workspace Sessions** - 在当前 workspace 下方展示相关 Codex sessions。
+ - **Activity Groups** - 按 Last 8 Hours、Last 2 Days、Last Week、Older 分组 active sessions。
+ - **Archived Sessions** - archived sessions 默认折叠，避免干扰当前工作。
+-- **Session Actions** - 支持恢复到终端、归档、删除、复制 session ID、复制 jsonl 路径。
++- **Session Actions** - 支持恢复到终端、归档与取消归档、删除、复制 session ID、复制 jsonl 路径。
++- **归档清理** - 通过已归档分组的垃圾桶按钮，经确认后删除当前列表中的已归档会话。
++- **子代理筛选** - 默认隐藏子代理会话，可在 Settings > Terminal 中切换。
++- **摘要与刷新** - 列表显示会话消息摘要，悬浮查看来源、模型与目录；应用重新激活时自动刷新。
+ - **Running Indicator** - 显示 session 是否正在终端中运行。
+ - **iTerm Jump** - 安装 Codex hooks 后，可跳转到正在运行的 iTerm2 session。
+ - **Display Name** - 可为 session 设置 Shark 内部显示名，保存到当前 workspace metadata。
+-- **Session Preview** - 双击 session 可预览首条用户消息和最近对话，再决定是否恢复或跳转。
++- **Session Preview** - 右键 session 选择 Preview，可预览首条用户消息和最近对话，再决定是否恢复或跳转。
+ 
+ ### 快捷操作
+ - **Double-Click to Open** - 双击即可在终端打开虚拟工作区目录。
+@@ -59,7 +67,7 @@
+ ## 为什么使用 Shark
+ 
+ ### 面向 Agent 工具的工作区
+-Shark 的 virtual folder 本质上就是一个普通目录。Codex、Claude Code、Cursor、终端和其他工具都可以直接打开它，不需要理解 Shark 的内部数据结构。
++Shark 同时支持 virtual workspace 和直接引用的 Project。virtual folder 本质上就是一个普通目录。Codex、Claude Code、Cursor、终端和其他工具都可以直接打开它，不需要理解 Shark 的内部数据结构。
+ 
+ ### 清晰的 macOS 界面
+ - 左侧是 workspace 列表。
+diff --git a/Shark.xcodeproj/project.pbxproj b/Shark.xcodeproj/project.pbxproj
+index c486620..b319969 100644
+--- a/Shark.xcodeproj/project.pbxproj
++++ b/Shark.xcodeproj/project.pbxproj
+@@ -251,7 +251,7 @@
+ 				CODE_SIGN_ENTITLEMENTS = Shark/Shark.entitlements;
+ 				CODE_SIGN_STYLE = Automatic;
+ 				COMBINE_HIDPI_IMAGES = YES;
+-				CURRENT_PROJECT_VERSION = 15;
++				CURRENT_PROJECT_VERSION = 16;
+ 				DEVELOPMENT_ASSET_PATHS = "\"Shark/Preview Content\"";
+ 				DEVELOPMENT_TEAM = 2795FFTPWT;
+ 				ENABLE_HARDENED_RUNTIME = YES;
+@@ -264,7 +264,7 @@
+ 					"$(inherited)",
+ 					"@executable_path/../Frameworks",
+ 				);
+-				MARKETING_VERSION = 1.13.0;
++				MARKETING_VERSION = 1.14.0;
+ 				PRODUCT_BUNDLE_IDENTIFIER = com.csl.cool.Shark;
+ 				PRODUCT_NAME = SharkSpace;
+ 				SWIFT_EMIT_LOC_STRINGS = YES;
+@@ -280,7 +280,7 @@
+ 				CODE_SIGN_ENTITLEMENTS = Shark/Shark.entitlements;
+ 				CODE_SIGN_STYLE = Automatic;
+ 				COMBINE_HIDPI_IMAGES = YES;
+-				CURRENT_PROJECT_VERSION = 15;
++				CURRENT_PROJECT_VERSION = 16;
+ 				DEVELOPMENT_ASSET_PATHS = "\"Shark/Preview Content\"";
+ 				DEVELOPMENT_TEAM = 2795FFTPWT;
+ 				ENABLE_HARDENED_RUNTIME = YES;
+@@ -293,7 +293,7 @@
+ 					"$(inherited)",
+ 					"@executable_path/../Frameworks",
+ 				);
+-				MARKETING_VERSION = 1.13.0;
++				MARKETING_VERSION = 1.14.0;
+ 				PRODUCT_BUNDLE_IDENTIFIER = com.csl.cool.Shark;
+ 				PRODUCT_NAME = SharkSpace;
+ 				SWIFT_EMIT_LOC_STRINGS = YES;
+diff --git a/Shark/Models/CodexSession.swift b/Shark/Models/CodexSession.swift
+index a75690f..0f99436 100644
+--- a/Shark/Models/CodexSession.swift
++++ b/Shark/Models/CodexSession.swift
+@@ -8,6 +8,7 @@ import Foundation
+ struct CodexSession: Identifiable, Hashable {
+     let id: String
+     let title: String
++    let lastUserMessage: String?
+     let cwd: String
+     let filePath: String
+     let updatedAt: Date
+diff --git a/Shark/Models/Workspace.swift b/Shark/Models/Workspace.swift
+index 69ef3c0..ab9ee72 100644
+--- a/Shark/Models/Workspace.swift
++++ b/Shark/Models/Workspace.swift
+@@ -7,21 +7,30 @@
+ 
+ import Foundation
+ 
++enum WorkspaceKind: String, Codable {
++    // A virtual workspace directory under the Shark settings folder.
++    case workspace
++    // A direct reference to an existing folder on disk.
++    case project
++}
++
+ struct Workspace: Identifiable, Hashable, Codable {
+     let id: UUID
+     var name: String
+-    var filePath: String // Virtual folder workspace directory path
++    var filePath: String // Virtual folder workspace directory path, or the project folder path
+     var createdAt: Date
+     var isPinned: Bool
+     var sortOrder: Int
++    var kind: WorkspaceKind
+ 
+-    init(id: UUID = UUID(), name: String, filePath: String, createdAt: Date = Date(), isPinned: Bool = false, sortOrder: Int = 0) {
++    init(id: UUID = UUID(), name: String, filePath: String, createdAt: Date = Date(), isPinned: Bool = false, sortOrder: Int = 0, kind: WorkspaceKind = .workspace) {
+         self.id = id
+         self.name = name
+         self.filePath = filePath
+         self.createdAt = createdAt
+         self.isPinned = isPinned
+         self.sortOrder = sortOrder
++        self.kind = kind
+     }
+ 
+     init(from decoder: Decoder) throws {
+@@ -32,5 +41,6 @@ struct Workspace: Identifiable, Hashable, Codable {
+         createdAt = try container.decode(Date.self, forKey: .createdAt)
+         isPinned = (try? container.decode(Bool.self, forKey: .isPinned)) ?? false
+         sortOrder = (try? container.decode(Int.self, forKey: .sortOrder)) ?? 0
++        kind = (try? container.decode(WorkspaceKind.self, forKey: .kind)) ?? .workspace
+     }
+ }
+diff --git a/Shark/Utilities/CodexSessionManager.swift b/Shark/Utilities/CodexSessionManager.swift
+index d1d52f0..0393b94 100644
+--- a/Shark/Utilities/CodexSessionManager.swift
++++ b/Shark/Utilities/CodexSessionManager.swift
+@@ -30,6 +30,7 @@ enum CodexSessionManager {
+                 return CodexSession(
+                     id: thread.id,
+                     title: bestTitle(displayNames[thread.id], thread.title, thread.firstUserMessage, thread.preview, indexed?.title, fallback: thread.id),
++                    lastUserMessage: thread.preview,
+                     cwd: thread.cwd,
+                     filePath: thread.filePath,
+                     updatedAt: thread.updatedAt,
+@@ -50,6 +51,7 @@ enum CodexSessionManager {
+             return CodexSession(
+                 id: meta.id,
+                 title: bestTitle(displayNames[meta.id], thread?.title, thread?.firstUserMessage, thread?.preview, indexed?.title, fallback: meta.id),
++                lastUserMessage: thread?.preview,
+                 cwd: meta.cwd,
+                 filePath: url.path,
+                 updatedAt: thread?.updatedAt ?? indexed?.updatedAt ?? meta.updatedAt,
+diff --git a/Shark/Utilities/ForkOpener.swift b/Shark/Utilities/ForkOpener.swift
+index 163debc..7b0a6d9 100644
+--- a/Shark/Utilities/ForkOpener.swift
++++ b/Shark/Utilities/ForkOpener.swift
+@@ -125,15 +125,29 @@ struct ForkWorkspaceManager {
+     }
+ }
+ 
+-// MARK: - Legacy repo opener
++// MARK: - Repository opener
+ 
++@MainActor
+ struct ForkOpener {
+     static func openRepository(at path: String) {
+-        guard FileManager.default.fileExists(atPath: path) else { return }
++        var isDirectory: ObjCBool = false
++        guard FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory), isDirectory.boolValue else {
++            AlertManager.shared.error("Repository folder does not exist: \(path)", title: "Open in Fork")
++            return
++        }
++
++        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.DanPristupov.Fork") else {
++            AlertManager.shared.error("Fork is not installed or could not be found.", title: "Open in Fork")
++            return
++        }
+ 
+-        let process = Process()
+-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+-        process.arguments = ["fork", path]
+-        try? process.run()
++        let repositoryURL = URL(fileURLWithPath: path, isDirectory: true)
++        NSWorkspace.shared.open([repositoryURL], withApplicationAt: appURL, configuration: .init()) { _, error in
++            if let error {
++                Task { @MainActor in
++                    AlertManager.shared.error("Failed to open repository in Fork: \(error.localizedDescription)", title: "Open in Fork")
++                }
++            }
++        }
+     }
+ }
+diff --git a/Shark/Utilities/SettingsManager.swift b/Shark/Utilities/SettingsManager.swift
+index bba9880..5738705 100644
+--- a/Shark/Utilities/SettingsManager.swift
++++ b/Shark/Utilities/SettingsManager.swift
+@@ -10,6 +10,9 @@ import Foundation
+ class SettingsManager {
+     static let shared = SettingsManager()
+ 
++    /// Posted when a setting changes which Codex session visibility (e.g. subagent filter).
++    static let codexSessionFilterChangedNotification = Notification.Name("codexSessionFilterChanged")
++
+     private let settingsFolderPathKey = "settingsFolderPath"
+     private let settingsFolderBookmarkKey = "settingsFolderBookmark"
+     private let componentsSearchPathsKey = "componentsSearchPaths"
+@@ -21,6 +24,7 @@ class SettingsManager {
+     private let defaultTerminalAppKey = "defaultTerminalApp"
+     private let codexResumeInITermSplitsKey = "codexResumeInITermSplits"
+     private let codexResumeSplitLayoutKey = "codexResumeSplitLayout"
++    private let hideSubagentSessionsKey = "hideSubagentSessions"
+ 
+     private init() {
+         migrateLegacySearchPath()
+@@ -258,6 +262,18 @@ class SettingsManager {
+         }
+     }
+ 
++    var hideSubagentSessions: Bool {
++        get {
++            guard UserDefaults.standard.object(forKey: hideSubagentSessionsKey) != nil else {
++                return true
++            }
++            return UserDefaults.standard.bool(forKey: hideSubagentSessionsKey)
++        }
++        set {
++            UserDefaults.standard.set(newValue, forKey: hideSubagentSessionsKey)
++        }
++    }
++
+     var codexResumeSplitLayout: CodexResumeSplitLayout {
+         get {
+             if let savedValue = UserDefaults.standard.string(forKey: codexResumeSplitLayoutKey),
+diff --git a/Shark/Utilities/WorkspaceManager.swift b/Shark/Utilities/WorkspaceManager.swift
+index ce8e1e5..777825f 100644
+--- a/Shark/Utilities/WorkspaceManager.swift
++++ b/Shark/Utilities/WorkspaceManager.swift
+@@ -97,6 +97,33 @@ class WorkspaceManager: ObservableObject {
+         }
+     }
+ 
++    /// Add an existing folder as a project entry.
++    func addProject(url: URL) -> Workspace {
++        let path = url.path
++        if let existing = workspaces.first(where: { $0.filePath == path }) {
++            return existing
++        }
++
++        var bookmarkData: Data?
++        if let bookmark = try? url.bookmarkData(
++            options: .withSecurityScope,
++            includingResourceValuesForKeys: nil,
++            relativeTo: nil
++        ) {
++            UserDefaults.standard.set(bookmark, forKey: "folderBookmark_\(path)")
++            bookmarkData = bookmark
++        }
++
++        let project = Workspace(
++            name: url.lastPathComponent,
++            filePath: path,
++            kind: .project
++        )
++        _ = bookmarkData // stored above; project relies on SettingsManager bookmark lookup
++        addWorkspace(project)
++        return project
++    }
++
+     /// Remove a workspace
+     func removeWorkspace(_ workspace: Workspace) {
+         workspaces.removeAll { $0.id == workspace.id }
+@@ -121,6 +148,10 @@ class WorkspaceManager: ObservableObject {
+ 
+     /// Get git repo paths for a workspace.
+     func gitRepoPaths(for workspace: Workspace) throws -> [String] {
++        if workspace.kind == .project {
++            let folder = Folder(name: workspace.name, path: workspace.filePath)
++            return folder.isGitRepository ? [folder.path] : []
++        }
+         let dirURL = URL(fileURLWithPath: workspace.filePath)
+         let workspaceFile = try VirtualWorkspaceFile.parse(fromDirectory: dirURL)
+         return workspaceFile.toFolders()
+@@ -130,6 +161,14 @@ class WorkspaceManager: ObservableObject {
+ 
+     /// Rename a workspace and its corresponding file/directory on disk
+     func renameWorkspace(_ workspace: Workspace, to newName: String) throws -> Workspace {
++        // Projects reference an external folder; only update the display name.
++        if workspace.kind == .project {
++            var updated = workspace
++            updated.name = newName
++            updateWorkspace(updated)
++            return updated
++        }
++
+         let oldURL = URL(fileURLWithPath: workspace.filePath)
+         let parentURL = oldURL.deletingLastPathComponent()
+         let newURL = parentURL.appendingPathComponent(newName)
+diff --git a/Shark/Views/CodexSessionListView.swift b/Shark/Views/CodexSessionListView.swift
+index ca6295f..97ea901 100644
+--- a/Shark/Views/CodexSessionListView.swift
++++ b/Shark/Views/CodexSessionListView.swift
+@@ -8,6 +8,7 @@ import SwiftUI
+ struct CodexSessionListView: View {
+     let sessions: [CodexSession]
+     let isLoading: Bool
++    let canRename: Bool
+     let onRefresh: () -> Void
+     let onPreview: (CodexSession) -> Void
+     let onShowInFinder: ([CodexSession]) -> Void
+@@ -16,8 +17,10 @@ struct CodexSessionListView: View {
+     let onJumpToITerm: (CodexSession) -> Void
+     let onCopySessionID: ([CodexSession]) -> Void
+     let onRename: (CodexSession) -> Void
+-    let onArchive: ([CodexSession]) -> Void
++    /// Sets the selected sessions to the archive state requested by the menu.
++    let onArchive: (_ sessions: [CodexSession], _ archived: Bool) -> Void
+     let onDelete: ([CodexSession]) -> Void
++    let onCleanArchived: () -> Void
+ 
+     @State private var isArchivedExpanded = false
+     @State private var selectedSessionIDs = Set<CodexSession.ID>()
+@@ -74,9 +77,19 @@ struct CodexSessionListView: View {
+                                 sessionRow(session)
+                             }
+                         } label: {
+-                            Label("Archived Sessions (\(archivedSessions.count))", systemImage: "archivebox")
+-                                .font(.system(size: 12, weight: .medium))
+-                                .foregroundColor(.secondary)
++                            HStack {
++                                Label("Archived Sessions (\(archivedSessions.count))", systemImage: "archivebox")
++                                    .font(.system(size: 12, weight: .medium))
++                                    .foregroundColor(.secondary)
++                                Spacer()
++                                Button(role: .destructive, action: onCleanArchived) {
++                                    Image(systemName: "trash")
++                                        .font(.system(size: 11, weight: .medium))
++                                        .foregroundColor(.secondary)
++                                }
++                                .buttonStyle(.plain)
++                                .help("Delete all archived sessions")
++                            }
+                         }
+                     }
+                 }
+@@ -103,6 +116,7 @@ struct CodexSessionListView: View {
+     private func sessionRow(_ session: CodexSession) -> some View {
+         CodexSessionRow(
+             session: session,
++            canRename: canRename,
+             onPreview: { onPreview(session) },
+             onShowInFinder: { onShowInFinder(targetSessions(for: session)) },
+             onCopyPath: { onCopyPath(targetSessions(for: session)) },
+@@ -110,7 +124,9 @@ struct CodexSessionListView: View {
+             onJumpToITerm: { onJumpToITerm(session) },
+             onCopySessionID: { onCopySessionID(targetSessions(for: session)) },
+             onRename: { onRename(session) },
+-            onArchive: { onArchive(targetSessions(for: session)) },
++            onArchive: {
++                onArchive(targetSessions(for: session), !session.isArchived)
++            },
+             onDelete: { onDelete(targetSessions(for: session)) }
+         )
+         .tag(session.id)
+@@ -166,6 +182,7 @@ private enum CodexSessionDateBucket: CaseIterable {
+ 
+ private struct CodexSessionRow: View {
+     let session: CodexSession
++    let canRename: Bool
+     let onPreview: () -> Void
+     let onShowInFinder: () -> Void
+     let onCopyPath: () -> Void
+@@ -201,12 +218,8 @@ private struct CodexSessionRow: View {
+                 Spacer()
+             }
+             .contentShape(.rect)
+-            .simultaneousGesture(
+-                TapGesture(count: 2)
+-                    .onEnded { onPreview() }
+-            )
+             .accessibilityAction(named: Text("Preview Session"), onPreview)
+-            .help("Double-click to preview session")
++            .help("Right-click to preview session")
+ 
+             if session.runtimeState.isRunningInTerminal {
+                 Button(action: onJumpToITerm) {
+@@ -219,15 +232,20 @@ private struct CodexSessionRow: View {
+             }
+         }
+         .padding(.vertical, 4)
++        .help(tooltip)
+         .contextMenu {
++            Button(action: onPreview) {
++                Label("Preview", systemImage: "eye")
++            }
+             Button(action: onResumeInTerminal) {
+                 Label("Resume in Terminal", systemImage: "terminal")
+             }
+             Button(action: onRename) {
+                 Label("Rename Display Name", systemImage: "pencil")
+             }
++            .disabled(!canRename)
+             Button(action: onArchive) {
+-                Label("Archive", systemImage: "archivebox")
++                Label(session.isArchived ? "Unarchive" : "Archive", systemImage: session.isArchived ? "archivebox.fill" : "archivebox")
+             }
+             Button(role: .destructive, action: onDelete) {
+                 Label("Delete", systemImage: "trash")
+@@ -250,17 +268,22 @@ private struct CodexSessionRow: View {
+     }
+ 
+     private var sessionSummary: String {
++        let message = session.lastUserMessage?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
++        var parts: [String] = [formattedDate(session.updatedAt)]
++        if !message.isEmpty { parts.append(message) }
++        if let summary = runtimeSummary { parts.append(summary) }
++        if session.isArchived { parts.append("Archived") }
++        return parts.joined(separator: "  ")
++    }
++
++    private var tooltip: String {
+         [
+-            formattedDate(session.updatedAt),
+-            session.isArchived ? "Archived" : "Active",
+-            runtimeSummary,
+-            session.source,
+-            session.model,
+-            session.cwd
++            session.source.map { "Source: \($0)" },
++            session.model.map { "Model: \($0)" },
++            "Cwd: \(session.cwd)",
+         ]
+         .compactMap { $0 }
+-        .filter { !$0.isEmpty }
+-        .joined(separator: "  ")
++        .joined(separator: "\n")
+     }
+ 
+     private var runtimeSummary: String? {
+diff --git a/Shark/Views/MainWorkspaceView.swift b/Shark/Views/MainWorkspaceView.swift
+index fc6c9ba..9e70ec2 100644
+--- a/Shark/Views/MainWorkspaceView.swift
++++ b/Shark/Views/MainWorkspaceView.swift
+@@ -6,6 +6,7 @@
+ //
+ 
+ import SwiftUI
++import AppKit
+ 
+ struct MainWorkspaceView: View {
+     @State private var store = WorkspaceStore()
+@@ -23,26 +24,29 @@ struct MainWorkspaceView: View {
+                 .frame(minWidth: 250, idealWidth: 300, maxWidth: 400)
+ 
+             VSplitView {
+-                FolderListView(
+-                    folders: $store.folders,
+-                    onAddFolder: {
+-                        Task { await store.addFolder(authManager: authManager) }
+-                    },
+-                    onUpdateFolder: { _ in
+-                        Task { await store.saveFoldersToWorkspace(authManager: authManager) }
+-                    },
+-                    onSelectComponents: {
+-                        showComponentSelector = true
+-                    },
+-                    onDropFolders: { droppedFolders in
+-                        Task { await store.handleDroppedFolders(droppedFolders) }
+-                    }
+-                )
+-                .frame(minWidth: 250, idealWidth: 300, minHeight: 220)
++                if store.selectedWorkspace?.kind != .project {
++                    FolderListView(
++                        folders: $store.folders,
++                        onAddFolder: {
++                            Task { await store.addFolder(authManager: authManager) }
++                        },
++                        onUpdateFolder: { _ in
++                            Task { await store.saveFoldersToWorkspace(authManager: authManager) }
++                        },
++                        onSelectComponents: {
++                            showComponentSelector = true
++                        },
++                        onDropFolders: { droppedFolders in
++                            Task { await store.handleDroppedFolders(droppedFolders) }
++                        }
++                    )
++                    .frame(minWidth: 250, idealWidth: 300, minHeight: 220)
++                }
+ 
+                 CodexSessionListView(
+                     sessions: store.codexSessions,
+                     isLoading: store.isLoadingCodexSessions,
++                    canRename: store.selectedWorkspace?.kind == .workspace,
+                     onRefresh: {
+                         Task { await store.loadCodexSessions() }
+                     },
+@@ -65,11 +69,14 @@ struct MainWorkspaceView: View {
+                     onRename: { session in
+                         Task { await store.renameCodexSessionDisplayName(session) }
+                     },
+-                    onArchive: { sessions in
+-                        Task { await store.archiveCodexSessions(sessions) }
++                    onArchive: { sessions, archived in
++                        Task { await store.setCodexSessions(sessions, archived: archived) }
+                     },
+                     onDelete: { sessions in
+                         Task { await store.deleteCodexSessions(sessions) }
++                    },
++                    onCleanArchived: {
++                        Task { await store.deleteAllArchivedCodexSessions() }
+                     }
+                 )
+                 .frame(minWidth: 250, minHeight: 120, idealHeight: 180)
+@@ -99,6 +106,12 @@ struct MainWorkspaceView: View {
+             store.refreshWorkspaces()
+             await store.loadFoldersForSelectedWorkspace(authManager: authManager)
+         }
++        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
++            Task { await store.loadCodexSessions() }
++        }
++        .onReceive(NotificationCenter.default.publisher(for: SettingsManager.codexSessionFilterChangedNotification)) { _ in
++            Task { await store.loadCodexSessions() }
++        }
+     }
+ 
+     private func previewCodexSession(_ session: CodexSession) {
+diff --git a/Shark/Views/SettingsView.swift b/Shark/Views/SettingsView.swift
+index 7d3470f..947d689 100644
+--- a/Shark/Views/SettingsView.swift
++++ b/Shark/Views/SettingsView.swift
+@@ -37,6 +37,7 @@ struct SettingsView: View {
+     @State private var selectedTerminalApp: TerminalApp = .systemDefault
+     @State private var codexResumeInITermSplits = true
+     @State private var codexResumeSplitLayout: CodexResumeSplitLayout = .automaticGrid
++    @State private var hideSubagentSessions = true
+     @State private var codexHooksInstalled = false
+     @State private var codexHooksMessage = ""
+     private let settingsManager = SettingsManager.shared
+@@ -72,6 +73,7 @@ struct SettingsView: View {
+             selectedTerminalApp = settingsManager.defaultTerminalApp
+             codexResumeInITermSplits = settingsManager.codexResumeInITermSplits
+             codexResumeSplitLayout = settingsManager.codexResumeSplitLayout
++            hideSubagentSessions = settingsManager.hideSubagentSessions
+             refreshCodexHooksStatus()
+             // Determine if current path is default or custom
+             if settingsFolderPath == settingsManager.defaultSettingsFolderPath {
+@@ -98,6 +100,10 @@ struct SettingsView: View {
+         .onChange(of: codexResumeInITermSplits) { oldValue, newValue in
+             settingsManager.codexResumeInITermSplits = newValue
+         }
++        .onChange(of: hideSubagentSessions) { oldValue, newValue in
++            settingsManager.hideSubagentSessions = newValue
++            NotificationCenter.default.post(name: SettingsManager.codexSessionFilterChangedNotification, object: nil)
++        }
+         .onChange(of: codexResumeSplitLayout) { oldValue, newValue in
+             settingsManager.codexResumeSplitLayout = newValue
+         }
+@@ -286,6 +292,8 @@ struct SettingsView: View {
+                         .font(.system(size: 13, weight: .semibold))
+                     Toggle("Use iTerm split panes for multiple sessions", isOn: $codexResumeInITermSplits)
+                         .toggleStyle(.checkbox)
++                    Toggle("Hide subagent sessions", isOn: $hideSubagentSessions)
++                        .toggleStyle(.checkbox)
+                     Picker("Split Layout", selection: $codexResumeSplitLayout) {
+                         ForEach(CodexResumeSplitLayout.allCases) { layout in
+                             Text(layout.displayName).tag(layout)
+diff --git a/Shark/Views/WorkspaceListView.swift b/Shark/Views/WorkspaceListView.swift
+index 51b2462..01c6e18 100644
+--- a/Shark/Views/WorkspaceListView.swift
++++ b/Shark/Views/WorkspaceListView.swift
+@@ -20,14 +20,18 @@ struct WorkspaceListView: View {
+     @State private var healthReport: WorkspaceHealthReport?
+ 
+     private var filteredWorkspaces: [Workspace] {
+-        if searchText.isEmpty {
+-            return store.workspaces
+-        }
++        store.workspaces.filter { $0.kind == .workspace && matchesSearch($0) }
++    }
++
++    private var filteredProjects: [Workspace] {
++        store.workspaces.filter { $0.kind == .project && matchesSearch($0) }
++    }
++
++    private func matchesSearch(_ workspace: Workspace) -> Bool {
++        guard !searchText.isEmpty else { return true }
+         let lowercased = searchText.lowercased()
+-        return store.workspaces.filter {
+-            $0.name.lowercased().contains(lowercased) ||
+-            $0.filePath.lowercased().contains(lowercased)
+-        }
++        return workspace.name.lowercased().contains(lowercased)
++            || workspace.filePath.lowercased().contains(lowercased)
+     }
+ 
+     var body: some View {
+@@ -74,6 +78,15 @@ struct WorkspaceListView: View {
+                 }
+                 .buttonStyle(.plain)
+                 .help("Create virtual workspace")
++
++                Button(action: {
++                    Task { await store.addProject(authManager: authManager) }
++                }) {
++                    Image(systemName: "plus.square.on.square")
++                        .font(.system(size: 14, weight: .medium))
++                }
++                .buttonStyle(.plain)
++                .help("Add existing folder as project")
+             }
+             .padding(.horizontal, 12)
+             .padding(.vertical, 8)
+@@ -124,7 +137,7 @@ struct WorkspaceListView: View {
+             Divider()
+ 
+             // Workspace list
+-            if filteredWorkspaces.isEmpty && !searchText.isEmpty {
++            if filteredWorkspaces.isEmpty && filteredProjects.isEmpty && !searchText.isEmpty {
+                 VStack(spacing: 12) {
+                     Image(systemName: "magnifyingglass")
+                         .font(.system(size: 32))
+@@ -136,9 +149,22 @@ struct WorkspaceListView: View {
+                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+             } else {
+                 List(selection: $store.selectedWorkspace) {
+-                    ForEach(filteredWorkspaces) { workspace in
+-                        makeWorkspaceRow(workspace, isPinned: workspace.isPinned)
+-                            .tag(workspace)
++                    if !filteredWorkspaces.isEmpty {
++                        Section("Workspaces") {
++                            ForEach(filteredWorkspaces) { workspace in
++                                makeWorkspaceRow(workspace, isPinned: workspace.isPinned)
++                                    .tag(workspace)
++                            }
++                        }
++                    }
++
++                    if !filteredProjects.isEmpty {
++                        Section("Projects") {
++                            ForEach(filteredProjects) { workspace in
++                                makeWorkspaceRow(workspace, isPinned: workspace.isPinned)
++                                    .tag(workspace)
++                            }
++                        }
+                     }
+                 }
+                 .listStyle(.sidebar)
+@@ -150,7 +176,11 @@ struct WorkspaceListView: View {
+                            let lastSelected = lastSelectedWorkspace,
+                            lastSelected.id == newValue.id,
+                            now.timeIntervalSince(lastTime) < 0.5 {
+-                            WorkspaceOpener.openWorkspace(newValue)
++                            if newValue.kind == .project {
++                                store.showWorkspaceInFinder(newValue)
++                            } else {
++                                WorkspaceOpener.openWorkspace(newValue)
++                            }
+                         }
+                         lastSelectedWorkspace = newValue
+                         lastSelectionTime = now
+@@ -205,7 +235,11 @@ struct WorkspaceListView: View {
+             isPinned: isPinned,
+             onTogglePin: { store.togglePin(workspace) },
+             onOpen: {
+-                WorkspaceOpener.openWorkspace(workspace)
++                if workspace.kind == .project {
++                    store.showWorkspaceInFinder(workspace)
++                } else {
++                    WorkspaceOpener.openWorkspace(workspace)
++                }
+             },
+             onShowInFinder: {
+                 store.showWorkspaceInFinder(workspace)
+@@ -216,12 +250,12 @@ struct WorkspaceListView: View {
+             onRemove: {
+                 workspaceToRemove = workspace
+             },
+-            onCheckHealth: {
++            onCheckHealth: workspace.kind == .workspace ? {
+                 healthReport = WorkspaceHealthReport.inspect(workspace)
+-            },
+-            onOpenInForkWorkspace: {
++            } : nil,
++            onOpenInForkWorkspace: workspace.kind == .workspace ? {
+                 Task { await store.openInForkWorkspace(workspace, authManager: authManager) }
+-            },
++            } : nil,
+             onOpenInSourceTree: {
+                 Task { await store.openGitFoldersInSourceTree(workspace, authManager: authManager) }
+             }
+@@ -283,7 +317,7 @@ struct WorkspaceRow: View {
+     let onShowInFinder: () -> Void
+     let onRename: (String) -> Void
+     let onRemove: () -> Void
+-    let onCheckHealth: () -> Void
++    let onCheckHealth: (() -> Void)?
+     let onOpenInForkWorkspace: (() -> Void)?
+     let onOpenInSourceTree: (() -> Void)?
+ 
+@@ -294,9 +328,9 @@ struct WorkspaceRow: View {
+ 
+     var body: some View {
+         HStack(spacing: 8) {
+-            Image(systemName: "folder.fill")
++            Image(systemName: workspace.kind == .project ? "folder.badge.gearshape" : "folder.fill")
+                 .font(.system(size: 12))
+-                .foregroundColor(.blue)
++                .foregroundColor(workspace.kind == .project ? .purple : .blue)
+ 
+             VStack(alignment: .leading, spacing: 4) {
+                 if isEditing {
+@@ -389,10 +423,12 @@ struct WorkspaceRow: View {
+                 }
+             }
+ 
+-            Button(action: onCheckHealth) {
+-                HStack {
+-                    Image(systemName: "stethoscope")
+-                    Text("Check Health...")
++            if let onCheckHealth {
++                Button(action: onCheckHealth) {
++                    HStack {
++                        Image(systemName: "stethoscope")
++                        Text("Check Health...")
++                    }
+                 }
+             }
+ 
+@@ -419,7 +455,7 @@ struct WorkspaceRow: View {
+     }
+ 
+     private var openActionLabel: String {
+-        "Open virtual workspace"
++        workspace.kind == .project ? "Reveal project folder" : "Open virtual workspace"
+     }
+ 
+     private func startEditing() {
+diff --git a/Shark/Views/WorkspaceStore.swift b/Shark/Views/WorkspaceStore.swift
+index 26d8f7c..d7d5058 100644
+--- a/Shark/Views/WorkspaceStore.swift
++++ b/Shark/Views/WorkspaceStore.swift
+@@ -61,6 +61,20 @@ final class WorkspaceStore {
+         }
+     }
+ 
++    func addProject(authManager: AuthorizationManager) async {
++        let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
++        guard authorized else { return }
++
++        guard let url = FileDialogHelper.selectFolder(
++            title: "Add Project Folder",
++            message: "Choose a folder to track its Codex sessions."
++        ) else { return }
++
++        let project = workspaceManager.addProject(url: url)
++        syncWorkspaces()
++        selectedWorkspace = project
++    }
++
+     func renameWorkspace(_ workspace: Workspace, to newName: String) {
+         do {
+             let updatedWorkspace = try workspaceManager.renameWorkspace(workspace, to: newName)
+@@ -83,7 +97,7 @@ final class WorkspaceStore {
+             codexSessions = []
+         }
+ 
+-        if workspace.filePath.hasPrefix(settingsManager.settingsFolderPath) {
++        if workspace.kind == .workspace && workspace.filePath.hasPrefix(settingsManager.settingsFolderPath) {
+             do {
+                 try FileManager.default.removeItem(atPath: workspace.filePath)
+             } catch {
+@@ -150,6 +164,13 @@ final class WorkspaceStore {
+             return
+         }
+ 
++        // Projects reference a single folder on disk directly — no virtual workspace file.
++        if workspace.kind == .project {
++            folders = []
++            await loadCodexSessions()
++            return
++        }
++
+         isLoadingFolders = true
+         defer { isLoadingFolders = false }
+ 
+@@ -226,11 +247,14 @@ final class WorkspaceStore {
+             CodexSessionManager.sessions(matching: workspacePath, folderPaths: folderPaths, displayNames: displayNames)
+         }.value
+         guard selectedWorkspace?.id == workspace.id, codexSessionLoadID == loadID else { return }
+-        codexSessions = sessions
++        let visibleSessions = settingsManager.hideSubagentSessions
++            ? sessions.filter { !isSubagentSession($0) }
++            : sessions
++        codexSessions = visibleSessions
+ 
+         let sessionsWithRuntimeState = await Task.detached(priority: .utility) {
+             let terminalStates = CodexSessionRuntimeDetector.terminalStates()
+-            return sessions.map { session in
++            return visibleSessions.map { session in
+                 var session = session
+                 session.runtimeState = terminalStates[session.id] ?? .inactive
+                 return session
+@@ -240,6 +264,11 @@ final class WorkspaceStore {
+         codexSessions = sessionsWithRuntimeState
+     }
+ 
++    private func isSubagentSession(_ session: CodexSession) -> Bool {
++        guard let source = session.source else { return false }
++        return source.hasPrefix("{") && source.contains("\"subagent\"")
++    }
++
+     func openCodexSession(_ session: CodexSession) {
+         NSWorkspace.shared.open(URL(fileURLWithPath: session.filePath))
+     }
+@@ -273,6 +302,7 @@ final class WorkspaceStore {
+ 
+     func renameCodexSessionDisplayName(_ session: CodexSession) async {
+         guard let workspace = selectedWorkspace,
++              workspace.kind == .workspace,
+               let newName = promptForCodexSessionDisplayName(currentName: session.title) else {
+             return
+         }
+@@ -289,8 +319,13 @@ final class WorkspaceStore {
+         }
+     }
+ 
+-    func archiveCodexSessions(_ sessions: [CodexSession]) async {
+-        await runCodexSessionCommand("archive", sessions: sessions)
++    /// Sets the archive state without changing sessions already in that state.
++    func setCodexSessions(_ sessions: [CodexSession], archived: Bool) async {
++        let targets = sessions.filter { $0.isArchived != archived }
++        guard !targets.isEmpty else {
++            return
++        }
++        await runCodexSessionCommand(archived ? "archive" : "unarchive", sessions: targets)
+         await loadCodexSessions()
+     }
+ 
+@@ -300,8 +335,14 @@ final class WorkspaceStore {
+         await loadCodexSessions()
+     }
+ 
++    func deleteAllArchivedCodexSessions() async {
++        let archived = codexSessions.filter { $0.isArchived }
++        guard !archived.isEmpty else { return }
++        await deleteCodexSessions(archived)
++    }
++
+     func saveFoldersToWorkspace(authManager: AuthorizationManager) async {
+-        guard let workspace = selectedWorkspace else { return }
++        guard let workspace = selectedWorkspace, workspace.kind == .workspace else { return }
+ 
+         let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
+         guard authorized else { return }
+@@ -391,24 +432,39 @@ final class WorkspaceStore {
+ 
+     private func runCodexSessionCommand(_ command: String, sessions: [CodexSession]) async {
+         let ids = sessions.map(\.id)
+-        await Task.detached(priority: .utility) {
++        let failures = await Task.detached(priority: .utility) {
++            var failures: [String] = []
+             for id in ids {
+                 let process = Process()
+-                process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+-                process.arguments = command == "delete" ? ["codex", command, "--force", id] : ["codex", command, id]
+-                process.standardOutput = Pipe()
+-                process.standardError = Pipe()
++                process.executableURL = URL(fileURLWithPath: "/bin/zsh")
++                process.arguments = ["-lic", "codex \"$@\"", "shark-codex"]
++                    + (command == "delete" ? [command, "--force", id] : [command, id])
++                process.standardInput = FileHandle.nullDevice
++                process.standardOutput = FileHandle.nullDevice
++                let errorPipe = Pipe()
++                process.standardError = errorPipe
+                 do {
+                     try process.run()
++                    let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                     process.waitUntilExit()
++                    if process.terminationStatus != 0 {
++                        let message = String(decoding: errorData, as: UTF8.self)
++                            .trimmingCharacters(in: .whitespacesAndNewlines)
++                        failures.append("\(id): \(message.isEmpty ? "Exit status \(process.terminationStatus)" : message)")
++                    }
+                 } catch {
+-                    print("Failed to run codex \(command) for \(id): \(error)")
++                    failures.append("\(id): \(error.localizedDescription)")
+                 }
+             }
++            return failures
+         }.value
++        if !failures.isEmpty {
++            AlertManager.shared.error(failures.joined(separator: "\n"), title: "Codex \(command) failed")
++        }
+     }
+ 
+     private func codexSessionDisplayNames(for workspace: Workspace) -> [String: String] {
++        guard workspace.kind == .workspace else { return [:] }
+         let dirURL = URL(fileURLWithPath: workspace.filePath)
+         let workspaceFile = try? VirtualWorkspaceFile.parse(fromDirectory: dirURL)
+         return workspaceFile?.codexSessionDisplayNames ?? [:]
+diff --git a/package-lock.json b/package-lock.json
+index 5c727f8..2a21a1f 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "@ssbun/sharkspace",
+-  "version": "1.13.0",
++  "version": "1.14.0",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "@ssbun/sharkspace",
+-      "version": "1.13.0",
++      "version": "1.14.0",
+       "hasInstallScript": true,
+       "license": "MIT",
+       "bin": {
+diff --git a/package.json b/package.json
+index f7d6990..07d612b 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "@ssbun/sharkspace",
+-  "version": "1.13.0",
++  "version": "1.14.0",
+   "description": "macOS desktop app for managing multiple IDE workspaces",
+   "bin": {
+     "shark": "install.js"
+diff --git a/scripts/verify-codex-sessions-ui.sh b/scripts/verify-codex-sessions-ui.sh
+index fa96bb4..2978341 100644
+--- a/scripts/verify-codex-sessions-ui.sh
++++ b/scripts/verify-codex-sessions-ui.sh
+@@ -35,7 +35,9 @@ if ! printf '%s\n' "$session_load_body" | rg -Fq 'selectedWorkspace?.id == works
+ fi
+ 
+ if ! printf '%s\n' "$session_load_body" | rg -Fq 'codexSessionLoadID == loadID' ||
+-   ! printf '%s\n' "$session_load_body" | rg -q '^[[:space:]]*codexSessions = sessions$' ||
++   ! printf '%s\n' "$session_load_body" | rg -q '^[[:space:]]*codexSessions = visibleSessions$' ||
++   ! printf '%s\n' "$session_load_body" | rg -Fq 'sessions.filter { !isSubagentSession($0) }' ||
++   ! printf '%s\n' "$session_load_body" | rg -Fq 'return visibleSessions.map' ||
+    ! printf '%s\n' "$session_load_body" | rg -q '^[[:space:]]*codexSessions = sessionsWithRuntimeState$'; then
+   echo "WorkspaceStore must publish metadata before runtime state and discard superseded refreshes" >&2
+   exit 1
+@@ -116,8 +118,18 @@ if ! rg -Fq 'List(selection:' Shark/Views/CodexSessionListView.swift; then
+   exit 1
+ fi
+ 
+-if ! rg -Fq 'Label("Archive"' Shark/Views/CodexSessionListView.swift; then
+-  echo "Codex session rows must support archive" >&2
++if ! rg -Fq 'Label(session.isArchived ? "Unarchive" : "Archive"' Shark/Views/CodexSessionListView.swift; then
++  echo "Codex session rows must show archive or unarchive for the clicked row" >&2
++  exit 1
++fi
++
++archive_body=$(sed -n '/func setCodexSessions(/,/func deleteCodexSessions(/p' Shark/Views/WorkspaceStore.swift)
++if ! rg -Fq 'onArchive(targetSessions(for: session), !session.isArchived)' Shark/Views/CodexSessionListView.swift ||
++   ! rg -Fq 'store.setCodexSessions(sessions, archived: archived)' Shark/Views/MainWorkspaceView.swift ||
++   ! printf '%s\n' "$archive_body" | rg -Fq 'sessions.filter { $0.isArchived != archived }' ||
++   ! printf '%s\n' "$archive_body" | rg -Fq 'guard !targets.isEmpty else' ||
++   ! printf '%s\n' "$archive_body" | rg -Fq 'runCodexSessionCommand(archived ? "archive" : "unarchive", sessions: targets)'; then
++  echo "Mixed selections must use the menu target state and leave sessions already in that state unchanged" >&2
+   exit 1
+ fi
+ 
+@@ -126,8 +138,10 @@ if ! rg -Fq 'Label("Delete"' Shark/Views/CodexSessionListView.swift; then
+   exit 1
+ fi
+ 
+-if ! rg -Fq '["codex", command, "--force", id]' Shark/Views/WorkspaceStore.swift; then
+-  echo "WorkspaceStore must delete Codex sessions with codex delete --force <session_id> after app confirmation" >&2
++if ! rg -Fq '[command, "--force", id]' Shark/Views/WorkspaceStore.swift ||
++   ! rg -Fq '["-lic", "codex \"$@\"", "shark-codex"]' Shark/Views/WorkspaceStore.swift ||
++   ! rg -Fq 'guard confirmDeleteCodexSessions(sessions) else' Shark/Views/WorkspaceStore.swift; then
++  echo "WorkspaceStore must pass delete --force <session_id> as shell positional arguments after app confirmation" >&2
+   exit 1
+ fi
+ 
+@@ -163,8 +177,10 @@ if rg -Fq 'onTapGesture(count: 2)' Shark/Views/CodexSessionListView.swift; then
+   exit 1
+ fi
+ 
+-if ! rg -Fq 'simultaneousGesture(' Shark/Views/CodexSessionListView.swift || ! rg -Fq 'TapGesture(count: 2)' Shark/Views/CodexSessionListView.swift; then
+-  echo "Codex session rows must preserve List selection while supporting double-click preview" >&2
++if ! rg -Fq 'Label("Preview", systemImage: "eye")' Shark/Views/CodexSessionListView.swift ||
++   ! rg -Fq '.accessibilityAction(named: Text("Preview Session"), onPreview)' Shark/Views/CodexSessionListView.swift ||
++   rg -Fq 'TapGesture(count: 2)' Shark/Views/CodexSessionListView.swift; then
++  echo "Codex session rows must preserve List selection and expose context-menu and accessible preview without double-click" >&2
+   exit 1
+ fi
+ 

@@ -2,9 +2,9 @@
 
 - [发布并回读验证 SharkSpace 1.14.0](tasks/publish-shark-1-14-0.md) — Pending (2026-10-27 19:49)
 
-- [构建并核验 SharkSpace 1.14.0 安装包](tasks/package-shark-1-14-0.md) — Pending (2026-10-27 19:49)
+- [构建并核验 SharkSpace 1.14.0 安装包](tasks/package-shark-1-14-0.md) — In Progress (2026-10-27 20:09)
 
-- [准备并提交 SharkSpace 1.14.0 源码与版本元数据](tasks/prepare-shark-1-14-0.md) — In Progress (2026-10-27 19:49)
+- [准备并提交 SharkSpace 1.14.0 源码与版本元数据](tasks/prepare-shark-1-14-0.md) — Completed (2026-10-27 20:09)
 
 - [提交全部本地改动并发布 Shark 新版本](tasks/release-all-local-changes.md) — In Progress (2026-10-27 19:46)
 

@@ -81,9 +81,9 @@ async function createDMG(
   if (opts.build) {
     const noSign = process.env.NO_SIGN === '1'
     const signingArguments = noSign
-      ? ' CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO'
+      ? ' CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=YES CODE_SIGNING_ALLOWED=YES CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO DEVELOPMENT_TEAM=""'
       : ''
-    if (noSign) p.log.warn('Building without code signing (NO_SIGN=1)')
+    if (noSign) p.log.warn('Building with ad-hoc signing (NO_SIGN=1; no Developer ID or notarization)')
 
     const spinner = p.spinner()
     spinner.start(`Building «${opts.scheme}» (Release)…`)
@@ -122,6 +122,7 @@ async function createDMG(
   }
   const appName = basename(appPath)
   p.log.success(`Found: ${appPath}`)
+  exec(`codesign --verify --deep --strict "${appPath}"`)
 
   // ---- 3. Stage files ----
   const tmpDir = join(tmpdir(), `sharkspace-dmg-${randomUUID()}`)

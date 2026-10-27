@@ -1,11 +1,11 @@
 构建：Shark scheme，Debug，禁用签名，无测试。
-2026-10-27 19:55:16.364 appintentsmetadataprocessor[92269:2191380] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
-** BUILD SUCCEEDED ** [2.942 sec]
+2026-10-27 20:02:12.423 appintentsmetadataprocessor[8441:2220544] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+** BUILD SUCCEEDED ** [3.917 sec]
 Swift 语法检查：
 通过
-Xcode project 结构：
 Shark.xcodeproj/project.pbxproj: OK
 受限 GUI PATH 下仅探测 CLI help，不运行会话操作：
 Usage: codex archive [OPTIONS] <SESSION>
 Usage: codex unarchive [OPTIONS] <SESSION>
 Usage: codex delete [OPTIONS] <SESSION>
+会话静态验证脚本：bash -n scripts/verify-codex-sessions-ui.sh 通过；未执行该脚本或单元测试。

@@ -1,0 +1,29 @@
+{
+  "id": "@ssbun/sharkspace@1.14.0",
+  "name": "@ssbun/sharkspace",
+  "version": "1.14.0",
+  "size": 4330,
+  "unpackedSize": 8829,
+  "shasum": "f32e756f2278712d8218d9fe6a4dce68b9576330",
+  "integrity": "sha512-7iwyZRASjo3FTPXrNhyL/b0liOYSzdEJoN9bP+yf24UlNt8IqxmbvCWcqula6VH/RFZ48XlZ0cO5DWOH6txFsw==",
+  "filename": "ssbun-sharkspace-1.14.0.tgz",
+  "files": [
+    {
+      "path": "README.md",
+      "size": 7260,
+      "mode": 420
+    },
+    {
+      "path": "install.js",
+      "size": 1086,
+      "mode": 493
+    },
+    {
+      "path": "package.json",
+      "size": 483,
+      "mode": 420
+    }
+  ],
+  "entryCount": 3,
+  "bundled": []
+}

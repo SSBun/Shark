@@ -56,3 +56,16 @@
 - `WorkspaceStore.loadCodexSessions` 在发布 metadata 前应用子代理过滤，再为相同可见集合补充 runtime；两次提交都核对 workspace ID 与 load ID。`MainWorkspaceView` 在应用激活或筛选设置通知时重新加载。
 - `CodexSessionListView` 通过右键 Preview 和辅助功能动作触发预览；归档菜单向 `WorkspaceStore.setCodexSessions(_:archived:)` 传递明确目标状态，混合多选只处理状态需要变化的条目。垃圾桶仅处理当前可见列表的已归档项并复用永久删除确认。
 - `WorkspaceStore.runCodexSessionCommand` 用登录交互式 zsh 获取用户 CLI 环境，命令参数通过位置参数传递；CLI help/构建只能证明接口与编译兼容，不能证明真实归档/删除副作用正确。
+
+## CTX-release-delivery — 原生安装包与 npm 分发边界
+- Scope: Release app、DMG、GitHub tag 工作流与 npm 下载包装包之间的一致性及签名边界。
+- Paths: `scripts/build-tool.ts`, `.github/workflows/build-and-release.yml`, `install.js`, `package.json`, `Shark/Shark.entitlements`
+- Keywords: DMG, NO_SIGN, ad-hoc, codesign, npm, GitHub Release, postinstall
+- Authority: `scripts/build-tool.ts`, `.github/workflows/build-and-release.yml`, `install.js`, `package.json`, `Shark/Shark.entitlements`
+- Recheck: 打包入口、签名参数、CI 产物命名、npm files/postinstall 或 entitlements 改变时重新检查。
+
+### Relationships
+- GitHub `v*` tag 工作流通过 `npm ci --ignore-scripts` 安装构建依赖，调用现有 build-tool，以版本化 DMG 与 SHA256 创建 Release。不能在 asset 尚未存在时执行面向用户的 postinstall。
+- npm 只包含安装脚本、README 与 package.json；`install.js` 用 package version 推导对应 GitHub tag 和 DMG URL。因此 registry 发布依赖同版本公开 DMG 已就绪。
+- `NO_SIGN=1` 表示不使用证书，而不是留下半成品链接器签名：build-tool 请求 Xcode 完整 ad-hoc 签名，禁用自动注入基础 entitlement，并在打包前执行严格 codesign 验证。实际 signed entitlement 应与项目源文件一致。
+- ad-hoc 完整性通过不等于 Developer ID 身份、Gatekeeper 信任或 Apple 公证；这些是独立分发能力边界。

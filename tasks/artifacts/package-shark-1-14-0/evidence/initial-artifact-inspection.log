@@ -1,0 +1,20 @@
+Release DMG 内 App 版本：
+1.14.0
+16
+com.csl.cool.Shark
+15.2
+arm64
+Executable=/private/tmp/shark-1-14-0-dmg/SharkSpace.app/Contents/MacOS/SharkSpace
+Identifier=SharkSpace
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=34019 flags=0x20002(adhoc,linker-signed) hashes=1060+0 location=embedded
+Signature=adhoc
+Info.plist=not bound
+TeamIdentifier=not set
+Sealed Resources=none
+Internal requirements=none
+/tmp/shark-1-14-0-dmg/SharkSpace.app: code has no resources but signature indicates they must be present
+codesign verify exit=1
+SHA256：
+b8f9eef99572faa62206bfd2ca31173a1e9e8c9782539000d0290cd3ff34ef3f  /Users/caishilin/Desktop/personal/Shark/dist/SharkSpace-1.14.0_20261027T121038Z/SharkSpace-1.14.0.dmg
+签名/公证边界：NO_SIGN=1；未请求 Developer ID 签名或 Apple 公证，不报告为已公证。

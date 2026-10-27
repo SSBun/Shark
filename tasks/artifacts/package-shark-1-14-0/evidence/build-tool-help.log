@@ -1,0 +1,11 @@
+Usage: build-tool [options] [command]
+
+SharkSpace build, package & publish tool
+
+Options:
+  -h, --help                      display help for command
+
+Commands:
+  create-dmg [options] [version]  Build SharkSpace and package it as a DMG
+  publish [options] <version>     Verify version, create DMG, and publish to npm
+  help [command]                  display help for command

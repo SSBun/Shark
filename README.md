@@ -119,7 +119,7 @@ cd Shark
    ```
 
 ### 系统要求
-- macOS 14.0 或更高版本。
+- macOS 15.2 或更高版本。
 - 一个用于打开 virtual workspace 的终端应用。
 
 ## 快速开始
