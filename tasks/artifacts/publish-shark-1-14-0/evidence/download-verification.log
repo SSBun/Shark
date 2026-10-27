@@ -1,0 +1,23 @@
+公开HTTPS下载成功（curl未提供认证），SHA256文件校验与hdiutil verify通过。
+Downloaded directory: /tmp/shark-1-14-0-published.K3Eknb
+1.14.0
+16
+15.2
+arm64
+Executable=/private/tmp/shark-1-14-0-published-mount/SharkSpace.app/Contents/MacOS/SharkSpace
+Identifier=com.csl.cool.Shark
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20500 size=31603 flags=0x10002(adhoc,runtime) hashes=977+7 location=embedded
+Signature=adhoc
+Info.plist entries=23
+TeamIdentifier=not set
+Runtime Version=15.2.0
+Sealed Resources version=2 rules=13 files=2
+Internal requirements count=0 size=12
+/tmp/shark-1-14-0-published-mount/SharkSpace.app: valid on disk
+/tmp/shark-1-14-0-published-mount/SharkSpace.app: satisfies its Designated Requirement
+codesign verify exit=0
+Signed entitlements match source: True
+get-task-allow: False
+5d8fa5a47db2fa1bccb367a158027546edfa46ca4a95df1e1b9301662c5a5782  /tmp/shark-1-14-0-published.K3Eknb/SharkSpace-1.14.0.dmg
+完整性通过；仅ad-hoc，无Developer ID/Apple公证，不代表Gatekeeper信任。

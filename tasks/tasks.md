@@ -1,6 +1,6 @@
 # 任务索引
 
-- [发布并回读验证 SharkSpace 1.14.0](tasks/publish-shark-1-14-0.md) — In Progress (2026-10-27 20:27)
+- [发布并回读验证 SharkSpace 1.14.0](tasks/publish-shark-1-14-0.md) — Blocked (2026-10-27 20:38)
 
 - [构建并核验 SharkSpace 1.14.0 安装包](tasks/package-shark-1-14-0.md) — Completed (2026-10-27 20:21)
 
