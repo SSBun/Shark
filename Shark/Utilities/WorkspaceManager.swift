@@ -97,6 +97,33 @@ class WorkspaceManager: ObservableObject {
         }
     }
 
+    /// Add an existing folder as a project entry.
+    func addProject(url: URL) -> Workspace {
+        let path = url.path
+        if let existing = workspaces.first(where: { $0.filePath == path }) {
+            return existing
+        }
+
+        var bookmarkData: Data?
+        if let bookmark = try? url.bookmarkData(
+            options: .withSecurityScope,
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+        ) {
+            UserDefaults.standard.set(bookmark, forKey: "folderBookmark_\(path)")
+            bookmarkData = bookmark
+        }
+
+        let project = Workspace(
+            name: url.lastPathComponent,
+            filePath: path,
+            kind: .project
+        )
+        _ = bookmarkData // stored above; project relies on SettingsManager bookmark lookup
+        addWorkspace(project)
+        return project
+    }
+
     /// Remove a workspace
     func removeWorkspace(_ workspace: Workspace) {
         workspaces.removeAll { $0.id == workspace.id }
@@ -121,6 +148,10 @@ class WorkspaceManager: ObservableObject {
 
     /// Get git repo paths for a workspace.
     func gitRepoPaths(for workspace: Workspace) throws -> [String] {
+        if workspace.kind == .project {
+            let folder = Folder(name: workspace.name, path: workspace.filePath)
+            return folder.isGitRepository ? [folder.path] : []
+        }
         let dirURL = URL(fileURLWithPath: workspace.filePath)
         let workspaceFile = try VirtualWorkspaceFile.parse(fromDirectory: dirURL)
         return workspaceFile.toFolders()
@@ -130,6 +161,14 @@ class WorkspaceManager: ObservableObject {
 
     /// Rename a workspace and its corresponding file/directory on disk
     func renameWorkspace(_ workspace: Workspace, to newName: String) throws -> Workspace {
+        // Projects reference an external folder; only update the display name.
+        if workspace.kind == .project {
+            var updated = workspace
+            updated.name = newName
+            updateWorkspace(updated)
+            return updated
+        }
+
         let oldURL = URL(fileURLWithPath: workspace.filePath)
         let parentURL = oldURL.deletingLastPathComponent()
         let newURL = parentURL.appendingPathComponent(newName)

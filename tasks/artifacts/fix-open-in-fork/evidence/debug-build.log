@@ -1,0 +1,731 @@
+Command line invocation:
+    /Applications/Xcode-26.2.0.app/Contents/Developer/usr/bin/xcodebuild -project Shark.xcodeproj -scheme Shark -configuration Debug -derivedDataPath /tmp/shark-fork-fix-derived -destination platform=macOS CODE_SIGN_IDENTITY= CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
+
+Build settings from command line:
+    CODE_SIGN_IDENTITY = 
+    CODE_SIGNING_ALLOWED = NO
+    CODE_SIGNING_REQUIRED = NO
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64, id:00008132-0016511C0CD9801C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00008132-0016511C0CD9801C, name:My Mac }
+note: Using codesigning identity override: 
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'Shark' in project 'Shark' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode-26.2.0.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: bffd3c30327e55351ecdb6ed8851bf36
+Build description path: /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/XCBuildData/bffd3c30327e55351ecdb6ed8851bf36.xcbuilddata
+ClangStatCache /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk /tmp/shark-fork-fix-derived/SDKStatCaches.noindex/macosx26.2-25C57-8e261bc56bcf93cdf4ad792911627a89.sdkstatcache
+    cd /Users/caishilin/Desktop/personal/Shark/Shark.xcodeproj
+    /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -o /tmp/shark-fork-fix-derived/SDKStatCaches.noindex/macosx26.2-25C57-8e261bc56bcf93cdf4ad792911627a89.sdkstatcache
+
+CreateBuildDirectory /tmp/shark-fork-fix-derived/Build/Products
+    cd /Users/caishilin/Desktop/personal/Shark/Shark.xcodeproj
+    builtin-create-build-directory /tmp/shark-fork-fix-derived/Build/Products
+
+CreateBuildDirectory /tmp/shark-fork-fix-derived/Build/Intermediates.noindex
+    cd /Users/caishilin/Desktop/personal/Shark/Shark.xcodeproj
+    builtin-create-build-directory /tmp/shark-fork-fix-derived/Build/Intermediates.noindex
+
+CreateBuildDirectory /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /Users/caishilin/Desktop/personal/Shark/Shark.xcodeproj
+    builtin-create-build-directory /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /tmp/shark-fork-fix-derived/Build/Products/Debug
+    cd /Users/caishilin/Desktop/personal/Shark/Shark.xcodeproj
+    builtin-create-build-directory /tmp/shark-fork-fix-derived/Build/Products/Debug
+
+CreateBuildDirectory /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /Users/caishilin/Desktop/personal/Shark/Shark.xcodeproj
+    builtin-create-build-directory /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/EagerLinkingTBDs/Debug
+    cd /Users/caishilin/Desktop/personal/Shark/Shark.xcodeproj
+    builtin-create-build-directory /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/EagerLinkingTBDs/Debug
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark-9504c7abf328d987e5f5d8602cc0fffa-VFS/all-product-headers.yaml
+    cd /Users/caishilin/Desktop/personal/Shark/Shark.xcodeproj
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark-9504c7abf328d987e5f5d8602cc0fffa-VFS/all-product-headers.yaml
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-generated-files.hmap (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-generated-files.hmap
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace.DependencyStaticMetadataFileList (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace.DependencyMetadataFileList (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace.DependencyMetadataFileList
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/empty-SharkSpace.plist (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/empty-SharkSpace.plist
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-all-non-framework-target-headers.hmap (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace.hmap (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace.hmap
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-all-target-headers.hmap (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-all-target-headers.hmap
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-own-target-headers.hmap (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-own-target-headers.hmap
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-project-headers.hmap (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-project-headers.hmap
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-DebugDylibPath-normal-arm64.txt (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-DebugDylibInstallName-normal-arm64.txt (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-DebugDylibInstallName-normal-arm64.txt
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.SwiftFileList (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.SwiftFileList
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/Shark_const_extract_protocols.json (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/Shark_const_extract_protocols.json
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.SwiftConstValuesFileList (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.LinkFileList (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.LinkFileList
+
+WriteAuxiliaryFile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/Shark-OutputFileMap.json (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    write-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/Shark-OutputFileMap.json
+
+MkDir /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /bin/mkdir -p /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS
+
+MkDir /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Resources (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /bin/mkdir -p /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Resources
+
+MkDir /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /bin/mkdir -p /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents
+
+MkDir /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /bin/mkdir -p /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app
+
+ValidateDevelopmentAssets /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-validate-development-assets --validate YES_ERROR /Users/caishilin/Desktop/personal/Shark/Shark/Preview\ Content
+
+Ld /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS/__preview.dylib normal (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos15.2 -dynamiclib -isysroot /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -O0 -L/tmp/shark-fork-fix-derived/Build/Products/Debug -F/tmp/shark-fork-fix-derived/Build/Products/Debug -install_name @rpath/SharkSpace.debug.dylib -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace_dependency_info.dat -o /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS/__preview.dylib
+
+MkDir /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_output/thinned (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /bin/mkdir -p /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_output/thinned
+
+MkDir /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_output/unthinned (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /bin/mkdir -p /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_output/unthinned
+
+GenerateAssetSymbols /Users/caishilin/Desktop/personal/Shark/Shark/Preview\ Content/Preview\ Assets.xcassets /Users/caishilin/Desktop/personal/Shark/Shark/Assets.xcassets (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /Applications/Xcode-26.2.0.app/Contents/Developer/usr/bin/actool /Users/caishilin/Desktop/personal/Shark/Shark/Preview\ Content/Preview\ Assets.xcassets /Users/caishilin/Desktop/personal/Shark/Shark/Assets.xcassets --compile /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Resources --output-format human-readable-text --notices --warnings --export-dependency-info /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_dependencies --output-partial-info-plist /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --enable-on-demand-resources NO --development-region en --target-device mac --minimum-deployment-target 15.2 --platform macosx --bundle-identifier com.csl.cool.Shark --generate-swift-asset-symbols /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/GeneratedAssetSymbols.h
+/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+CompileAssetCatalogVariant thinned /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Resources /Users/caishilin/Desktop/personal/Shark/Shark/Preview\ Content/Preview\ Assets.xcassets /Users/caishilin/Desktop/personal/Shark/Shark/Assets.xcassets (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /Applications/Xcode-26.2.0.app/Contents/Developer/usr/bin/actool /Users/caishilin/Desktop/personal/Shark/Shark/Preview\ Content/Preview\ Assets.xcassets /Users/caishilin/Desktop/personal/Shark/Shark/Assets.xcassets --compile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_dependencies_thinned --output-partial-info-plist /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --enable-on-demand-resources NO --development-region en --target-device mac --minimum-deployment-target 15.2 --platform macosx
+/* com.apple.actool.compilation-results */
+/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_generated_info.plist_thinned
+/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_output/thinned/AppIcon.icns
+/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_output/thinned/Assets.car
+
+
+LinkAssetCatalog /Users/caishilin/Desktop/personal/Shark/Shark/Preview\ Content/Preview\ Assets.xcassets /Users/caishilin/Desktop/personal/Shark/Shark/Assets.xcassets (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-linkAssetCatalog --thinned /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_output/thinned --thinned-dependencies /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_generated_info.plist_thinned --unthinned /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_output/unthinned --unthinned-dependencies /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_generated_info.plist_unthinned --output /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Resources --plist-output /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_generated_info.plist
+note: Emplaced /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Resources/AppIcon.icns (in target 'Shark' from project 'Shark')
+note: Emplaced /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Resources/Assets.car (in target 'Shark' from project 'Shark')
+
+ProcessInfoPlistFile /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Info.plist /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/empty-SharkSpace.plist (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-infoPlistUtility /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/empty-SharkSpace.plist -producttype com.apple.product-type.application -genpkginfo /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/PkgInfo -expandbuildsettings -platform macosx -additionalcontentfile /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/assetcatalog_generated_info.plist -o /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Info.plist
+
+SwiftDriver Shark normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-SwiftDriver -- /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SharkSpace -Onone -enforce-exclusivity\=checked @/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -target arm64-apple-macos15.2 -g -module-cache-path /tmp/shark-fork-fix-derived/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /tmp/shark-fork-fix-derived/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/shark-fork-fix-derived/Build/Products/Debug -F /tmp/shark-fork-fix-derived/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/shark-fork-fix-derived/SDKStatCaches.noindex/macosx26.2-25C57-8e261bc56bcf93cdf4ad792911627a89.sdkstatcache -output-file-map /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/Shark-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/shark-fork-fix-derived/ModuleCache.noindex -sdk-module-cache-path /tmp/shark-fork-fix-derived/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/shark-fork-fix-derived/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/Shark_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-generated-files.hmap -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-own-target-headers.hmap -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-project-headers.hmap -Xcc -I/tmp/shark-fork-fix-derived/Build/Products/Debug/include -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources-normal/arm64 -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/arm64 -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace-Swift.h -working-directory /Users/caishilin/Desktop/personal/Shark -experimental-emit-module-separately -disable-cmo
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/ptrcheck-ROHUQ3GQCD1QFP3FE3CN3HNN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_AvailabilityInternal-D873OYWBV6IRLCC1HZIDVM1P6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/DeveloperToolsSupport-B9CCFQ9U7NTFJ5V06DM0DFY4S.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_Builtin_float-9BFO9TR7LWC87388QDGQKBCEB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_Builtin_stdarg-1HJAV5QAY3BC0KMQSWXE9BOX8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/SwiftShims-4Q0FPFDVENWPIS09CPAR8FJGZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_Builtin_stdbool-GAGPAEO4SY6GWZW6KAQUZHY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/ptrauth-8JIDGYV7JNXNC1KT1T0E5IRWM.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_Builtin_stddef-F5DKK5LYH1867FJRW8PBTFCR0.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_SwiftConcurrencyShims-4P8ZXKH5BPHZC8DF541WJXF90.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_DarwinFoundation1-1EPLEP4R3YIL8Y3DGBGOBBW1M.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_Builtin_limits-32Y8OVKNYC6NUTLLE52C7LM3R.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_DarwinFoundation2-A5OHGS299JY0436KMQQQRMJIY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/sys_types-801732G3JUDW1AFGYT7M7Q1HX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_Builtin_stdint-9E9XGXS6SXDC7A35KYLE2TW69.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_Builtin_tgmath-DA8OG9P4HEPL5USSH848QL85B.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/OpenGL-7H9R1HADAV6F5ISKG6QEVKLFG.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_Builtin_intrinsics-ZTKMH4SDIIV77Z3IEUL5T17Y.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/libDER-9MCIXYD2AIX58D55PJKBIOYP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_DarwinFoundation3-15CDAQ5TA2L5UF1OPJYFJ28IB.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_Builtin_stdatomic-B2LSQGEWX541WU1GRSBDHLVMV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/_Builtin_inttypes-2B07ND8CNEG3FT1GBU3HGX15R.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/Darwin-CWI0YDBDHP9UGQJXUD29IF3B7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/simd-9J22QSTDKYUCEONU34HIVSFQH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/MachO-4YEC4WG2JGSTCG5UE8F5X1K6E.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/launch-72N1ASHIGXMO6J6IJW0CZZ1Z3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/CUPS-50WHXAB9BZHZI5ALURRWV2FKZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/libkern-BRZ9OKZ7O65BCEL07KBBOBYYE.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/Spatial-BDH2OV4K1G3XPYRPEJURB9KWW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/ObjectiveC-6XI0NG3C9P53CURLJSSIE2HY1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/os_object-89JY5PQO5V3CRYVGMLAT0JMV6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/os_workgroup-F1XNCXWODVBRIVO0IN6J1TLN4.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/Dispatch-E1VWBS9Q1Q0HVZ2986FHH4XFN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/CoreFoundation-7NEGLZ03UV506RSUO2LZ7YMX2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/XPC-3CI9YYI3PBK05J49IK5B3YS2U.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/os-DRA1DG23YLA9B4QOTM9FQ4EJR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/IOKit-5WPODZ9NTJ799F1NTMWB8FK1K.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/Security-1G2NRXCUPJ98O9V6W5D932USG.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/ColorSync-4BZOW4A7G4KET2GXNE3PBVZ53.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/CFNetwork-CVMBFGBA1SJSK5KYZRKMMJ03V.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/CoreGraphics-2VLLMEANZY9NJ52ZF7TVK0V9G.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/DiskArbitration-8BHMAD4N44ILWZ2RHAQJMKVVP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/CoreServices-D7UZ3KMAK7TJG7XJNYFB0PXJK.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/CoreText-AKIM92RSLWHZF2ZMK8TORUKWJ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/ImageIO-CM5L83S77RDNR3BTOHRNX4ZRL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/Foundation-AQ8FIUAI55HUFZCHRUMJ7DTYE.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/DataDetection-2H1LF8Z3T7NW6CQE79RK2OUQX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/Symbols-7YH0NSQ1F4VD9TYPHRUDYU2IO.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/ApplicationServices-14XV6KA545NCJNND3LEFII2ZF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/CoreData-8LYC2UVIMWJA627E3F5X506FA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/Accessibility-4F75D3O0L8TA5WZY1P3JK4ZAV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/IOSurface-96OMJXXQD1OY594B69KNA1L1L.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/CoreTransferable-4OCWO2R0TDWTTKBBE32CA9WLN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/OSLog-EY26R5KLK90XMO3P6X9A0LDK5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/UniformTypeIdentifiers-8DXKCAQFQ36O5OFTY8JAUHLKW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/Metal-EZEP3G2QO3SOJBK2NJMKDILF8.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/CoreVideo-4GA5G56VK46H3QT5ROTRR8Y5T.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/CoreImage-E07Y4EJ1GWRUVPQ96BI0AAJCU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/QuartzCore-8YLG1ZIGES5F29BK308RZX74Y.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/SwiftUICore-7JO775YLS3RTQWZGWGO4C9LI5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/AppKit-6XA22QDMXAMH5ER22JANKDPYZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /tmp/shark-fork-fix-derived/ModuleCache.noindex/SwiftUI-7505Y7W2CAORNKGOU4L7OOSPF.pcm
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ SharkSpace (in target 'Shark' from project 'Shark')
+
+EmitSwiftModule normal arm64 (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 Compiling\ ComponentSelectorView.swift,\ ComponentValidationView.swift,\ DependencyListView.swift,\ FolderListView.swift,\ GitStatusValueView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/ComponentSelectorView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/ComponentValidationView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/DependencyListView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/FolderListView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/GitStatusValueView.swift (in target 'Shark' from project 'Shark')
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/ComponentSelectorView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/ComponentValidationView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/DependencyListView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/FolderListView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/GitStatusValueView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 Compiling\ WorkspaceListView.swift,\ WorkspaceStore.swift,\ ContentView.swift,\ SharkApp.swift,\ GeneratedAssetSymbols.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/WorkspaceListView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/WorkspaceStore.swift /Users/caishilin/Desktop/personal/Shark/Shark/ContentView.swift /Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Shark' from project 'Shark')
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/WorkspaceListView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/WorkspaceStore.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/ContentView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:86:21: warning: call to main actor-isolated instance method 'isSettingsWindow' in a synchronous nonisolated context
+            if self.isSettingsWindow(window) {
+                    ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:146:18: note: calls to instance method 'isSettingsWindow' from outside of its actor context are implicitly asynchronous
+    private func isSettingsWindow(_ window: NSWindow) -> Bool {
+                 ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:87:22: warning: main actor-isolated property 'settingsWindow' can not be mutated from a Sendable closure
+                self.settingsWindow = window
+                     ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:48:17: note: mutation of this property is only permitted within the actor
+    private var settingsWindow: NSWindow?
+                ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:92:21: warning: call to main actor-isolated instance method 'isMainContentWindow' in a synchronous nonisolated context
+            if self.isMainContentWindow(window) {
+                    ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:132:18: note: calls to instance method 'isMainContentWindow' from outside of its actor context are implicitly asynchronous
+    private func isMainContentWindow(_ window: NSWindow) -> Bool {
+                 ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:93:22: warning: main actor-isolated property 'mainWindow' can not be mutated from a Sendable closure
+                self.mainWindow = window
+                     ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:47:17: note: mutation of this property is only permitted within the actor
+    private var mainWindow: NSWindow?
+                ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:99:21: warning: call to main actor-isolated instance method 'isContentWindow' in a synchronous nonisolated context
+            if self.isContentWindow(window) && window != self.mainWindow {
+                    ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:166:18: note: calls to instance method 'isContentWindow' from outside of its actor context are implicitly asynchronous
+    private func isContentWindow(_ window: NSWindow) -> Bool {
+                 ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:99:63: warning: main actor-isolated property 'mainWindow' can not be referenced from a nonisolated autoclosure
+            if self.isContentWindow(window) && window != self.mainWindow {
+                                                              ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:47:17: note: property declared here
+    private var mainWindow: NSWindow?
+                ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:115:31: warning: main actor-isolated property 'mainWindow' can not be referenced from a Sendable closure
+            if window == self.mainWindow {
+                              ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:47:17: note: property declared here
+    private var mainWindow: NSWindow?
+                ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:116:22: warning: main actor-isolated property 'mainWindow' can not be mutated from a Sendable closure
+                self.mainWindow = nil
+                     ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:47:17: note: mutation of this property is only permitted within the actor
+    private var mainWindow: NSWindow?
+                ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:117:38: warning: main actor-isolated property 'settingsWindow' can not be referenced from a Sendable closure
+            } else if window == self.settingsWindow {
+                                     ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:48:17: note: property declared here
+    private var settingsWindow: NSWindow?
+                ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:118:22: warning: main actor-isolated property 'settingsWindow' can not be mutated from a Sendable closure
+                self.settingsWindow = nil
+                     ^
+/Users/caishilin/Desktop/personal/Shark/Shark/SharkApp.swift:48:17: note: mutation of this property is only permitted within the actor
+    private var settingsWindow: NSWindow?
+                ^
+
+SwiftCompile normal arm64 /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 Compiling\ TerminalOpener.swift,\ UpdateManager.swift,\ ValidationManager.swift,\ VenomfileParser.swift,\ WorkspaceManager.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/TerminalOpener.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/UpdateManager.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/ValidationManager.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/VenomfileParser.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/WorkspaceManager.swift (in target 'Shark' from project 'Shark')
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/TerminalOpener.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/UpdateManager.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/ValidationManager.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/VenomfileParser.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/WorkspaceManager.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 Compiling\ VirtualWorkspaceFile.swift,\ Workspace.swift,\ AlertManager.swift,\ AuthorizationManager.swift,\ CodexHookInstaller.swift,\ CodexSessionManager.swift /Users/caishilin/Desktop/personal/Shark/Shark/Models/VirtualWorkspaceFile.swift /Users/caishilin/Desktop/personal/Shark/Shark/Models/Workspace.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/AlertManager.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/AuthorizationManager.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/CodexHookInstaller.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/CodexSessionManager.swift (in target 'Shark' from project 'Shark')
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Models/VirtualWorkspaceFile.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Models/Workspace.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/AlertManager.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+/Users/caishilin/Desktop/personal/Shark/Shark/Utilities/AlertManager.swift:200:20: warning: immutable value 'action' was never used; consider replacing with '_' or removing it
+            if let action = alert.action, let actionTitle = alert.actionTitle {
+               ~~~~^~~~~~
+               _
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/AuthorizationManager.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/CodexHookInstaller.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/CodexSessionManager.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 Compiling\ CodexSessionPreviewLoader.swift,\ CodexSessionRuntimeDetector.swift,\ FileDialogHelper.swift,\ ForkOpener.swift,\ GitManager.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/CodexSessionPreviewLoader.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/CodexSessionRuntimeDetector.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/FileDialogHelper.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/ForkOpener.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/GitManager.swift (in target 'Shark' from project 'Shark')
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/CodexSessionPreviewLoader.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/CodexSessionRuntimeDetector.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/FileDialogHelper.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/ForkOpener.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+/Users/caishilin/Desktop/personal/Shark/Shark/Utilities/ForkOpener.swift:92:15: warning: result of call to 'quitFork()' is unused
+        await quitFork()
+              ^       ~~
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/GitManager.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 Compiling\ WorkspaceOpener.swift,\ XcodeOpener.swift,\ AuthorizationPanel.swift,\ CodexSessionListView.swift,\ CodexSessionPreviewContentView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/WorkspaceOpener.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/XcodeOpener.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/AuthorizationPanel.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/CodexSessionListView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/CodexSessionPreviewContentView.swift (in target 'Shark' from project 'Shark')
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/WorkspaceOpener.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/XcodeOpener.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/AuthorizationPanel.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/CodexSessionListView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/CodexSessionPreviewContentView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 Compiling\ MainWorkspaceView.swift,\ RenameWorkspaceView.swift,\ SettingsView.swift,\ WorkspaceGitOverviewView.swift,\ WorkspaceGitStatusStore.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/MainWorkspaceView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/RenameWorkspaceView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/SettingsView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/WorkspaceGitOverviewView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/WorkspaceGitStatusStore.swift (in target 'Shark' from project 'Shark')
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/MainWorkspaceView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/RenameWorkspaceView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/SettingsView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+/Users/caishilin/Desktop/personal/Shark/Shark/Views/SettingsView.swift:517:16: warning: 'allowedFileTypes' was deprecated in macOS 12.0: Use -allowedContentTypes instead
+        dialog.allowedFileTypes = ["app"]
+               ^
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/WorkspaceGitOverviewView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/WorkspaceGitStatusStore.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 Compiling\ CodexSessionPreviewMessageView.swift,\ CodexSessionPreviewStore.swift,\ CodexSessionPreviewView.swift,\ ComponentGitPanel.swift,\ ComponentSearchFilter.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/CodexSessionPreviewMessageView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/CodexSessionPreviewStore.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/CodexSessionPreviewView.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/ComponentGitPanel.swift /Users/caishilin/Desktop/personal/Shark/Shark/Views/ComponentSearchFilter.swift (in target 'Shark' from project 'Shark')
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/CodexSessionPreviewMessageView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/CodexSessionPreviewStore.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/CodexSessionPreviewView.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/ComponentGitPanel.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Views/ComponentSearchFilter.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+/Users/caishilin/Desktop/personal/Shark/Shark/Views/ComponentSearchFilter.swift:118:78: warning: backward matching of the unlabeled trailing closure is deprecated; label the argument with 'onSearch' to suppress this warning
+                SearchBar(text: $searchText, placeholder: searchPlaceholder) {
+                                                                           ~ ^
+                                                                           , onSearch: 
+/Users/caishilin/Desktop/personal/Shark/Shark/Views/ComponentSearchFilter.swift:19:5: note: 'init(text:placeholder:onClear:onSearch:)' declared here
+    init(
+    ^
+
+SwiftCompile normal arm64 Compiling\ CodexSession.swift,\ CodexSessionPreview.swift,\ CodexSessionRuntimeState.swift,\ Folder.swift,\ GitRepositoryStatus.swift,\ VenomDependency.swift /Users/caishilin/Desktop/personal/Shark/Shark/Models/CodexSession.swift /Users/caishilin/Desktop/personal/Shark/Shark/Models/CodexSessionPreview.swift /Users/caishilin/Desktop/personal/Shark/Shark/Models/CodexSessionRuntimeState.swift /Users/caishilin/Desktop/personal/Shark/Shark/Models/Folder.swift /Users/caishilin/Desktop/personal/Shark/Shark/Models/GitRepositoryStatus.swift /Users/caishilin/Desktop/personal/Shark/Shark/Models/VenomDependency.swift (in target 'Shark' from project 'Shark')
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Models/CodexSession.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Models/CodexSessionPreview.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Models/CodexSessionRuntimeState.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Models/Folder.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Models/GitRepositoryStatus.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Models/VenomDependency.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 Compiling\ KeyboardManager.swift,\ Log.swift,\ SettingsManager.swift,\ SourceTreeOpener.swift,\ SymlinkManager.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/KeyboardManager.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/Log.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/SettingsManager.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/SourceTreeOpener.swift /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/SymlinkManager.swift (in target 'Shark' from project 'Shark')
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/KeyboardManager.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/Log.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/SettingsManager.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+/Users/caishilin/Desktop/personal/Shark/Shark/Utilities/SettingsManager.swift:39:21: warning: variable 'bookmarks' was never mutated; consider changing to 'let' constant
+                var bookmarks: [String: Data] = [oldPath: oldBookmark]
+                ~~~ ^
+                let
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/SourceTreeOpener.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftCompile normal arm64 /Users/caishilin/Desktop/personal/Shark/Shark/Utilities/SymlinkManager.swift (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for SharkSpace (in target 'Shark' from project 'Shark')
+
+SwiftDriver\ Compilation\ Requirements Shark normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SharkSpace -Onone -enforce-exclusivity\=checked @/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -target arm64-apple-macos15.2 -g -module-cache-path /tmp/shark-fork-fix-derived/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /tmp/shark-fork-fix-derived/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/shark-fork-fix-derived/Build/Products/Debug -F /tmp/shark-fork-fix-derived/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/shark-fork-fix-derived/SDKStatCaches.noindex/macosx26.2-25C57-8e261bc56bcf93cdf4ad792911627a89.sdkstatcache -output-file-map /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/Shark-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/shark-fork-fix-derived/ModuleCache.noindex -sdk-module-cache-path /tmp/shark-fork-fix-derived/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/shark-fork-fix-derived/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/Shark_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-generated-files.hmap -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-own-target-headers.hmap -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-project-headers.hmap -Xcc -I/tmp/shark-fork-fix-derived/Build/Products/Debug/include -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources-normal/arm64 -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/arm64 -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace-Swift.h -working-directory /Users/caishilin/Desktop/personal/Shark -experimental-emit-module-separately -disable-cmo
+
+SwiftDriverJobDiscovery normal arm64 Compiling CodexSession.swift, CodexSessionPreview.swift, CodexSessionRuntimeState.swift, Folder.swift, GitRepositoryStatus.swift, VenomDependency.swift (in target 'Shark' from project 'Shark')
+
+SwiftMergeGeneratedHeaders /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/SharkSpace-Swift.h /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace-Swift.h (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-swiftHeaderTool -arch arm64 /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace-Swift.h -o /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/SharkSpace-Swift.h
+
+Copy /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.swiftmodule/arm64-apple-macos.swiftmodule /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.swiftmodule (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.swiftmodule /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.swiftmodule/arm64-apple-macos.swiftmodule
+
+Copy /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.swiftmodule/arm64-apple-macos.swiftdoc /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.swiftdoc (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.swiftdoc /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.swiftmodule/arm64-apple-macos.swiftdoc
+
+Copy /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.swiftmodule/arm64-apple-macos.abi.json /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.abi.json (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.abi.json /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.swiftmodule/arm64-apple-macos.abi.json
+
+Copy /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.swiftsourceinfo (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.swiftsourceinfo /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling TerminalOpener.swift, UpdateManager.swift, ValidationManager.swift, VenomfileParser.swift, WorkspaceManager.swift (in target 'Shark' from project 'Shark')
+
+SwiftDriverJobDiscovery normal arm64 Compiling KeyboardManager.swift, Log.swift, SettingsManager.swift, SourceTreeOpener.swift, SymlinkManager.swift (in target 'Shark' from project 'Shark')
+
+SwiftDriverJobDiscovery normal arm64 Compiling VirtualWorkspaceFile.swift, Workspace.swift, AlertManager.swift, AuthorizationManager.swift, CodexHookInstaller.swift, CodexSessionManager.swift (in target 'Shark' from project 'Shark')
+
+SwiftDriverJobDiscovery normal arm64 Compiling CodexSessionPreviewMessageView.swift, CodexSessionPreviewStore.swift, CodexSessionPreviewView.swift, ComponentGitPanel.swift, ComponentSearchFilter.swift (in target 'Shark' from project 'Shark')
+
+SwiftDriverJobDiscovery normal arm64 Compiling MainWorkspaceView.swift, RenameWorkspaceView.swift, SettingsView.swift, WorkspaceGitOverviewView.swift, WorkspaceGitStatusStore.swift (in target 'Shark' from project 'Shark')
+
+SwiftDriverJobDiscovery normal arm64 Compiling WorkspaceListView.swift, WorkspaceStore.swift, ContentView.swift, SharkApp.swift, GeneratedAssetSymbols.swift (in target 'Shark' from project 'Shark')
+
+SwiftDriverJobDiscovery normal arm64 Compiling WorkspaceOpener.swift, XcodeOpener.swift, AuthorizationPanel.swift, CodexSessionListView.swift, CodexSessionPreviewContentView.swift (in target 'Shark' from project 'Shark')
+
+SwiftDriverJobDiscovery normal arm64 Compiling CodexSessionPreviewLoader.swift, CodexSessionRuntimeDetector.swift, FileDialogHelper.swift, ForkOpener.swift, GitManager.swift (in target 'Shark' from project 'Shark')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ComponentSelectorView.swift, ComponentValidationView.swift, DependencyListView.swift, FolderListView.swift, GitStatusValueView.swift (in target 'Shark' from project 'Shark')
+
+SwiftDriver\ Compilation Shark normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-Swift-Compilation -- /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name SharkSpace -Onone -enforce-exclusivity\=checked @/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -target arm64-apple-macos15.2 -g -module-cache-path /tmp/shark-fork-fix-derived/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /tmp/shark-fork-fix-derived/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/shark-fork-fix-derived/Build/Products/Debug -F /tmp/shark-fork-fix-derived/Build/Products/Debug -emit-localized-strings -emit-localized-strings-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/shark-fork-fix-derived/SDKStatCaches.noindex/macosx26.2-25C57-8e261bc56bcf93cdf4ad792911627a89.sdkstatcache -output-file-map /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/Shark-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/shark-fork-fix-derived/ModuleCache.noindex -sdk-module-cache-path /tmp/shark-fork-fix-derived/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/shark-fork-fix-derived/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/Shark_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-generated-files.hmap -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-own-target-headers.hmap -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-all-target-headers.hmap -Xcc -iquote -Xcc /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-project-headers.hmap -Xcc -I/tmp/shark-fork-fix-derived/Build/Products/Debug/include -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources-normal/arm64 -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources/arm64 -Xcc -I/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace-Swift.h -working-directory /Users/caishilin/Desktop/personal/Shark -experimental-emit-module-separately -disable-cmo
+
+Ld /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS/SharkSpace.debug.dylib normal (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos15.2 -dynamiclib -isysroot /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -O0 -L/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -L/tmp/shark-fork-fix-derived/Build/Products/Debug -F/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -F/tmp/shark-fork-fix-derived/Build/Products/Debug -filelist /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.LinkFileList -install_name @rpath/SharkSpace.debug.dylib -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -rpath -Xlinker @executable_path/../Frameworks -Xlinker -object_path_lto -Xlinker /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.swiftmodule @/tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace-linker-args.resp -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -o /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS/SharkSpace.debug.dylib
+
+ConstructStubExecutorLinkFileList /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-ExecutorLinkFileList-normal-arm64.txt (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    construct-stub-executor-link-file-list /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS/SharkSpace.debug.dylib /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library with Swift entry point. (in target 'Shark' from project 'Shark')
+
+Ld /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS/SharkSpace normal (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos15.2 -isysroot /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -O0 -L/tmp/shark-fork-fix-derived/Build/Products/Debug -F/tmp/shark-fork-fix-derived/Build/Products/Debug -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker @executable_path/../Frameworks -rdynamic -Xlinker -no_deduplicate -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace-ExecutorLinkFileList-normal-arm64.txt /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS/SharkSpace.debug.dylib -o /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS/SharkSpace
+
+CopySwiftLibs /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS/SharkSpace.debug.dylib --scan-folder /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Frameworks --scan-folder /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/PlugIns --scan-folder /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Library/SystemExtensions --scan-folder /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Extensions --platform macosx --toolchain /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
+Ignoring --strip-bitcode because --sign was not passed
+
+ExtractAppIntentsMetadata (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode-26.2.0.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name SharkSpace --sdk-root /Applications/Xcode-26.2.0.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk --xcode-version 17C52 --platform-family macOS --deployment-target 15.2 --bundle-identifier com.csl.cool.Shark --output /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/Resources --target-triple arm64-apple-macos15.2 --binary-file /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app/Contents/MacOS/SharkSpace --dependency-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace_dependency_info.dat --stringsdata-file /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.SwiftFileList --metadata-file-list /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace.DependencyMetadataFileList --static-metadata-file-list /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/SharkSpace.DependencyStaticMetadataFileList --swift-const-vals-list /tmp/shark-fork-fix-derived/Build/Intermediates.noindex/Shark.build/Debug/Shark.build/Objects-normal/arm64/SharkSpace.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-27 15:13:30.535 appintentsmetadataprocessor[98876:750340] Starting appintentsmetadataprocessor export
+2026-10-27 15:13:30.536 appintentsmetadataprocessor[98876:750340] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+RegisterExecutionPolicyException /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-RegisterExecutionPolicyException /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app
+
+Validate /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    builtin-validationUtility /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app -no-validate-extension -infoplist-subpath Contents/Info.plist
+
+Touch /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /usr/bin/touch -c /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app
+
+RegisterWithLaunchServices /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app (in target 'Shark' from project 'Shark')
+    cd /Users/caishilin/Desktop/personal/Shark
+    /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister -f -R -trusted /tmp/shark-fork-fix-derived/Build/Products/Debug/SharkSpace.app
+
+** BUILD SUCCEEDED ** [10.667 sec]
+

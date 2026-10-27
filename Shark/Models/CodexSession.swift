@@ -8,6 +8,7 @@ import Foundation
 struct CodexSession: Identifiable, Hashable {
     let id: String
     let title: String
+    let lastUserMessage: String?
     let cwd: String
     let filePath: String
     let updatedAt: Date

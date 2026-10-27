@@ -30,6 +30,7 @@ enum CodexSessionManager {
                 return CodexSession(
                     id: thread.id,
                     title: bestTitle(displayNames[thread.id], thread.title, thread.firstUserMessage, thread.preview, indexed?.title, fallback: thread.id),
+                    lastUserMessage: thread.preview,
                     cwd: thread.cwd,
                     filePath: thread.filePath,
                     updatedAt: thread.updatedAt,
@@ -50,6 +51,7 @@ enum CodexSessionManager {
             return CodexSession(
                 id: meta.id,
                 title: bestTitle(displayNames[meta.id], thread?.title, thread?.firstUserMessage, thread?.preview, indexed?.title, fallback: meta.id),
+                lastUserMessage: thread?.preview,
                 cwd: meta.cwd,
                 filePath: url.path,
                 updatedAt: thread?.updatedAt ?? indexed?.updatedAt ?? meta.updatedAt,

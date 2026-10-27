@@ -1,0 +1,90 @@
+{
+  "schema": "task-snapshot/v1",
+  "taskId": "fix-open-in-fork",
+  "files": [
+    {
+      "path": "Shark/Utilities/ForkOpener.swift",
+      "sha256": "7b611a023716141ee43f2f9bbf3ebe014638e9aefdae0e76d3ca0062eea72e2b",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "163debc5d657bddd8416ec877e4579d70aa997e8"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "163debc5d657bddd8416ec877e4579d70aa997e8",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Views/ComponentSelectorView.swift",
+      "sha256": "afd02f0bab1a98f12b07136a4df5dc4e801f2203a8327c9d1b9a74a51cf1e896",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "e0ca326091e277a23ab111be4d2cbd1d14c5f5ef"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "e0ca326091e277a23ab111be4d2cbd1d14c5f5ef",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "Shark/Views/FolderListView.swift",
+      "sha256": "734dc6e5ce6fb600903ff788d6d5c1820eeec47cddcf91cd8f77953b7a9420fd",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "f58a60059fd46d127349051243b22b71b9324bc1"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "f58a60059fd46d127349051243b22b71b9324bc1",
+            "stage": 0
+          }
+        ]
+      }
+    },
+    {
+      "path": "tasks/artifacts/fix-open-in-fork/evidence/debug-build.log",
+      "sha256": "1f76ca3317124f121b8520c06695b7ac0e0ef0fa0ad83240464692dc552d288f",
+      "git": {
+        "head": null,
+        "index": []
+      }
+    },
+    {
+      "path": "tasks/artifacts/fix-open-in-fork/evidence/native-open.log",
+      "sha256": "255ce1fbc444adc4ae8b1dc06648db705cc6d67b8711bb200562dbf642b0296b",
+      "git": {
+        "head": null,
+        "index": []
+      }
+    },
+    {
+      "path": "tasks/todo.md",
+      "sha256": "c67bdb12a827992f47273a6941d0e1a53bd151606a50fb83e21ca00e578a519a",
+      "git": {
+        "head": {
+          "mode": "100644",
+          "object": "de5b00465a001ca59480a09ca40a14c9494e4e07"
+        },
+        "index": [
+          {
+            "mode": "100644",
+            "object": "de5b00465a001ca59480a09ca40a14c9494e4e07",
+            "stage": 0
+          }
+        ]
+      }
+    }
+  ]
+}

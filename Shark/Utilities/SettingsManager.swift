@@ -10,6 +10,9 @@ import Foundation
 class SettingsManager {
     static let shared = SettingsManager()
 
+    /// Posted when a setting changes which Codex session visibility (e.g. subagent filter).
+    static let codexSessionFilterChangedNotification = Notification.Name("codexSessionFilterChanged")
+
     private let settingsFolderPathKey = "settingsFolderPath"
     private let settingsFolderBookmarkKey = "settingsFolderBookmark"
     private let componentsSearchPathsKey = "componentsSearchPaths"
@@ -21,6 +24,7 @@ class SettingsManager {
     private let defaultTerminalAppKey = "defaultTerminalApp"
     private let codexResumeInITermSplitsKey = "codexResumeInITermSplits"
     private let codexResumeSplitLayoutKey = "codexResumeSplitLayout"
+    private let hideSubagentSessionsKey = "hideSubagentSessions"
 
     private init() {
         migrateLegacySearchPath()
@@ -255,6 +259,18 @@ class SettingsManager {
         }
         set {
             UserDefaults.standard.set(newValue, forKey: codexResumeInITermSplitsKey)
+        }
+    }
+
+    var hideSubagentSessions: Bool {
+        get {
+            guard UserDefaults.standard.object(forKey: hideSubagentSessionsKey) != nil else {
+                return true
+            }
+            return UserDefaults.standard.bool(forKey: hideSubagentSessionsKey)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: hideSubagentSessionsKey)
         }
     }
 

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 struct MainWorkspaceView: View {
     @State private var store = WorkspaceStore()
@@ -23,26 +24,29 @@ struct MainWorkspaceView: View {
                 .frame(minWidth: 250, idealWidth: 300, maxWidth: 400)
 
             VSplitView {
-                FolderListView(
-                    folders: $store.folders,
-                    onAddFolder: {
-                        Task { await store.addFolder(authManager: authManager) }
-                    },
-                    onUpdateFolder: { _ in
-                        Task { await store.saveFoldersToWorkspace(authManager: authManager) }
-                    },
-                    onSelectComponents: {
-                        showComponentSelector = true
-                    },
-                    onDropFolders: { droppedFolders in
-                        Task { await store.handleDroppedFolders(droppedFolders) }
-                    }
-                )
-                .frame(minWidth: 250, idealWidth: 300, minHeight: 220)
+                if store.selectedWorkspace?.kind != .project {
+                    FolderListView(
+                        folders: $store.folders,
+                        onAddFolder: {
+                            Task { await store.addFolder(authManager: authManager) }
+                        },
+                        onUpdateFolder: { _ in
+                            Task { await store.saveFoldersToWorkspace(authManager: authManager) }
+                        },
+                        onSelectComponents: {
+                            showComponentSelector = true
+                        },
+                        onDropFolders: { droppedFolders in
+                            Task { await store.handleDroppedFolders(droppedFolders) }
+                        }
+                    )
+                    .frame(minWidth: 250, idealWidth: 300, minHeight: 220)
+                }
 
                 CodexSessionListView(
                     sessions: store.codexSessions,
                     isLoading: store.isLoadingCodexSessions,
+                    canRename: store.selectedWorkspace?.kind == .workspace,
                     onRefresh: {
                         Task { await store.loadCodexSessions() }
                     },
@@ -70,6 +74,9 @@ struct MainWorkspaceView: View {
                     },
                     onDelete: { sessions in
                         Task { await store.deleteCodexSessions(sessions) }
+                    },
+                    onCleanArchived: {
+                        Task { await store.deleteAllArchivedCodexSessions() }
                     }
                 )
                 .frame(minWidth: 250, minHeight: 120, idealHeight: 180)
@@ -98,6 +105,12 @@ struct MainWorkspaceView: View {
         .task {
             store.refreshWorkspaces()
             await store.loadFoldersForSelectedWorkspace(authManager: authManager)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await store.loadCodexSessions() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: SettingsManager.codexSessionFilterChangedNotification)) { _ in
+            Task { await store.loadCodexSessions() }
         }
     }
 

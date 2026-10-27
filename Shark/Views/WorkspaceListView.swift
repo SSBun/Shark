@@ -20,14 +20,18 @@ struct WorkspaceListView: View {
     @State private var healthReport: WorkspaceHealthReport?
 
     private var filteredWorkspaces: [Workspace] {
-        if searchText.isEmpty {
-            return store.workspaces
-        }
+        store.workspaces.filter { $0.kind == .workspace && matchesSearch($0) }
+    }
+
+    private var filteredProjects: [Workspace] {
+        store.workspaces.filter { $0.kind == .project && matchesSearch($0) }
+    }
+
+    private func matchesSearch(_ workspace: Workspace) -> Bool {
+        guard !searchText.isEmpty else { return true }
         let lowercased = searchText.lowercased()
-        return store.workspaces.filter {
-            $0.name.lowercased().contains(lowercased) ||
-            $0.filePath.lowercased().contains(lowercased)
-        }
+        return workspace.name.lowercased().contains(lowercased)
+            || workspace.filePath.lowercased().contains(lowercased)
     }
 
     var body: some View {
@@ -74,6 +78,15 @@ struct WorkspaceListView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Create virtual workspace")
+
+                Button(action: {
+                    Task { await store.addProject(authManager: authManager) }
+                }) {
+                    Image(systemName: "plus.square.on.square")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .help("Add existing folder as project")
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -124,7 +137,7 @@ struct WorkspaceListView: View {
             Divider()
 
             // Workspace list
-            if filteredWorkspaces.isEmpty && !searchText.isEmpty {
+            if filteredWorkspaces.isEmpty && filteredProjects.isEmpty && !searchText.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 32))
@@ -136,9 +149,22 @@ struct WorkspaceListView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(selection: $store.selectedWorkspace) {
-                    ForEach(filteredWorkspaces) { workspace in
-                        makeWorkspaceRow(workspace, isPinned: workspace.isPinned)
-                            .tag(workspace)
+                    if !filteredWorkspaces.isEmpty {
+                        Section("Workspaces") {
+                            ForEach(filteredWorkspaces) { workspace in
+                                makeWorkspaceRow(workspace, isPinned: workspace.isPinned)
+                                    .tag(workspace)
+                            }
+                        }
+                    }
+
+                    if !filteredProjects.isEmpty {
+                        Section("Projects") {
+                            ForEach(filteredProjects) { workspace in
+                                makeWorkspaceRow(workspace, isPinned: workspace.isPinned)
+                                    .tag(workspace)
+                            }
+                        }
                     }
                 }
                 .listStyle(.sidebar)
@@ -150,7 +176,11 @@ struct WorkspaceListView: View {
                            let lastSelected = lastSelectedWorkspace,
                            lastSelected.id == newValue.id,
                            now.timeIntervalSince(lastTime) < 0.5 {
-                            WorkspaceOpener.openWorkspace(newValue)
+                            if newValue.kind == .project {
+                                store.showWorkspaceInFinder(newValue)
+                            } else {
+                                WorkspaceOpener.openWorkspace(newValue)
+                            }
                         }
                         lastSelectedWorkspace = newValue
                         lastSelectionTime = now
@@ -205,7 +235,11 @@ struct WorkspaceListView: View {
             isPinned: isPinned,
             onTogglePin: { store.togglePin(workspace) },
             onOpen: {
-                WorkspaceOpener.openWorkspace(workspace)
+                if workspace.kind == .project {
+                    store.showWorkspaceInFinder(workspace)
+                } else {
+                    WorkspaceOpener.openWorkspace(workspace)
+                }
             },
             onShowInFinder: {
                 store.showWorkspaceInFinder(workspace)
@@ -216,12 +250,12 @@ struct WorkspaceListView: View {
             onRemove: {
                 workspaceToRemove = workspace
             },
-            onCheckHealth: {
+            onCheckHealth: workspace.kind == .workspace ? {
                 healthReport = WorkspaceHealthReport.inspect(workspace)
-            },
-            onOpenInForkWorkspace: {
+            } : nil,
+            onOpenInForkWorkspace: workspace.kind == .workspace ? {
                 Task { await store.openInForkWorkspace(workspace, authManager: authManager) }
-            },
+            } : nil,
             onOpenInSourceTree: {
                 Task { await store.openGitFoldersInSourceTree(workspace, authManager: authManager) }
             }
@@ -283,7 +317,7 @@ struct WorkspaceRow: View {
     let onShowInFinder: () -> Void
     let onRename: (String) -> Void
     let onRemove: () -> Void
-    let onCheckHealth: () -> Void
+    let onCheckHealth: (() -> Void)?
     let onOpenInForkWorkspace: (() -> Void)?
     let onOpenInSourceTree: (() -> Void)?
 
@@ -294,9 +328,9 @@ struct WorkspaceRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "folder.fill")
+            Image(systemName: workspace.kind == .project ? "folder.badge.gearshape" : "folder.fill")
                 .font(.system(size: 12))
-                .foregroundColor(.blue)
+                .foregroundColor(workspace.kind == .project ? .purple : .blue)
 
             VStack(alignment: .leading, spacing: 4) {
                 if isEditing {
@@ -389,10 +423,12 @@ struct WorkspaceRow: View {
                 }
             }
 
-            Button(action: onCheckHealth) {
-                HStack {
-                    Image(systemName: "stethoscope")
-                    Text("Check Health...")
+            if let onCheckHealth {
+                Button(action: onCheckHealth) {
+                    HStack {
+                        Image(systemName: "stethoscope")
+                        Text("Check Health...")
+                    }
                 }
             }
 
@@ -419,7 +455,7 @@ struct WorkspaceRow: View {
     }
 
     private var openActionLabel: String {
-        "Open virtual workspace"
+        workspace.kind == .project ? "Reveal project folder" : "Open virtual workspace"
     }
 
     private func startEditing() {

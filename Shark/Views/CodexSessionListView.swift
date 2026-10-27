@@ -8,6 +8,7 @@ import SwiftUI
 struct CodexSessionListView: View {
     let sessions: [CodexSession]
     let isLoading: Bool
+    let canRename: Bool
     let onRefresh: () -> Void
     let onPreview: (CodexSession) -> Void
     let onShowInFinder: ([CodexSession]) -> Void
@@ -18,6 +19,7 @@ struct CodexSessionListView: View {
     let onRename: (CodexSession) -> Void
     let onArchive: ([CodexSession]) -> Void
     let onDelete: ([CodexSession]) -> Void
+    let onCleanArchived: () -> Void
 
     @State private var isArchivedExpanded = false
     @State private var selectedSessionIDs = Set<CodexSession.ID>()
@@ -74,9 +76,19 @@ struct CodexSessionListView: View {
                                 sessionRow(session)
                             }
                         } label: {
-                            Label("Archived Sessions (\(archivedSessions.count))", systemImage: "archivebox")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.secondary)
+                            HStack {
+                                Label("Archived Sessions (\(archivedSessions.count))", systemImage: "archivebox")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Button(role: .destructive, action: onCleanArchived) {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundColor(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                                .help("Delete all archived sessions")
+                            }
                         }
                     }
                 }
@@ -103,6 +115,7 @@ struct CodexSessionListView: View {
     private func sessionRow(_ session: CodexSession) -> some View {
         CodexSessionRow(
             session: session,
+            canRename: canRename,
             onPreview: { onPreview(session) },
             onShowInFinder: { onShowInFinder(targetSessions(for: session)) },
             onCopyPath: { onCopyPath(targetSessions(for: session)) },
@@ -166,6 +179,7 @@ private enum CodexSessionDateBucket: CaseIterable {
 
 private struct CodexSessionRow: View {
     let session: CodexSession
+    let canRename: Bool
     let onPreview: () -> Void
     let onShowInFinder: () -> Void
     let onCopyPath: () -> Void
@@ -201,12 +215,8 @@ private struct CodexSessionRow: View {
                 Spacer()
             }
             .contentShape(.rect)
-            .simultaneousGesture(
-                TapGesture(count: 2)
-                    .onEnded { onPreview() }
-            )
             .accessibilityAction(named: Text("Preview Session"), onPreview)
-            .help("Double-click to preview session")
+            .help("Right-click to preview session")
 
             if session.runtimeState.isRunningInTerminal {
                 Button(action: onJumpToITerm) {
@@ -219,15 +229,20 @@ private struct CodexSessionRow: View {
             }
         }
         .padding(.vertical, 4)
+        .help(tooltip)
         .contextMenu {
+            Button(action: onPreview) {
+                Label("Preview", systemImage: "eye")
+            }
             Button(action: onResumeInTerminal) {
                 Label("Resume in Terminal", systemImage: "terminal")
             }
             Button(action: onRename) {
                 Label("Rename Display Name", systemImage: "pencil")
             }
+            .disabled(!canRename)
             Button(action: onArchive) {
-                Label("Archive", systemImage: "archivebox")
+                Label(session.isArchived ? "Unarchive" : "Archive", systemImage: session.isArchived ? "archivebox.fill" : "archivebox")
             }
             Button(role: .destructive, action: onDelete) {
                 Label("Delete", systemImage: "trash")
@@ -250,17 +265,22 @@ private struct CodexSessionRow: View {
     }
 
     private var sessionSummary: String {
+        let message = session.lastUserMessage?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        var parts: [String] = [formattedDate(session.updatedAt)]
+        if !message.isEmpty { parts.append(message) }
+        if let summary = runtimeSummary { parts.append(summary) }
+        if session.isArchived { parts.append("Archived") }
+        return parts.joined(separator: "  ")
+    }
+
+    private var tooltip: String {
         [
-            formattedDate(session.updatedAt),
-            session.isArchived ? "Archived" : "Active",
-            runtimeSummary,
-            session.source,
-            session.model,
-            session.cwd
+            session.source.map { "Source: \($0)" },
+            session.model.map { "Model: \($0)" },
+            "Cwd: \(session.cwd)",
         ]
         .compactMap { $0 }
-        .filter { !$0.isEmpty }
-        .joined(separator: "  ")
+        .joined(separator: "\n")
     }
 
     private var runtimeSummary: String? {

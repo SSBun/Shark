@@ -61,6 +61,20 @@ final class WorkspaceStore {
         }
     }
 
+    func addProject(authManager: AuthorizationManager) async {
+        let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
+        guard authorized else { return }
+
+        guard let url = FileDialogHelper.selectFolder(
+            title: "Add Project Folder",
+            message: "Choose a folder to track its Codex sessions."
+        ) else { return }
+
+        let project = workspaceManager.addProject(url: url)
+        syncWorkspaces()
+        selectedWorkspace = project
+    }
+
     func renameWorkspace(_ workspace: Workspace, to newName: String) {
         do {
             let updatedWorkspace = try workspaceManager.renameWorkspace(workspace, to: newName)
@@ -83,7 +97,7 @@ final class WorkspaceStore {
             codexSessions = []
         }
 
-        if workspace.filePath.hasPrefix(settingsManager.settingsFolderPath) {
+        if workspace.kind == .workspace && workspace.filePath.hasPrefix(settingsManager.settingsFolderPath) {
             do {
                 try FileManager.default.removeItem(atPath: workspace.filePath)
             } catch {
@@ -147,6 +161,13 @@ final class WorkspaceStore {
         guard let workspace = selectedWorkspace else {
             folders = []
             codexSessions = []
+            return
+        }
+
+        // Projects reference a single folder on disk directly — no virtual workspace file.
+        if workspace.kind == .project {
+            folders = []
+            await loadCodexSessions()
             return
         }
 
@@ -226,11 +247,14 @@ final class WorkspaceStore {
             CodexSessionManager.sessions(matching: workspacePath, folderPaths: folderPaths, displayNames: displayNames)
         }.value
         guard selectedWorkspace?.id == workspace.id, codexSessionLoadID == loadID else { return }
-        codexSessions = sessions
+        let visibleSessions = settingsManager.hideSubagentSessions
+            ? sessions.filter { !isSubagentSession($0) }
+            : sessions
+        codexSessions = visibleSessions
 
         let sessionsWithRuntimeState = await Task.detached(priority: .utility) {
             let terminalStates = CodexSessionRuntimeDetector.terminalStates()
-            return sessions.map { session in
+            return visibleSessions.map { session in
                 var session = session
                 session.runtimeState = terminalStates[session.id] ?? .inactive
                 return session
@@ -238,6 +262,11 @@ final class WorkspaceStore {
         }.value
         guard selectedWorkspace?.id == workspace.id, codexSessionLoadID == loadID else { return }
         codexSessions = sessionsWithRuntimeState
+    }
+
+    private func isSubagentSession(_ session: CodexSession) -> Bool {
+        guard let source = session.source else { return false }
+        return source.hasPrefix("{") && source.contains("\"subagent\"")
     }
 
     func openCodexSession(_ session: CodexSession) {
@@ -273,6 +302,7 @@ final class WorkspaceStore {
 
     func renameCodexSessionDisplayName(_ session: CodexSession) async {
         guard let workspace = selectedWorkspace,
+              workspace.kind == .workspace,
               let newName = promptForCodexSessionDisplayName(currentName: session.title) else {
             return
         }
@@ -290,7 +320,15 @@ final class WorkspaceStore {
     }
 
     func archiveCodexSessions(_ sessions: [CodexSession]) async {
-        await runCodexSessionCommand("archive", sessions: sessions)
+        // Toggle per current state: archived → unarchive, active → archive.
+        let active = sessions.filter { !$0.isArchived }
+        let archived = sessions.filter { $0.isArchived }
+        if !active.isEmpty {
+            await runCodexSessionCommand("archive", sessions: active)
+        }
+        if !archived.isEmpty {
+            await runCodexSessionCommand("unarchive", sessions: archived)
+        }
         await loadCodexSessions()
     }
 
@@ -300,8 +338,14 @@ final class WorkspaceStore {
         await loadCodexSessions()
     }
 
+    func deleteAllArchivedCodexSessions() async {
+        let archived = codexSessions.filter { $0.isArchived }
+        guard !archived.isEmpty else { return }
+        await deleteCodexSessions(archived)
+    }
+
     func saveFoldersToWorkspace(authManager: AuthorizationManager) async {
-        guard let workspace = selectedWorkspace else { return }
+        guard let workspace = selectedWorkspace, workspace.kind == .workspace else { return }
 
         let authorized = await authManager.requireAuthorization(for: .fileSystemAccess)
         guard authorized else { return }
@@ -391,24 +435,39 @@ final class WorkspaceStore {
 
     private func runCodexSessionCommand(_ command: String, sessions: [CodexSession]) async {
         let ids = sessions.map(\.id)
-        await Task.detached(priority: .utility) {
+        let failures = await Task.detached(priority: .utility) {
+            var failures: [String] = []
             for id in ids {
                 let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-                process.arguments = command == "delete" ? ["codex", command, "--force", id] : ["codex", command, id]
-                process.standardOutput = Pipe()
-                process.standardError = Pipe()
+                process.executableURL = URL(fileURLWithPath: "/bin/zsh")
+                process.arguments = ["-lic", "codex \"$@\"", "shark-codex"]
+                    + (command == "delete" ? [command, "--force", id] : [command, id])
+                process.standardInput = FileHandle.nullDevice
+                process.standardOutput = FileHandle.nullDevice
+                let errorPipe = Pipe()
+                process.standardError = errorPipe
                 do {
                     try process.run()
+                    let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
                     process.waitUntilExit()
+                    if process.terminationStatus != 0 {
+                        let message = String(decoding: errorData, as: UTF8.self)
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                        failures.append("\(id): \(message.isEmpty ? "Exit status \(process.terminationStatus)" : message)")
+                    }
                 } catch {
-                    print("Failed to run codex \(command) for \(id): \(error)")
+                    failures.append("\(id): \(error.localizedDescription)")
                 }
             }
+            return failures
         }.value
+        if !failures.isEmpty {
+            AlertManager.shared.error(failures.joined(separator: "\n"), title: "Codex \(command) failed")
+        }
     }
 
     private func codexSessionDisplayNames(for workspace: Workspace) -> [String: String] {
+        guard workspace.kind == .workspace else { return [:] }
         let dirURL = URL(fileURLWithPath: workspace.filePath)
         let workspaceFile = try? VirtualWorkspaceFile.parse(fromDirectory: dirURL)
         return workspaceFile?.codexSessionDisplayNames ?? [:]

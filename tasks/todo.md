@@ -1,3 +1,16 @@
+# 发布 SharkSpace 1.14.0
+
+## 假设与边界
+- 现有未提交改动包含 Projects、Codex 子代理筛选、会话摘要、取消归档与已归档会话清理；按兼容新功能发布 1.14.0 / build 16。
+- 沿用 GitHub tag 构建 DMG、npm 下载包装包；不新增签名/公证系统，不安装替换当前 App，不运行单元测试。
+- 检查发现 Projects 复用删除入口可能删除外部目录，metadata 阶段未应用子代理过滤，新增会话命令仍依赖 GUI 缺失的 CLI PATH；发布前仅修复这些直接阻塞。
+
+## 计划与验证
+- 保护 project 外部目录，统一 metadata/runtime 可见会话，使用经本机只读探测确认的登录 shell 环境运行 Codex 命令并呈现失败。
+- 同步 package、lockfile、Xcode、CHANGELOG 和 README；执行 Swift 解析、Debug 构建、敏感信息/差异检查及独立只读审查。
+- 按现有入口生成 Release app 和 DMG，核验版本、build、架构、DMG 和 SHA256；执行 npm pack/publish dry-run。
+- 正式发布清单确认后推送代码/tag，验证 GitHub Release，再发布并回读 npm。当前 npm 登录失效，需要用户登录后才能完成 registry 发布。
+
 # 修复 Open in Fork 菜单无响应
 
 ## 假设

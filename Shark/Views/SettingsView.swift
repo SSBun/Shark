@@ -37,6 +37,7 @@ struct SettingsView: View {
     @State private var selectedTerminalApp: TerminalApp = .systemDefault
     @State private var codexResumeInITermSplits = true
     @State private var codexResumeSplitLayout: CodexResumeSplitLayout = .automaticGrid
+    @State private var hideSubagentSessions = true
     @State private var codexHooksInstalled = false
     @State private var codexHooksMessage = ""
     private let settingsManager = SettingsManager.shared
@@ -72,6 +73,7 @@ struct SettingsView: View {
             selectedTerminalApp = settingsManager.defaultTerminalApp
             codexResumeInITermSplits = settingsManager.codexResumeInITermSplits
             codexResumeSplitLayout = settingsManager.codexResumeSplitLayout
+            hideSubagentSessions = settingsManager.hideSubagentSessions
             refreshCodexHooksStatus()
             // Determine if current path is default or custom
             if settingsFolderPath == settingsManager.defaultSettingsFolderPath {
@@ -97,6 +99,10 @@ struct SettingsView: View {
         }
         .onChange(of: codexResumeInITermSplits) { oldValue, newValue in
             settingsManager.codexResumeInITermSplits = newValue
+        }
+        .onChange(of: hideSubagentSessions) { oldValue, newValue in
+            settingsManager.hideSubagentSessions = newValue
+            NotificationCenter.default.post(name: SettingsManager.codexSessionFilterChangedNotification, object: nil)
         }
         .onChange(of: codexResumeSplitLayout) { oldValue, newValue in
             settingsManager.codexResumeSplitLayout = newValue
@@ -285,6 +291,8 @@ struct SettingsView: View {
                     Text("Codex resume")
                         .font(.system(size: 13, weight: .semibold))
                     Toggle("Use iTerm split panes for multiple sessions", isOn: $codexResumeInITermSplits)
+                        .toggleStyle(.checkbox)
+                    Toggle("Hide subagent sessions", isOn: $hideSubagentSessions)
                         .toggleStyle(.checkbox)
                     Picker("Split Layout", selection: $codexResumeSplitLayout) {
                         ForEach(CodexResumeSplitLayout.allCases) { layout in

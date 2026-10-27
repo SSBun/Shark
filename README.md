@@ -15,6 +15,11 @@
 - **Rename Workspaces** - 重命名 workspace，并同步更新工作区目录和 metadata。
 - **Workspace Health Check** - 检查 metadata、缺失文件夹、断开的 symlink 和 Codex hooks 状态，并支持重建 symlinks。
 
+### Projects
+- **直接添加项目** - 将磁盘上的已有目录加入 Projects 分组，无需创建虚拟工作区。
+- **项目会话** - 选择项目即可查看该目录下的 Codex 会话；打开项目条目会在 Finder 中显示目录。
+- **非破坏性管理** - 重命名只改变显示名称，移除只删除列表引用，不移动或删除项目目录。
+
 ### Folder 管理
 - **Add Folders** - 通过拖拽、文件选择器或组件选择器添加多个目录。
 - **Component Selector** - 从可配置搜索路径中浏览和选择组件。
@@ -27,11 +32,14 @@
 - **Workspace Sessions** - 在当前 workspace 下方展示相关 Codex sessions。
 - **Activity Groups** - 按 Last 8 Hours、Last 2 Days、Last Week、Older 分组 active sessions。
 - **Archived Sessions** - archived sessions 默认折叠，避免干扰当前工作。
-- **Session Actions** - 支持恢复到终端、归档、删除、复制 session ID、复制 jsonl 路径。
+- **Session Actions** - 支持恢复到终端、归档与取消归档、删除、复制 session ID、复制 jsonl 路径。
+- **归档清理** - 通过已归档分组的垃圾桶按钮，经确认后删除当前列表中的已归档会话。
+- **子代理筛选** - 默认隐藏子代理会话，可在 Settings > Terminal 中切换。
+- **摘要与刷新** - 列表显示会话消息摘要，悬浮查看来源、模型与目录；应用重新激活时自动刷新。
 - **Running Indicator** - 显示 session 是否正在终端中运行。
 - **iTerm Jump** - 安装 Codex hooks 后，可跳转到正在运行的 iTerm2 session。
 - **Display Name** - 可为 session 设置 Shark 内部显示名，保存到当前 workspace metadata。
-- **Session Preview** - 双击 session 可预览首条用户消息和最近对话，再决定是否恢复或跳转。
+- **Session Preview** - 右键 session 选择 Preview，可预览首条用户消息和最近对话，再决定是否恢复或跳转。
 
 ### 快捷操作
 - **Double-Click to Open** - 双击即可在终端打开虚拟工作区目录。
@@ -59,7 +67,7 @@
 ## 为什么使用 Shark
 
 ### 面向 Agent 工具的工作区
-Shark 的 virtual folder 本质上就是一个普通目录。Codex、Claude Code、Cursor、终端和其他工具都可以直接打开它，不需要理解 Shark 的内部数据结构。
+Shark 同时支持 virtual workspace 和直接引用的 Project。virtual folder 本质上就是一个普通目录。Codex、Claude Code、Cursor、终端和其他工具都可以直接打开它，不需要理解 Shark 的内部数据结构。
 
 ### 清晰的 macOS 界面
 - 左侧是 workspace 列表。

@@ -1,8 +1,25 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+记录面向用户的重要变更。
 
 ## [Unreleased]
+
+## [1.14.0] - 2026-10-27
+
+### Added
+- 新增 Projects 分组，可直接添加已有项目目录并查看关联的 Codex 会话，无需创建虚拟工作区。
+- 新增隐藏子代理会话设置，默认开启；应用重新激活时刷新会话。
+- 支持取消归档，以及经确认后批量清理当前列表中的已归档会话。
+
+### Changed
+- 会话列表展示消息摘要，来源、模型与目录信息移至悬浮提示。
+- 会话预览改为右键菜单入口，保留辅助功能操作。
+
+### Fixed
+- 修复 Open in Fork 依赖 GUI 环境中的 shell PATH，导致点击无响应的问题；打开失败时显示错误。
+- 移除 Project 条目时仅移除引用，不删除原始项目目录；项目重命名只更改显示名。
+- 子代理过滤在 metadata 与 runtime 两阶段保持一致，避免初次加载时短暂显示隐藏项。
+- Codex 会话操作使用登录 shell 查找 CLI，并在命令失败时提示错误。
 
 ## [1.13.0] - 2026-07-16
 
