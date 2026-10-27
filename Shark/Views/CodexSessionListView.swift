@@ -17,7 +17,8 @@ struct CodexSessionListView: View {
     let onJumpToITerm: (CodexSession) -> Void
     let onCopySessionID: ([CodexSession]) -> Void
     let onRename: (CodexSession) -> Void
-    let onArchive: ([CodexSession]) -> Void
+    /// Sets the selected sessions to the archive state requested by the menu.
+    let onArchive: (_ sessions: [CodexSession], _ archived: Bool) -> Void
     let onDelete: ([CodexSession]) -> Void
     let onCleanArchived: () -> Void
 
@@ -123,7 +124,9 @@ struct CodexSessionListView: View {
             onJumpToITerm: { onJumpToITerm(session) },
             onCopySessionID: { onCopySessionID(targetSessions(for: session)) },
             onRename: { onRename(session) },
-            onArchive: { onArchive(targetSessions(for: session)) },
+            onArchive: {
+                onArchive(targetSessions(for: session), !session.isArchived)
+            },
             onDelete: { onDelete(targetSessions(for: session)) }
         )
         .tag(session.id)

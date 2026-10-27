@@ -10,6 +10,7 @@
 - 同步 package、lockfile、Xcode、CHANGELOG 和 README；执行 Swift 解析、Debug 构建、敏感信息/差异检查及独立只读审查。
 - 按现有入口生成 Release app 和 DMG，核验版本、build、架构、DMG 和 SHA256；执行 npm pack/publish dry-run。
 - 正式发布清单确认后推送代码/tag，验证 GitHub Release，再发布并回读 npm。当前 npm 登录失效，需要用户登录后才能完成 registry 发布。
+- 独立审查 TR-1 指出混合多选会反向切换另一类会话；已改为菜单显式传递目标归档状态，Store 只处理与目标状态不同的条目，重新构建并交独立审查。
 
 # 修复 Open in Fork 菜单无响应
 

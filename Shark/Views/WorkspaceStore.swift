@@ -319,16 +319,13 @@ final class WorkspaceStore {
         }
     }
 
-    func archiveCodexSessions(_ sessions: [CodexSession]) async {
-        // Toggle per current state: archived → unarchive, active → archive.
-        let active = sessions.filter { !$0.isArchived }
-        let archived = sessions.filter { $0.isArchived }
-        if !active.isEmpty {
-            await runCodexSessionCommand("archive", sessions: active)
+    /// Sets the archive state without changing sessions already in that state.
+    func setCodexSessions(_ sessions: [CodexSession], archived: Bool) async {
+        let targets = sessions.filter { $0.isArchived != archived }
+        guard !targets.isEmpty else {
+            return
         }
-        if !archived.isEmpty {
-            await runCodexSessionCommand("unarchive", sessions: archived)
-        }
+        await runCodexSessionCommand(archived ? "archive" : "unarchive", sessions: targets)
         await loadCodexSessions()
     }
 

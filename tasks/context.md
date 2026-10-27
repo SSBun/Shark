@@ -54,5 +54,5 @@
 
 ### Relationships
 - `WorkspaceStore.loadCodexSessions` 在发布 metadata 前应用子代理过滤，再为相同可见集合补充 runtime；两次提交都核对 workspace ID 与 load ID。`MainWorkspaceView` 在应用激活或筛选设置通知时重新加载。
-- `CodexSessionListView` 通过右键 Preview 和辅助功能动作触发预览；已归档会话支持取消归档，垃圾桶仅处理当前可见列表的已归档项并复用永久删除确认。
+- `CodexSessionListView` 通过右键 Preview 和辅助功能动作触发预览；归档菜单向 `WorkspaceStore.setCodexSessions(_:archived:)` 传递明确目标状态，混合多选只处理状态需要变化的条目。垃圾桶仅处理当前可见列表的已归档项并复用永久删除确认。
 - `WorkspaceStore.runCodexSessionCommand` 用登录交互式 zsh 获取用户 CLI 环境，命令参数通过位置参数传递；CLI help/构建只能证明接口与编译兼容，不能证明真实归档/删除副作用正确。

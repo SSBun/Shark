@@ -69,8 +69,8 @@ struct MainWorkspaceView: View {
                     onRename: { session in
                         Task { await store.renameCodexSessionDisplayName(session) }
                     },
-                    onArchive: { sessions in
-                        Task { await store.archiveCodexSessions(sessions) }
+                    onArchive: { sessions, archived in
+                        Task { await store.setCodexSessions(sessions, archived: archived) }
                     },
                     onDelete: { sessions in
                         Task { await store.deleteCodexSessions(sessions) }
