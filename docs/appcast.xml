@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>SharkSpace 更新</title>
+    <link>https://ssbun.github.io/Shark/</link>
+    <description>SharkSpace 的已验证更新。</description>
+    <language>zh-CN</language>
+  </channel>
+</rss>

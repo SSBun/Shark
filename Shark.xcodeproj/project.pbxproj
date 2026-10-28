@@ -6,13 +6,30 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F00000000000000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = F00000000000000000000003 /* Sparkle */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		C4796DE02EC4265200E6093E /* Shark.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Shark.app; path = SharkSpace.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F00000000000000000000004 /* Exceptions for "Shark" folder in "Shark" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C4796DDF2EC4265200E6093E /* Shark */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C4796DE22EC4265200E6093E /* Shark */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F00000000000000000000004 /* Exceptions for "Shark" folder in "Shark" target */,
+			);
 			path = Shark;
 			sourceTree = "<group>";
 		};
@@ -23,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F00000000000000000000001 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +83,7 @@
 			);
 			name = Shark;
 			packageProductDependencies = (
+				F00000000000000000000003 /* Sparkle */,
 			);
 			productName = Shark;
 			productReference = C4796DE02EC4265200E6093E /* Shark.app */;
@@ -94,6 +113,9 @@
 			);
 			mainGroup = C4796DD72EC4265200E6093E;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F00000000000000000000002 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C4796DE12EC4265200E6093E /* Products */;
 			projectDirPath = "";
@@ -251,7 +273,7 @@
 				CODE_SIGN_ENTITLEMENTS = Shark/Shark.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_ASSET_PATHS = "\"Shark/Preview Content\"";
 				DEVELOPMENT_TEAM = 2795FFTPWT;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -264,11 +286,12 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.14.0;
+				MARKETING_VERSION = 1.15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.csl.cool.Shark;
 				PRODUCT_NAME = SharkSpace;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				INFOPLIST_FILE = Shark/Info.plist;
 			};
 			name = Debug;
 		};
@@ -280,7 +303,7 @@
 				CODE_SIGN_ENTITLEMENTS = Shark/Shark.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 17;
 				DEVELOPMENT_ASSET_PATHS = "\"Shark/Preview Content\"";
 				DEVELOPMENT_TEAM = 2795FFTPWT;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -293,11 +316,12 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.14.0;
+				MARKETING_VERSION = 1.15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.csl.cool.Shark;
 				PRODUCT_NAME = SharkSpace;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				INFOPLIST_FILE = Shark/Info.plist;
 			};
 			name = Release;
 		};
@@ -323,6 +347,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F00000000000000000000002 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = exactVersion;
+				version = 2.10.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F00000000000000000000003 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F00000000000000000000002 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C4796DD82EC4265200E6093E /* Project object */;
 }

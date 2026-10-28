@@ -58,6 +58,12 @@
 - **Codex Hooks** - 一键注入 Codex hooks，用于稳定识别正在运行的 terminal session。
 - **Venomfiles Support** - 检查带 Venomfiles 的组件依赖状态。
 
+### 应用更新（开发中）
+- Sparkle 2 标准更新器提供应用菜单和 Settings > About 检查入口。
+- 使用 HTTPS appcast 和 EdDSA 更新包签名，不再通过自定义版本比较跳转下载页。
+- 1.15.0 开始包含 Sparkle；1.14.0 不包含此功能，首次需要手动安装。无证书发布采用 ad-hoc 代码签名与 EdDSA 更新包签名，未经 Apple 公证，首次打开可能需要在 macOS 隐私与安全性设置中手动确认；不保证受管理设备允许安装。
+- 无证书构建仅豁免应用的 Library Validation，保留 Hardened Runtime 其余保护；不关闭系统 Gatekeeper。公开 feed 与真实双版本升级须单独核验，详见 [Sparkle 更新说明](docs/sparkle-updates.md)。
+
 ### Venomfiles 管理
 - **Check Dependencies** - 扫描并验证 Venomfiles 项目的依赖。
 - **Jump to Repository** - 直接打开依赖仓库。

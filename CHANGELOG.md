@@ -4,6 +4,17 @@
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-10-28
+
+### Added
+- 接入 Sparkle 2 标准更新器，应用菜单与设置共用检查入口，更新下载、验签、安装与重启交给框架处理。
+- 增加已发布 DMG 的 EdDSA appcast 准备命令，校验公开归档字节、公钥、版本/build、长度和签名后仅生成暂存 feed。
+
+### Changed
+- Sparkle framework 打包保留相对 symlink，并在复制前后校验代码签名完整性。
+- 无证书发布使用 ad-hoc 代码签名及 EdDSA 更新包签名，仅对此构建豁免 Library Validation，保留 Hardened Runtime 其余保护；此包没有 Developer ID 身份，也未经 Apple 公证。
+- 1.14.0 不含 Sparkle，首次需要手动安装新版本；首次安装可能被 Gatekeeper 阻止。真实双版本升级尚未验收，不能把构建或归档验签通过当作端到端升级成功。
+
 ## [1.14.0] - 2026-10-27
 
 ### Added

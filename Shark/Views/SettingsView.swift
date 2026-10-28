@@ -367,68 +367,21 @@ struct SettingsView: View {
                             Text("Current Version: \(updateManager.currentVersion) (\(updateManager.buildNumber))")
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
-                            updateStatusView
+                            Text("Updates are checked, downloaded, and installed securely by Sparkle.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Button("Check for Updates") {
-                            Task {
-                                await updateManager.checkForUpdates()
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(updateManager.updateStatus == .checking)
+                        Button("Check for Updates", action: updateManager.checkForUpdates)
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(!updateManager.canCheckForUpdates)
                     }
                 }
 
                 Spacer(minLength: 0)
             }
             .padding(30)
-        }
-    }
-
-    @ViewBuilder
-    private var updateStatusView: some View {
-        switch updateManager.updateStatus {
-        case .idle:
-            EmptyView()
-        case .checking:
-            HStack(spacing: 6) {
-                ProgressView()
-                    .scaleEffect(0.6)
-                Text("Checking for updates...")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-        case .updateAvailable(let version):
-            HStack(spacing: 6) {
-                Image(systemName: "arrow.down.circle.fill")
-                    .foregroundStyle(.green)
-                Text("Update available: v\(version)")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.green)
-                Button("Download") {
-                    updateManager.openReleasePage()
-                }
-                .buttonStyle(.link)
-                .font(.system(size: 11))
-            }
-        case .upToDate:
-            HStack(spacing: 6) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.blue)
-                Text("You're up to date!")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-        case .error(let message):
-            HStack(spacing: 6) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                Text("Error: \(message)")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.orange)
-            }
         }
     }
 

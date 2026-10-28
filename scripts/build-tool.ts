@@ -4,6 +4,7 @@
 // Commands:
 //   create-dmg [version]   Build app and package as DMG
 //   publish <version>      Verify version, create DMG, and publish to npm
+//   appcast <version> <dmg>  Stage a signed feed for an already-published DMG
 //
 // Options shared by both commands:
 //   --no-build             Skip xcodebuild step
@@ -19,9 +20,10 @@
 
 import { Command } from 'commander'
 import * as p from '@clack/prompts'
-import { execSync } from 'child_process'
+import { execFileSync, execSync, spawnSync } from 'child_process'
+import { generateSparkleAppcast } from './sparkle-appcast'
 import {
-  cpSync, existsSync, mkdirSync, rmSync,
+  cpSync, existsSync, mkdirSync, mkdtempSync, rmSync,
   writeFileSync, readFileSync,
 } from 'fs'
 import { tmpdir } from 'os'
@@ -78,16 +80,22 @@ async function createDMG(
     : outputDir
 
   // ---- 1. Build ----
+  const noSign = process.env.NO_SIGN === '1'
   if (opts.build) {
-    const noSign = process.env.NO_SIGN === '1'
-    const signingArguments = noSign
-      ? ' CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=YES CODE_SIGNING_ALLOWED=YES CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO DEVELOPMENT_TEAM=""'
-      : ''
-    if (noSign) p.log.warn('Building with ad-hoc signing (NO_SIGN=1; no Developer ID or notarization)')
-
+    const signingDirectory = noSign ? mkdtempSync(join(tmpdir(), 'shark-signing-')) : undefined
     const spinner = p.spinner()
     spinner.start(`Building «${opts.scheme}» (Release)…`)
     try {
+      let signingArguments = ''
+      if (signingDirectory) {
+        const entitlements = join(signingDirectory, 'Shark.entitlements')
+        cpSync(join(projectRoot, 'Shark/Shark.entitlements'), entitlements)
+        execFileSync('/usr/libexec/PlistBuddy', [
+          '-c', 'Add :com.apple.security.cs.disable-library-validation bool true', entitlements,
+        ])
+        signingArguments = ` CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=YES CODE_SIGNING_ALLOWED=YES CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO DEVELOPMENT_TEAM="" ENABLE_HARDENED_RUNTIME=YES CODE_SIGN_ENTITLEMENTS="${entitlements}"`
+        p.log.warn('Ad-hoc release: Library Validation exception enabled; no Developer ID or notarization')
+      }
       execSync(
         `xcodebuild` +
         ` -scheme "${opts.scheme}"` +
@@ -103,8 +111,9 @@ async function createDMG(
       const msg = (e.stderr?.toString()?.trim() || e.message || '')
         .split('\n').slice(-5).join('\n')
       spinner.stop('Build failed')
-      p.cancel(`xcodebuild failed:\n${msg}`)
-      process.exit(1)
+      throw new Error(`xcodebuild failed:\n${msg}`)
+    } finally {
+      if (signingDirectory) rmSync(signingDirectory, { recursive: true, force: true })
     }
   } else {
     p.log.info('Skipping build (--no-build)')
@@ -123,28 +132,47 @@ async function createDMG(
   const appName = basename(appPath)
   p.log.success(`Found: ${appPath}`)
   exec(`codesign --verify --deep --strict "${appPath}"`)
+  if (existsSync(join(appPath, 'Contents/Frameworks/Sparkle.framework'))) {
+    const signing = spawnSync('/usr/bin/codesign', ['--display', '--verbose=2', appPath], {
+      encoding: 'utf-8',
+    })
+    if (signing.status !== 0) throw new Error('Cannot inspect the Sparkle app signature')
+    if (noSign) {
+      const entitlements = execFileSync('/usr/bin/codesign', [
+        '--display', '--entitlements', ':-', appPath,
+      ], { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] })
+      const signedEntitlements = JSON.parse(execFileSync('/usr/bin/plutil', [
+        '-convert', 'json', '-o', '-', '-',
+      ], { input: entitlements, encoding: 'utf-8' }))
+      if (!/^Signature=adhoc$/m.test(signing.stderr)
+        || !/flags=.*\bruntime\b/.test(signing.stderr)
+        || signedEntitlements['com.apple.security.cs.disable-library-validation'] !== true
+        || signedEntitlements['com.apple.security.get-task-allow'] === true) {
+        throw new Error('NO_SIGN=1 requires ad-hoc signing, Hardened Runtime, and the approved Library Validation exception')
+      }
+    } else if (!/^TeamIdentifier=[A-Z0-9]+$/m.test(signing.stderr)) {
+      throw new Error('A signed identity is required unless NO_SIGN=1 explicitly selects the EdDSA/ad-hoc release mode')
+    }
+  }
 
   // ---- 3. Stage files ----
   const tmpDir = join(tmpdir(), `sharkspace-dmg-${randomUUID()}`)
   const cleanup = () => rmSync(tmpDir, { recursive: true, force: true })
   process.once('exit', cleanup)
   mkdirSync(tmpDir, { recursive: true })
-  cpSync(appPath, join(tmpDir, appName), { recursive: true })
+  cpSync(appPath, join(tmpDir, appName), { recursive: true, verbatimSymlinks: true })
+  execFileSync('/usr/bin/codesign', ['--verify', '--deep', '--strict', join(tmpDir, appName)], {
+    stdio: 'inherit',
+  })
 
   writeFileSync(join(tmpDir, 'INSTALL.md'), [
-    '# SharkSpace Installation Guide',
+    '# SharkSpace 安装说明',
     '',
-    '## Quick Install',
-    '1. Drag **SharkSpace.app** into the **Applications** folder.',
-    '2. Open Terminal and run:',
-    '   ```',
-    '   xattr -cr /Applications/SharkSpace.app',
-    '   ```',
-    '3. Launch SharkSpace from Applications.',
+    '1. 将 SharkSpace.app 拖入“应用程序”，然后从该目录打开。',
+    '2. 此发布未经过 Apple 公证；无证书构建也没有 Developer ID 身份。',
+    '3. 如系统阻止打开，请先核实来源及发布校验和；确认信任后，可按 macOS“系统设置 → 隐私与安全性”的单应用“仍要打开”流程操作。受管理设备可能禁止此操作。',
     '',
-    '## Why `xattr`?',
-    'macOS adds quarantine attributes to downloaded applications.',
-    'The command above removes them so the app can launch.',
+    '不要关闭 Gatekeeper 或批量移除隔离属性。Sparkle EdDSA 验证后续更新归档，不代表 Apple 公证或首次安装信任。',
     '',
   ].join('\n'))
 
@@ -300,6 +328,24 @@ program
     if (pub) p.log.info(pub)
 
     p.outro(`Published @ssbun/sharkspace@${version}${dryRun ? ' (dry-run)' : ''}`)
+  })
+
+// ---- appcast -------------------------------------------------------------
+program
+  .command('appcast')
+  .description('Stage an EdDSA-signed appcast after verifying the public DMG bytes; does not publish')
+  .argument('<version>', 'published release version')
+  .argument('<dmg>', 'local copy of the final published DMG')
+  .option('--derived-data <path>', 'DerivedData containing the pinned Sparkle tools', 'build')
+  .action(async (version, dmg, opts) => {
+    p.intro('Sparkle appcast preparation')
+    try {
+      const feed = await generateSparkleAppcast(version, dmg, opts.derivedData)
+      p.outro(`Verified feed staged at ${feed}; publish it only after checking the release assets`)
+    } catch (error) {
+      p.cancel(error instanceof Error ? error.message : String(error))
+      process.exitCode = 1
+    }
   })
 
 program.parse(process.argv)

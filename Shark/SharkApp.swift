@@ -11,6 +11,8 @@ import AppKit
 @main
 struct SharkApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var updateManager = UpdateManager.shared
+
     @State private var codexSessionPreviewStore = CodexSessionPreviewStore()
     
     var body: some Scene {
@@ -22,6 +24,10 @@ struct SharkApp: App {
         }
         .handlesExternalEvents(matching: Set(arrayLiteral: "*"))
         .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…", action: updateManager.checkForUpdates)
+                    .disabled(!updateManager.canCheckForUpdates)
+            }
             CommandGroup(replacing: .newItem) {
                 // Remove "New Window" command
             }
@@ -135,11 +141,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                window.styleMask.contains(.titled) &&
                !isSettingsWindow(window) &&
                !isCodexSessionPreviewWindow(window) &&
+               !isSparkleWindow(window) &&
                !isDialogWindow(window)
     }
 
     private func isCodexSessionPreviewWindow(_ window: NSWindow) -> Bool {
         window.title == CodexSessionPreviewView.windowTitle
+    }
+
+    /// Keeps Sparkle's standard updater windows out of main-window tracking.
+    private func isSparkleWindow(_ window: NSWindow) -> Bool {
+        guard let controller = window.windowController else {
+            return false
+        }
+        return Bundle(for: type(of: controller)).bundleIdentifier == "org.sparkle-project.Sparkle"
     }
     
     /// Check if a window is a settings window
